@@ -1,0 +1,3 @@
+## list lib links of an arduino project
+
+find -type l -printf %f\\n

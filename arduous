@@ -1,0 +1,3 @@
+## usage: from projectdir> ../arduous pathtolibfile
+
+ln -sf $1 `basename $1`
