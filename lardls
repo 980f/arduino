@@ -1,3 +1,5 @@
 ## list lib links of an arduino project
+## run from arduino project directory
 
-find -type l -printf %f\\n
+find -type l -printf %f\\n >.lard
+
