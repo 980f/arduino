@@ -84,7 +84,7 @@ template <unsigned arduinoNumber, unsigned polarity = HIGH> struct InputPin: pub
 
 #include "boolish.h" // so that it may be passed to a generic bit flipping service
 template <unsigned arduinoNumber, unsigned polarity = HIGH> struct OutputPin: public Pin<arduinoNumber, OUTPUT, polarity>, public BoolishRef {
-  using super= Pin<arduinoNumber, OUTPUT, polarity>;
+  using super = Pin<arduinoNumber, OUTPUT, polarity>;
 
   bool operator =(bool value)const override {
     return super::setto(value);
