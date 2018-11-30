@@ -1,0 +1,12 @@
+inoname=`basename $PWD`
+echo loading project $inoname.ino
+
+#uncomment just one board, someday will have some synonyms and expand them to triplets here.
+boardspec="arduino:avr:leonardo"
+
+arperation="--upload"
+#arperation="--verify"
+
+#where installed on this system
+PATH=$PATH:/d/bin/arduino-1.8.7
+arduino $inoname.ino --preserve-temp-files $arperation -v --board $boardspec --port /dev/ttyACM0
