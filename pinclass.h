@@ -76,9 +76,9 @@ template <unsigned arduinoNumber, unsigned mode, unsigned polarity = HIGH> struc
     Note that the InputPin uses pullup mode.
     Also note that some devices have more options such as pulldown, that arduino does not provide access to.
 */
-template <unsigned arduinoNumber, unsigned polarity = HIGH> struct InputPin: public Pin<arduinoNumber, INPUT_PULLUP, polarity> {
+template <unsigned arduinoNumber, unsigned polarity = HIGH, unsigned puller= polarity?INPUT_PULLUP:INPUT_PULLDOWN> struct InputPin: public Pin<arduinoNumber, puller, polarity> {
   operator bool() const {
-    return Pin<arduinoNumber, INPUT_PULLUP, polarity>::get();
+    return Pin<arduinoNumber, puller, polarity>::get();
   }
 };
 
