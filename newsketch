@@ -1,0 +1,7 @@
+## run this to make it convenient to link to the shared code.
+
+#arduous does the painful thing needed to share code that isn't in a formal arduino library:
+ln -sf ../shared/arduous .
+
+#use this to make a list of your links, usually routed to a file for making a zip.
+ln -sf ../shared/lardls
