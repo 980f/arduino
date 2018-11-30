@@ -28,15 +28,15 @@ class DigitalPin {
     const unsigned polarity;
 
     explicit DigitalPin(unsigned arduinoNumber, unsigned mode, unsigned polarity = HIGH): number(arduinoNumber), polarity(polarity) {
-      if(Serial){
+      if (Serial) {
         Serial.print("digital construct ");
         Serial.println(arduinoNumber);
       }
       pinMode(arduinoNumber, mode);
     }
 
-    DigitalPin(DigitalPin &&any)=delete;
-    DigitalPin(const DigitalPin &any)=delete;
+    DigitalPin(DigitalPin &&any) = delete;
+    DigitalPin(const DigitalPin &any) = delete;
 
     static constexpr bool inverse(bool active) {
       return (HIGH + LOW) - active;
@@ -45,7 +45,7 @@ class DigitalPin {
     operator bool()const {
       Serial.print("digital read ");
       Serial.println(number);
-       
+
       return digitalRead(number) == polarity;
     }
 
@@ -64,7 +64,7 @@ class DigitalPin {
     }
 
     bool operator =(int nonzero)const {
-        Serial.print("digital write int ");
+      Serial.print("digital write int ");
       Serial.println(nonzero);
       return operator =(nonzero != 0);
     }
@@ -72,7 +72,7 @@ class DigitalPin {
     bool operator =(const DigitalPin &rhs)const {
       Serial.print("digital from pin ");
       Serial.println(rhs.number);
-      
+
       return operator =(bool(rhs));
     }
 
