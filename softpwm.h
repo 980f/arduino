@@ -1,3 +1,4 @@
+#pragma once
 
 /** very slow pwm.
 base frequency is whatever rate you call operator bool at.
@@ -28,4 +29,11 @@ public:
     }
     return 1;
   }
+
+  /** @returns phase of total cycle given @param resolution as 1/quantum. pass 100 to get percent.*/
+  unsigned phase(unsigned resolution=100){
+    unsigned cycle=early+later;
+    return (twiddler*resolution + (cycle/2))/cycle;
+  }
+  
 };

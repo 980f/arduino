@@ -2,7 +2,7 @@
 
 
 #ifndef ARDUINO
-//stubs to test compile
+//stubs to test compile on a desktop development system.
 void pinMode(unsigned pinnum, unsigned PINMODE);
 bool digitalRead(unsigned pinnum);
 void digitalWrite(unsigned pinnum, bool);
@@ -28,7 +28,7 @@ void digitalWrite(unsigned pinnum, bool);
   If you declare a Pin in a function then the pinMode command executes each time you enter the function.
 
   The downside of a template based implementation is that each Pin is a class unto itself. That means you can't pass a reference to one to a routine such as a software serial port.
-  There is a number() method added so that you can pass that piece of into about the pin to standard arduino code, or to your code which creates a pin locally which does a potentially pointless pinMode() but otherwise works fine.
+  There is a number() method that lets you pass the arduino number to standard arduino code, or to your code which creates a pin locally which does a potentially pointless pinMode() but otherwise works fine.
 
 */
 
@@ -55,12 +55,12 @@ template <unsigned arduinoNumber, unsigned mode, unsigned polarity = HIGH> struc
     return digitalRead(arduinoNumber) == active;
   }
 
-  bool setto(bool value)const { //const is allowed as this operation doesn't change the code, only the real world pin
+  bool setto(bool value) const { //const is allowed as this operation doesn't change the code, only the real world pin
     digitalWrite(arduinoNumber, value ? active : inactive);
     return value;
   }
 
-  bool setto(int value)const { //const is allowed as this operation doesn't change the code, only the real world pin
+  bool setto(int value) const { //const is allowed as this operation doesn't change the code, only the real world pin
     return setto(value != 0);
   }
 
@@ -86,17 +86,17 @@ template <unsigned arduinoNumber, unsigned polarity = HIGH> struct InputPin: pub
 template <unsigned arduinoNumber, unsigned polarity = HIGH> struct OutputPin: public Pin<arduinoNumber, OUTPUT, polarity>, public BoolishRef {
   using super = Pin<arduinoNumber, OUTPUT, polarity>;
 
-  bool operator =(bool value)const override {
+  bool operator =(bool value) const override {
     return super::setto(value);
   }
 
   //reading an output pin is ambiguous, it is not clear if you are reading the pin or the requested output value. most of the time that makes no difference so ...:
-  operator bool()const {
+  operator bool() const {
     return super::get();
   }
 
   /** an active edge is one which ends up at the given polarity*/
-  void edge(bool leading)const {
+  void edge(bool leading) const {
     if (leading) {
       super::setto(super::inverse(polarity));
       super::setto(polarity);
