@@ -20,11 +20,10 @@ public:
 
   /* call from a periodic source */
   operator bool() {
-    ++twiddler;
-    if(twiddler<early){
+    if(twiddler++<early){
       return 0;
     }
-    if(twiddler>=later){
+    if((twiddler-early)>=later){
       twiddler=0;
     }
     return 1;
