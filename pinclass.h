@@ -14,6 +14,11 @@ void digitalWrite(unsigned pinnum, bool);
 #define WiringPinMode(x)  x
 #endif
 
+
+//some devices have active pulldowns, some don't
+#ifndef INPUT_PULLDOWN
+#define INPUT_PULLDOWN INPUT
+#endif
 /* @param arduinoNumber is such as 13 for the typical LED pin.
   @param mode should be one of:: INPUT(0), INPUT_PULLUP(2), and OUTPUT(1)
   @param polarity is HIGH(1) if true means output pin high, LOW(0) if true means pin low.
