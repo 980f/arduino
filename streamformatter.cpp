@@ -1,3 +1,4 @@
+//(C) Copyright 2017, Andrew Heilveil, github/980F
 #include "streamformatter.h"
 
 

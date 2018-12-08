@@ -1,5 +1,5 @@
 #ifndef STREAMFORMATTER_H
-#define STREAMFORMATTER_H  980F
+#define STREAMFORMATTER_H  "(C) 2017 Andrew Heilveil, github/980F"
 
 class StreamFormatter {
 protected:

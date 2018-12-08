@@ -43,7 +43,7 @@ class StreamPrintf:StreamFormatter {
     cout.print(c,current.precision);    
   }
   template<typename Any> void write(Any &&c){
-    if(Formatting<Any>::hasBase){
+    if(Formatting<Any>::hasBase){//this is known at compile time and only one branch is actually compiled.
       if(current.showbase){
         switch(current.base){
           case 2: cout.print("0b"); break;
