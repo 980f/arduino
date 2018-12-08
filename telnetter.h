@@ -2,14 +2,27 @@
 #pragma once
 
 #include "chainprinter.h"
+ChainPrinter dbg(debug);
+ 
+#include "char.h"  //until chainprinter prints hex.
 
-//max number of simultaneous clients allowed, note: their incoming stuff is mixed together.
+//unsigned hexify(uint8_t charish){
+//  unsigned fourchars; //sizeof unsigned
+//  Char see(charish);
+//  //todo; endinaness
+//  fourchars=see.hexnibble(0)+(see.hexnibble(1)<<8);
+//  return fourchars;
+//}
+
+
+
+//max number of simultaneous clients allowed, note: their incoming stuff is mixed together. using 3 as the 8266 supports at most 4 sockets.
 #define MAX_SRV_CLIENTS 3
 
 struct Credentials {//todo: use allocation constants from wifi.h
-  char ssid[32];// = "honeypot";
-  char password[64];// = "brigadoon-will-be-back-soon";
-
+  char ssid[32];
+  char password[64];
+  
   unsigned save(unsigned offset = 0) { //todo: symbols or static allocator.
     return strzsave(password, sizeof(password), strzsave(ssid, sizeof(ssid), offset));
   }
@@ -72,7 +85,7 @@ struct Telnetter {
       if (server.hasClient()) {//true when a client has requested connection
         if (!findSlot()) {//no free/disconnected spot so reject
           server.available().stop();//?forceful reject to client?
-          debug.println("Incoming connection rejected, no room for it.");
+          dbg("\nIncoming connection rejected, no room for it.\n");
         }
       }
       //check clients for data
@@ -131,17 +144,17 @@ struct Telnetter {
       WiFi.mode(WIFI_STA);
       WiFi.hostname(Hostname);
       WiFi.begin(cred->ssid, cred->password);
-      debug.print("\nDevice Mac ");
+     
+      dbg("\nDevice Mac ");
       MAC mac;
       WiFi.macAddress(mac);
       for (unsigned mi = 0; mi < WL_MAC_ADDR_LENGTH; mi++) {
-        debug.print(':');
-        debug.print((mac[mi] >> 4), 16);
-        debug.print((mac[mi] & 0xF), 16);
+        Char c(mac[mi]);
+        dbg(':',c.hexNibble(1),c.hexNibble(0));
       }
-      debug.print("\nConnecting to AP "); debug.print(cred->ssid);
+      dbg("\nConnecting to AP ",cred->ssid);
       if (Verbose) {
-        debug.print(" using password "); debug.println(cred->password);
+        dbg(" using password ",cred->password,'\n');
       }
       amTrying = true;
     } else {
@@ -152,16 +165,16 @@ struct Telnetter {
 
   bool testConnection() {
     wst = WiFi.status();
-    debug.print("\tAPCon status "); debug.println(wst);
+    dbg("\tAPCon status ",wst);
     if (wst == WL_CONNECTED) {
       server.begin();
       server.setNoDelay(true);
 
-      debug.print("\nUse 'telnet "); debug.print(WiFi.localIP());
+      dbg("\nUse 'telnet ",WiFi.localIP());
       if (teleport != 23) {
-        debug.print(teleport);
+        dbg(teleport);
       }
-      debug.println("' to connect.");
+      dbg("' to connect.\n");
       amTrying = false; //trying to close putative timing gap
       return true;
     } else {
@@ -179,7 +192,7 @@ struct Telnetter {
       //not an else! aclient.stop() may make aclient be false.
       if (!aclient) {//if available
         aclient = server.available();
-        debug.print("\nNew client: "); debug.println(i);
+        dbg("\nNew client: ",i);
 
         aclient.write(Hostname);
         aclient.write(" at your service.\n");

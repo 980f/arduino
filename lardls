@@ -1,5 +1,6 @@
 ## list lib links of an arduino project
 ## run from arduino project directory
+## which is exactly what we need to ignore when checking for new files
 
-find -type l -printf %f\\n >.lard
+find -type l -printf %f\\n >.gitignore
 
