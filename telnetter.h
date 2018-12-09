@@ -154,7 +154,7 @@ struct Telnetter {
       }
       dbg("\nConnecting to AP ",cred->ssid);
       if (Verbose) {
-        dbg(" using password ",cred->password,'\n');
+        dbg(" using password ",cred->password);
       }
       amTrying = true;
     } else {
@@ -192,10 +192,12 @@ struct Telnetter {
       //not an else! aclient.stop() may make aclient be false.
       if (!aclient) {//if available
         aclient = server.available();
-        dbg("\nNew client: ",i);
+        dbg("\nNew client: #",i);//todo: find out how to get client ip, will need to go around wifi class proper to do so.
 
         aclient.write(Hostname);
-        aclient.write(" at your service.\n");
+        aclient.write(" at your service, station ");
+        aclient.write('0'+i);
+        aclient.write(".\n");
         return true;
       }
     }
