@@ -80,13 +80,14 @@ class MonoStable {
     /** @returns whether timer has started and not expired== it has been at least 'done' since start() was called */
     bool isRunning() const {
       TickType now = MilliTicked.recent();
-      return now > zero && done > (now - zero); //todo: debate whether either of these should have an '='
+      return now > zero && done > (now - zero);
+
     }
 
     /** @returns whether time has expired, will be false if never started. */
     bool isDone() const {
       TickType now = MilliTicked.recent();
-      return now > zero && done <= (now - zero); //todo: debate whether either of these should have an '='
+      return now > zero && done <= (now - zero);
     }
 
     /** @returns whether time has expired, and if so restarts it. */
@@ -99,8 +100,12 @@ class MonoStable {
       }
     }
 
+    operator bool() {
+      return perCycle();
+    }
+
     TickType due() const {
-      return done+zero;
+      return done + zero;
     }
 
 };

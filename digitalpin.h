@@ -1,5 +1,6 @@
 
-/** This variation of Pin wrapping (see pinclass.h) can be passed by reference, which includes being able to be put into an array.
+/** TODO: use debug printer instead of direct access to Serial.
+    This variation of Pin wrapping (see pinclass.h) can be passed by reference, which includes being able to be put into an array.
     It generates more code at each point of use. An aggressively optimizing compiler might eliminate that extra code,
     but for the template version of this functionality the compiler most likley will write minimal code without being asked nicely
 
@@ -76,7 +77,7 @@ class DigitalPin {
       return operator =(bool(rhs));
     }
 
-    /// the following are utility functions, not essential to this class
+  public:   /// the following are utility functions, not essential to this class
     bool toggle()const {
       *this = ! *this;
       return operator bool();//FYI you can call operator overloads as if they were normal functions.
@@ -86,7 +87,7 @@ class DigitalPin {
 
 /* some convenience classes:
     Note that the InputPin used pullup mode, it is rare that that is not what you want.
-    Also note that some devices have more options such as pulldown, that arduino does not provide access to.
+    Also note that some devices have more options such as pulldown, that arduino does not provide uniform access to. If we find something to conditionally compile upon then we will set the input to pull the opposite of 'polarity'
 */
 class DigitalInput: public DigitalPin {
   public:
