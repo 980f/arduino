@@ -1,4 +1,4 @@
-
+#pragma once
 /** TODO: use debug printer instead of direct access to Serial.
     This variation of Pin wrapping (see pinclass.h) can be passed by reference, which includes being able to be put into an array.
     It generates more code at each point of use. An aggressively optimizing compiler might eliminate that extra code,
@@ -23,12 +23,14 @@
 
 */
 
+#include "pinuser.h"
+
 class DigitalPin {
   public:
     const unsigned number;
     const unsigned polarity;
 
-    explicit DigitalPin(unsigned arduinoNumber, unsigned mode, unsigned polarity = HIGH): number(arduinoNumber), polarity(polarity) {
+    explicit DigitalPin(PinNumberType arduinoNumber, PinModeType mode, unsigned polarity = HIGH): number(arduinoNumber), polarity(polarity) {
       if (Serial) {
         Serial.print("digital construct ");
         Serial.println(arduinoNumber);

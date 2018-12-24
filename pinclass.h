@@ -1,24 +1,6 @@
 #pragma once
 
-
-#ifndef ARDUINO
-//stubs to test compile on a desktop development system.
-void pinMode(unsigned pinnum, unsigned PINMODE);
-bool digitalRead(unsigned pinnum);
-void digitalWrite(unsigned pinnum, bool);
-#endif
-
-#ifdef MAPLE
-#error need to: #define WiringPinMode(x)  x
-#else
-#define WiringPinMode(x)  x
-#endif
-
-
-//some devices have active pulldowns, some don't
-#ifndef INPUT_PULLDOWN
-#define INPUT_PULLDOWN INPUT
-#endif
+#include "pinuser.h"
 /* @param arduinoNumber is such as 13 for the typical LED pin.
   @param mode should be one of:: INPUT(0), INPUT_PULLUP(2), and OUTPUT(1)
   @param polarity is HIGH(1) if true means output pin high, LOW(0) if true means pin low.
@@ -37,14 +19,14 @@ void digitalWrite(unsigned pinnum, bool);
 
 */
 
+//arduino numbers are ints elsewhere, tired of fighting different compiler vintages, AVR one won't cast unsigned to int for linker
 
-
-template <unsigned arduinoNumber, unsigned mode, unsigned polarity = HIGH> struct Pin {
+template <PinNumberType arduinoNumber, PinModeType mode, unsigned polarity = HIGH> struct Pin {
   /** pretending to not know that HIGH=1 and LOW=0 ... constexpr should inline '1-active' at each place of use and not actually do a function call */
   static constexpr bool inverse(bool active) {
     return (HIGH + LOW) - active;
   }
-  enum Bits {
+  enum :int {
     /** in case you have to interface with something that takes the digitalXXX number*/
     number = arduinoNumber,
     active = polarity,
@@ -52,7 +34,7 @@ template <unsigned arduinoNumber, unsigned mode, unsigned polarity = HIGH> struc
   };
 
   Pin() {
-    pinMode(number, WiringPinMode(mode)); //MAPLE made us do this cast
+    pinMode(number, mode); 
   }
 
   /** derived classes have operator bool(), we don't do that here as some variants do something special on read and we don't want the cost of virtual functions. */
@@ -81,14 +63,15 @@ template <unsigned arduinoNumber, unsigned mode, unsigned polarity = HIGH> struc
     Note that the InputPin uses pullup mode.
     Also note that some devices have more options such as pulldown, that arduino does not provide access to.
 */
-template <unsigned arduinoNumber, unsigned polarity = HIGH, unsigned puller= polarity?INPUT_PULLUP:INPUT_PULLDOWN> struct InputPin: public Pin<arduinoNumber, puller, polarity> {
+template <PinNumberType arduinoNumber, unsigned polarity = HIGH, PinModeType puller= polarity?INPUT_PULLDOWN:INPUT_PULLUP> struct InputPin: public Pin<arduinoNumber, puller, polarity> {
   operator bool() const {
     return Pin<arduinoNumber, puller, polarity>::get();
   }
 };
 
-#include "boolish.h" // so that it may be passed to a generic bit flipping service
-template <unsigned arduinoNumber, unsigned polarity = HIGH> struct OutputPin: public Pin<arduinoNumber, OUTPUT, polarity>, public BoolishRef {
+#include "boolish.h" // so that OutputPin may be passed to a generic bit flipping service
+
+template <PinNumberType arduinoNumber, unsigned polarity = HIGH> struct OutputPin: public Pin<arduinoNumber, OUTPUT, polarity>, public BoolishRef {
   using super = Pin<arduinoNumber, OUTPUT, polarity>;
 
   bool operator =(bool value) const override {
