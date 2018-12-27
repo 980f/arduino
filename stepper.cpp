@@ -1,7 +1,14 @@
 #include "stepper.h"
 
+//todo: get digitalpin class to function so that we can pass pin numbers.
+const OutputPin<9> ph0;
+const OutputPin<8> ph1;
+const OutputPin<7> ph2;
+const OutputPin<6> ph3;
+
+
 static const unsigned grey2[] = {0, 1, 3, 2};//use by bipolar stepper interface
-    void Stepper::applyPhase(unsigned phase) {
+    void Stepper::applyPhase(unsigned phase)const {
       switch (iface) {
         case Uni4: {
             unsigned bits = 0x33 >> (phase % 4);
@@ -27,4 +34,3 @@ static const unsigned grey2[] = {0, 1, 3, 2};//use by bipolar stepper interface
           } break;
       }
     }
-

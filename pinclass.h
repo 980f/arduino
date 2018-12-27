@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Arduino.h"
 #include "pinuser.h"
 /* @param arduinoNumber is such as 13 for the typical LED pin.
   @param mode should be one of:: INPUT(0), INPUT_PULLUP(2), and OUTPUT(1)
