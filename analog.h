@@ -1,7 +1,7 @@
 #pragma once  //(C) 2018 Andy Heilveil, github/980F
 /** will be adding smoothing to analog inputs so wrap the data now.
-   some of the chips have more than 8 or 10 bits so this class 'normalizes' values to 15 bits (avoiding sign bit for now).
-   no Arduino will have 16 usable bits, that requires very careful board design.
+    some of the chips have more than 8 or 10 bits so this class 'normalizes' values to 15 bits (avoiding sign bit for now).
+    no Arduino will ever have 16 usable bits, that requires very careful board design.
 */
 
 struct AnalogValue {
@@ -22,6 +22,7 @@ struct AnalogValue {
 
 };
 
+/** makes analog output appear as if a simple variable. This is handy if you want to replace direct use with proxying to another guy, or to disable output but still see what the value would have been.*/
 struct AnalogOutput {
     const unsigned pinNumber;
     AnalogOutput(unsigned pinNumber): pinNumber(pinNumber) {
@@ -42,6 +43,7 @@ struct AnalogOutput {
     void operator =(AnalogOutput &other) = delete; //to stifle compiler saying that it did this on it own, good for it :P
 };
 
+/** makes analog input appear as if a simple variable. This is handy if you want to replace direct use with proxying to another guy, or to feed logic from a different source.*/
 struct AnalogInput {
   const unsigned pinNumber;
   AnalogInput(unsigned pinNumber): pinNumber(pinNumber) {
