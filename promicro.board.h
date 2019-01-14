@@ -1,3 +1,7 @@
+#pragma once //(C)2019 Andy Heilveil, github/980F
+
+#include "bitbanger.h"
+
 //board model, includes chip type.
 //from leonardo variant/pins....h
 //#define LED_BUILTIN 13
@@ -130,7 +134,7 @@ class AT32U4 {
             }
 
             /** @returns value of given param after possible changing it to be less than or equal to the cycle max.*/
-            static unsigned clip(unsigned &ticks) const {
+            static unsigned clip(unsigned &ticks) {
               if (ticks > ICR1) {
                 ticks = ICR1;
               }
