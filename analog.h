@@ -5,20 +5,21 @@
 */
 
 struct AnalogValue {
-  unsigned raw;
+  protected:
+    unsigned raw;
+  public:
+    AnalogValue(int physical = 0) {
+      raw = physical; //todo: shift will be a function of input resolution (10 vs 12) and oversampling rate (8 samples is same as 3 bit shift)
+    }
 
-  AnalogValue(int physical = 0) {
-    raw = physical; //todo: shift will be a function of input resolution (10 vs 12) and oversampling rate (8 samples is same as 3 bit shift)
-  }
+    unsigned operator =(int physical) {
+      raw = physical;
+      return raw;
+    }
 
-  unsigned operator =(int physical) {
-    raw = physical;
-    return raw;
-  }
-
-  operator unsigned() const {
-    return raw;
-  }
+    operator unsigned() const {
+      return raw;
+    }
 
 };
 
@@ -58,4 +59,25 @@ struct AnalogInput {
   int raw()const {
     return AnalogValue(analogRead(pinNumber));
   }
+};
+
+
+struct SmoothedAnalogValue: public AnalogValue {
+  unsigned shift;//power of two scaling is faster than multiply. Someday we will import the 16*16/16 code and make this class better.
+
+  SmoothedAnalogValue(int physical = 0, unsigned shift = 5) :
+    AnalogValue(physical),
+    shift(shift) {
+    //#done
+  }
+
+
+  /** adding 2^-shift * input and subtracting out 2^-shift * present value, works like an RC filter with a decay of 2^-shift each 'clock'.
+       A moving average behaves better, but this is almost as good and is really cheap in memory usage.
+  */
+  unsigned operator =(int physical) {
+    raw += (physical - raw) >> shift;
+    return raw;
+  }
+
 };
