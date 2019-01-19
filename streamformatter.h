@@ -1,6 +1,9 @@
 #ifndef STREAMFORMATTER_H
 #define STREAMFORMATTER_H  "(C) 2017 Andrew Heilveil, github/980F"
 
+/** utility class for typesafe formatting into an Arduino Stream. 
+ it parses the format string to get the arguments to feed to the Arduino Print functions such as number base or number of digits for fp numbers.
+*/
 class StreamFormatter {
 protected:
   /** for controlling the scope of application of formatting. */
@@ -8,7 +11,9 @@ protected:
     unsigned base=10;
     unsigned precision=2;
     char fill;//at present only used by scanner as 'ignore' such as for spaces in european numbers.
+    /** whether to preceded numbers with '0x' or the like.*/
     bool showbase=false;
+    
     void record(const StreamState &current);
     void restore(StreamState &current);
   };
@@ -60,9 +65,6 @@ protected://now for the API:
   /** inspects format character @param c and @returns what to do */
   Action applyItem(char c);
 
-// the following did not work as the ostream inherited virtually from the base class that actually had the methods needed:
-//  typedef std::streamsize (std::ostream::*Attributor)(std::streamsize);
-//  void applyFormat(Attributor func);
   enum FormatValue {Widthly, Precisely};
   void applyFormat(FormatValue whichly);
 

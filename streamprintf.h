@@ -109,7 +109,7 @@ public:
 
 };
 
-#include "Stream.h"
+//#include "Stream.h"
 class StreamScanf:StreamFormatter {
   Stream&cin;
 
