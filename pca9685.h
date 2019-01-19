@@ -8,7 +8,16 @@ class PCA9685: public WireWrapper {
   public:
     PCA9685( uint8_t addr = 0x40, unsigned which = 0);
     /** set some defaults, starts operating at a nominal refresh rate to mimic adafruit library.
-      argument is for output configuration byte for mode2 register, RTFM for now. Default value is that of powerup. */
+      argument is for output configuration byte for mode2 register, RTFM for now. Default value is that of powerup.
+      1<<4 polarity when on by OE, typically only set when adding an NFet or Darlington between the device and the load.
+      1<<3 high is output each channel as its set of 4 is completed, else update all when STOP happens. The latter makes the most sense.
+      1<<2 high for totem pole drive (e.g. servo)
+      1<<1 high for tri-state when off by OE
+      1<<0 LOW to drive output low when off by OE
+      some choices:
+      servo direct drive:  4  (0b100)
+      Typical LED low side drive, open when idle: 
+      */
     void begin(uint8_t mode2value = 0);
 
     /** @returns the number of microseconds you should wait to ensure the device is ready for new values. */

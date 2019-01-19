@@ -22,7 +22,8 @@ class WireWrapper {
     void begin() {
       bus.begin();
     }
-
+    
+private: //internals of send() operation.
     template <typename T > void outp(T t) {
       //output low to high, will eventually want a flag for bigendian targets
       uint8_t *peeker = reinterpret_cast<uint8_t*>(&t);
@@ -40,10 +41,11 @@ class WireWrapper {
     }
 
     template <typename ... Args> void more() {
-
+      //#template metaprogramming needs this function but will never call it.
     }
 
-
+public:
+/** send a bunch of values to the device address. Typically the first is a selector. */
     template <typename ... Args> void send(Args ... args) {
       bus.beginTransmission(base);
       more(args...);
@@ -51,15 +53,15 @@ class WireWrapper {
     }
 
 
-    /** read a device register.
+    /** read a device register. @param addr is the selector in the device, not the i2c bus address which is already stored on this.
       until we manage to do the painful coding for varargs use packed structs to get a multiple return. */
     template <typename T > T inp(uint8_t addr) {
       bus.beginTransmission(base);
       bus.write(addr);
-      bus.endTransmission();//there really should be a 'repeated start' capability.
+      bus.endTransmission(false);//setup repeated start.
       bus.requestFrom(base, sizeof(T));
       if (sizeof(T) == 1) {//expedite common case
-        return bus.read();//may need to do some type casting now and then.
+        return T(bus.read());
       } else {
         T accumulator;
         uint8_t *peeker = reinterpret_cast<uint8_t*>(&accumulator);
@@ -78,6 +80,5 @@ class WireWrapper {
         *buffer++ = bus.read();
       }
     }
-
 
 };
