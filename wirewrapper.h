@@ -22,8 +22,8 @@ class WireWrapper {
     void begin() {
       bus.begin();
     }
-    
-private: //internals of send() operation.
+
+  private: //internals of send() operation.
     template <typename T > void outp(T t) {
       //output low to high, will eventually want a flag for bigendian targets
       uint8_t *peeker = reinterpret_cast<uint8_t*>(&t);
@@ -32,20 +32,19 @@ private: //internals of send() operation.
       }
     }
 
-
+    //peel off 1st arg and process it.
     template <typename First, typename ... Args> void more(const First &first, const Args & ... args) {
       outp(first);
-      if (sizeof...(args) > 0) {
-        more(args...);
-      }
+      more(args...);      
     }
 
-    template <typename ... Args> void more() {
-      //#template metaprogramming needs this function but will never call it.
+    //terminates vararg template iteration.
+    template <typename ... > void more() {
+      //#do nothing, 
     }
 
-public:
-/** send a bunch of values to the device address. Typically the first is a selector. */
+  public:
+    /** send a bunch of values to the device address. Typically the first is a selector. */
     template <typename ... Args> void send(Args ... args) {
       bus.beginTransmission(base);
       more(args...);
