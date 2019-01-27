@@ -4,7 +4,11 @@
 
 /** Hide proper use of I2C.
 */
+
+
+
 class WireWrapper {
+  friend class Transmission;
     uint8_t base;
     TwoWire &bus;
   public:
@@ -35,12 +39,12 @@ class WireWrapper {
     //peel off 1st arg and process it.
     template <typename First, typename ... Args> void more(const First &first, const Args & ... args) {
       outp(first);
-      more(args...);      
+      more(args...);
     }
 
     //terminates vararg template iteration.
     template <typename ... > void more() {
-      //#do nothing, 
+      //#do nothing,
     }
 
   public:
@@ -78,6 +82,80 @@ class WireWrapper {
       while (length-- > 0) {
         *buffer++ = bus.read();
       }
+    }
+
+    /** modify a byte at an address */
+    uint8_t update(uint8_t addr,uint8_t ones,uint8_t zeroes) {
+      bus.beginTransmission(base);
+      bus.write(addr);
+      bus.endTransmission(false);//setup repeated start.
+      bus.requestFrom(base, 1U);
+      uint8_t was=bus.read();
+      
+      bus.beginTransmission(base);
+      bus.write(addr);
+      bus.write((was|ones)&~zeroes);//#parens required to ensure order of operations. without them the ones&~zeroes combined first, then were or'd into mode, preventing us from clearing bits.
+      bus.endTransmission();
+    }
+
+};
+
+
+/**
+usage:
+  WireWrapper ww(devaddress);//usually done once in constructor of object 
+  
+  Transmission msg(ww);//for each message sent.
+  msg(register)(value)(anothervalue).go();
+
+  go() is automatically callled when the entity goes out of scope. It is smart about already having been called, and if you wish to abandon a started one call oops() before exiting the scope.
+ 
+*/
+
+class Transmission {
+    bool begun = false;
+    bool sent = false;
+    WireWrapper &ww;
+  public:
+    Transmission (WireWrapper &ww): ww(ww) {}
+
+    /** append more bytes to the message.*/
+    template <typename T >  Transmission &operator ()(const T &t) {
+      if (!begun) {
+        ww.bus.beginTransmission(ww.base);
+      }
+      //output low to high, will eventually want a flag for bigendian targets
+      const uint8_t *peeker = reinterpret_cast<const uint8_t*>(&t);
+      for (unsigned bc = sizeof(T); bc-- > 0;) {
+        ww.bus.write(*peeker++);
+      }
+    }
+    /** actually send it*/
+    void go() {
+      if (begun && !sent) {
+        ww.bus.endTransmission();
+        sent = true;
+      }
+    }
+
+    /** abandon a transmission */
+    void oops(){
+      //underlying library doesn't seem to have a concept of quitting. One must hope that the next beginTransmission() takes care of a hanging one.
+      begun=false;
+      sent=true;
+    }
+
+/** destruction sends the message, if started. @see oops() to prevent that from happening.*/
+    ~Transmission(){
+      go();
+    }
+
+/** Transmission msg(ww);//for each message sent.
+  msg(register)(value)(anothervalue)--(register)(value);*/
+    Transmission &operator--(int){
+      go();//debate this, it is cute but may be confusing.
+      sent=false;
+      begun=false;
     }
 
 };

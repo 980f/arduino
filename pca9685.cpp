@@ -29,16 +29,15 @@ PCA9685::PCA9685( uint8_t addr, unsigned which): WireWrapper(addr, which) {
 
 void PCA9685::begin(uint8_t mode2value) {
   WireWrapper::begin();
-  send(Mode1, uint8_t(Restarter | AutoIncrement | Sleeper));
-  send(Mode2, mode2value);
-  send(Prescale, fromHz(1000)); //mimic Adafruit for ease of adoption.
+  Transmission init(*this);
+  init(Mode1)(uint8_t(Restarter | AutoIncrement | Sleeper))
+  --(Mode2)(mode2value)
+  --(Prescale)(fromHz(1000)); //mimic Adafruit for ease of adoption.
   delayMicroseconds(wake());
 }
 
 uint8_t PCA9685::updatemode(uint8_t ones, uint8_t zeroes) {
-  uint8_t mode = inp<uint8_t>(Mode1);
-  send(Mode1, ((mode | ones) & ~zeroes));//#parens required to ensure order of operations. without them the ones&~zeroes combined first, then were or'd into mode, preventing us from clearing bits.
-  return mode;
+  return update(Mode1, ones,zeroes);
 }
 
 /* avoiding floating point (drags in a bunch of code):
@@ -67,8 +66,9 @@ uint8_t PCA9685::fromHz(unsigned hz) {
 
 void PCA9685::setPrescale(uint8_t bookvalue) {
   uint8_t oldmode =  updatemode((1 << 4), 0); // reset off, sleep on, see footnote [1] under register address table.
-  send(Prescale, bookvalue); // set the prescaler
-  send(Mode1, oldmode);
+  Transmission msg(*this);
+  msg(Prescale)(bookvalue) // set the prescaler
+  --(Mode1)(oldmode);
   delayMicroseconds(500);//in case oscillator gets whacked. Better to not whack it.
   //not this guy's bailiwick:   outp(Mode1, oldmode | (1<<7) | (1<<5));  //bit 7 enables restart logic,  bit 5 is auto increment.
 }
@@ -87,17 +87,19 @@ void PCA9685::setChannel(uint8_t which, uint16_t on, uint16_t off = 0) {
   }
 
   uint8_t ledaddr = LedBase + 4 * which;
+  Transmission msg(*this);
+  
   //normalize value for good luck (robustness against future changes to the chip).
   if (off > 4095) { //full off. Tested first as the hardware itself also tests it first.
-    send(ledaddr + 2, FULL);
+    msg(ledaddr + 2)( FULL);
     return;
   }
   if (on > 4095) { //full on
-    send(ledaddr, FULL);
+    msg(ledaddr)( FULL);
     return;
   }
   //else the values are in the operational range.
-  send(ledaddr, on, off);
+  msg(ledaddr)( on)( off);
 }
 
 unsigned PCA9685::sleep() {
