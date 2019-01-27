@@ -68,7 +68,7 @@ void PCA9685::setPrescale(uint8_t bookvalue) {
   uint8_t oldmode =  updatemode((1 << 4), 0); // reset off, sleep on, see footnote [1] under register address table.
   Transmission msg(*this);
   msg(Prescale)(bookvalue) // set the prescaler
-  --(Mode1)(oldmode);
+  --(Mode1)(oldmode).go();
   delayMicroseconds(500);//in case oscillator gets whacked. Better to not whack it.
   //not this guy's bailiwick:   outp(Mode1, oldmode | (1<<7) | (1<<5));  //bit 7 enables restart logic,  bit 5 is auto increment.
 }
@@ -119,6 +119,6 @@ unsigned PCA9685::wake() {
 void PCA9685::setAddress(uint8_t which, uint8_t sevenbit) {
   which &= 3; //guard against bad value.
   //set a register 2,3,4, or 5 where 5 is ALL call.
-  send(5 - which, sevenbit << 1); //this mapping makes bit setting below easy.
+  Transmission(*this)(5 - which)(sevenbit << 1); //this mapping makes bit setting below easy.
   updatemode( (1 << which) , 0); // set related control bit
 }

@@ -21,9 +21,9 @@ class TwinConsole {
       return -1;
     }
 
-    void begin() {
+    void begin(uint32_t uartbaud=115200) {
       Serial.begin(500000);//number here doesn't matter.
-      Serial1.begin(500000);//hardware serial. up the baud to reduce overhead.
+      Serial1.begin(uartbaud);//hardware serial. up the baud to reduce overhead.
     }
 
     template<typename ... Args> TwinConsole& operator()(const Args ... args) {
@@ -35,4 +35,3 @@ class TwinConsole {
     }
 
 };
-
