@@ -1,3 +1,4 @@
+//(C) 2019 Andy Heilveil, github/980F
 #include "pca9685.h"
 #include <Arduino.h> //to get hardware options.
 
@@ -23,21 +24,20 @@ enum ControlBits {
 };
 
 
-PCA9685::PCA9685( uint8_t addr, unsigned which): WireWrapper(addr, which) {
+PCA9685::PCA9685( uint8_t addr, unsigned which): ww(addr, which) {
   //#done
 }
 
-void PCA9685::begin(uint8_t mode2value) {
-  WireWrapper::begin();
-  Transmission init(*this);
-  init(Mode1)(uint8_t(Restarter | AutoIncrement | Sleeper))
-  --(Mode2)(mode2value)
-  --(Prescale)(fromHz(1000)); //mimic Adafruit for ease of adoption.
+void PCA9685::begin(uint8_t mode2value, unsigned hz) {
+  ww.begin();
+  Transmission (ww)[Mode1][uint8_t(Restarter | AutoIncrement | Sleeper)]
+  --[Mode2][mode2value]
+  --[Prescale][fromHz(hz)]; 
   delayMicroseconds(wake());
 }
 
 uint8_t PCA9685::updatemode(uint8_t ones, uint8_t zeroes) {
-  return update(Mode1, ones,zeroes);
+  return ww.update(Mode1, ones, zeroes);
 }
 
 /* avoiding floating point (drags in a bunch of code):
@@ -45,7 +45,7 @@ uint8_t PCA9685::updatemode(uint8_t ones, uint8_t zeroes) {
   4096 has 12 lsbs of zero. so predivide each of those by 64:
   25E6 ->390625 or 0x 5F5E1, if we had 24 bit math we could use that
   4k -> 64 , 0x40
-  
+
   min prescale is '3', hardware enforced.~1526Hz.
   max is 255, ~24Hz.
   ps+1 * 4k/25E6 = 1/hz, hz=25E6/(4k*(ps+1))
@@ -57,7 +57,7 @@ uint8_t PCA9685::fromHz(unsigned hz) {
   if (prescaleval >= 256) {//register is 8 bits
     return 255;
   }
-  
+
   if (prescaleval < 4) {
     return 3;//because hardware will convert it to this.
   }
@@ -65,12 +65,11 @@ uint8_t PCA9685::fromHz(unsigned hz) {
 }
 
 void PCA9685::setPrescale(uint8_t bookvalue) {
-  uint8_t oldmode =  updatemode((1 << 4), 0); // reset off, sleep on, see footnote [1] under register address table.
-  Transmission msg(*this);
-  msg(Prescale)(bookvalue) // set the prescaler
-  --(Mode1)(oldmode).go();
+  uint8_t oldmode =  updatemode(Sleeper, 0); // reset off, sleep on, see footnote [1] under register address table.
+  Transmission(ww)[Prescale][bookvalue]--[Mode1][oldmode]; // set the prescaler  -- restore mode
+
   delayMicroseconds(500);//in case oscillator gets whacked. Better to not whack it.
-  //not this guy's bailiwick:   outp(Mode1, oldmode | (1<<7) | (1<<5));  //bit 7 enables restart logic,  bit 5 is auto increment.
+  //not this guy's bailiwick:   outp(Mode1, oldmode | Restarter | Autoincrement);  //bit 7 enables restart logic,  bit 5 is auto increment.
 }
 
 //this declaration is convenient, to set which template verions of twi.write() to invoke.
@@ -87,38 +86,40 @@ void PCA9685::setChannel(uint8_t which, uint16_t on, uint16_t off = 0) {
   }
 
   uint8_t ledaddr = LedBase + 4 * which;
-  Transmission msg(*this);
-  
+  Transmission msg(ww);
+
   //normalize value for good luck (robustness against future changes to the chip).
   if (off > 4095) { //full off. Tested first as the hardware itself also tests it first.
-    msg(ledaddr + 2)( FULL);
+    msg[ledaddr + 2][FULL];
     return;
   }
   if (on > 4095) { //full on
-    msg(ledaddr)( FULL);
+    msg[ledaddr][FULL];
     return;
   }
   //else the values are in the operational range.
-  msg(ledaddr)( on)( off);
+  msg[ledaddr][on][off];
 }
 
 unsigned PCA9685::sleep() {
-  uint8_t modewas = updatemode( (1 << 7) | (1 << 4), 0); //ack restart, set sleep
+  uint8_t modewas = updatemode( Restarter | Sleeper, 0); //ack restart, set sleep
   return 0;//make it look like wake so that we can use ternary to invoke wake else sleep
 }
 
 
 unsigned PCA9685::wake() {
-  uint8_t modewas = updatemode( (1 << 7), (1 << 4)); //ack restart, no sleep
-  if (modewas & (1 << 4)) {
+  uint8_t modewas = updatemode( Restarter, Sleeper); //ack restart, no sleep
+  if (modewas & Sleeper) {
     return 500;//wakeup time from sleep
   }
   return 0;
 }
 
+//set a register 2,3,4, or 5 where 5 is ALL call.
 void PCA9685::setAddress(uint8_t which, uint8_t sevenbit) {
   which &= 3; //guard against bad value.
-  //set a register 2,3,4, or 5 where 5 is ALL call.
-  Transmission(*this)(5 - which)(sevenbit << 1); //this mapping makes bit setting below easy.
+// 5-which mapping of which to register number makes bit setting below easy.
+  Transmission (ww)[5-which][sevenbit << 1]--; //# a compiler bug is magically fixed by trailing --, without which something tries to construct a Transmission with no-args.
   updatemode( (1 << which) , 0); // set related control bit
 }
+//end of file.

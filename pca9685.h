@@ -1,10 +1,10 @@
-
-#pragma once
+#pragma once  ////(C) 2019 Andy Heilveil, github/980F
 
 #include "wirewrapper.h" //wrap usage of TwoWire class
 
 /** PCA9685 interface, using Arduino Wire library for i2c access.  */
-class PCA9685: public WireWrapper {
+class PCA9685 {
+  WireWrapper ww;
   public:
     /** device i2C address, 7-bit, @param which is which i2c bus, 0 for the default, 1 for the 2nd available on some of the bigger processors. */
     PCA9685( uint8_t addr = 0x40, unsigned which = 0);
@@ -19,8 +19,10 @@ class PCA9685: public WireWrapper {
       some choices:
       servo direct drive:  4  (0b100)
       Typical LED low side drive, open when idle:
+
+      default hz is Adafruit choice.
     */
-    void begin(uint8_t mode2value = 0);
+    void begin(uint8_t mode2value = 0,unsigned hz=1000);
 
     /** @returns the number of microseconds you should wait to ensure the device is ready for new values. */
     unsigned wake();
