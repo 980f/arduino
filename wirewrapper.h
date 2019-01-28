@@ -17,7 +17,6 @@ enum WireError : uint8_t {
 };
 
 class WireWrapper {
-    friend class Transmission;
     uint8_t base;
     TwoWire &bus;
     WireError lastOp;
@@ -106,12 +105,12 @@ class WireWrapper {
       return true;
     }
 
-
-
+    /** @returns amount of read data in Wire buffer*/
     unsigned available() {
       return bus.available();
     }
 
+    /** @returns next read datum from Wire buffer*/
     uint8_t next() {
       return bus.read();
     }
@@ -119,15 +118,15 @@ class WireWrapper {
   public: //now for conveniences
     /** modify a byte at an address */
     uint8_t update(uint8_t addr, uint8_t ones, uint8_t zeroes) {
-      Start(addr);
-      End(false); //setup repeated start.
-      Read(1U);
-      uint8_t was = next();
+      uint8_t was;
+      if (ReadFrom(addr, 1, &was)) {
+        Start(addr);
+        emit((was | ones) & ~zeroes); //#parens required to ensure order of operations. without them the ones&~zeroes combined first, then were or'd into mode, preventing us from clearing bits.
+        End();
+        return was;
+      }
+      return ~0;
 
-      Start(addr);
-      emit((was | ones) & ~zeroes); //#parens required to ensure order of operations. without them the ones&~zeroes combined first, then were or'd into mode, preventing us from clearing bits.
-      End();
-      return was;
     }
 
 };
@@ -141,7 +140,7 @@ template <typename Scalar> class WIred {
     WireWrapper &ww;
     uint8_t selector;
     /** I2C might have different endianess than platform. The default arg below should be a platform derived value */
-    bool bigendian;//todo: move this onto ww once we see if any devices have per register endianness (I've seen this with some non-I2C devices)
+    bool bigendian;//todo: move this onto ww if we see that no devices have per-register endianness (I've seen this with some non-I2C devices)
 
   public:
     /** each time we read or write we update this value, handy for sequential bit flipping */
@@ -160,74 +159,17 @@ template <typename Scalar> class WIred {
 
     /** @returns value read from device, check lastOp to see if it happened.  */
     operator Scalar() {
-      if (Read(selector, numBytes, reinterpret_cast<uint8_t*>(&cached), bigendian)) {
+      if (ww.ReadFrom(selector, numBytes, reinterpret_cast<uint8_t*>(&cached), bigendian)) {
         lastOp = WireError::None;
       }
       return cached;
     }
-};
-////////////////////////////////////////////////////////////////////////////////
 
-/**
-  usage:
-  WireWrapper ww(devaddress);//usually done once in constructor of object
-
-  Transmission msg(ww);//for each message sent.
-  msg(register)(value)(anothervalue).go();
-
-  go() is automatically callled when the entity goes out of scope. It is smart about already having been called, and if you wish to abandon a started one call oops() before exiting the scope.
-
-*/
-
-class Transmission {
-    bool begun = false;
-    bool sent = false;
-    WireWrapper &ww;
-  public:
-    Transmission (WireWrapper &wwa): ww(wwa) {}
-    Transmission(const Transmission&) = delete;
-    Transmission() = delete;
-
-    /** append more bytes to the message.*/
-    template <typename T >  Transmission &operator [](const T &t) {
-      if (!begun) {
-        ww.Start();
-      }
-      //output low to high, will eventually want a flag for bigendian targets
-      const uint8_t *peeker = reinterpret_cast<const uint8_t*>(&t);
-      for (unsigned bc = sizeof(T); bc-- > 0;) {
-        ww.emit(*peeker++);
-      }
+    /** set @param ones, clear @param zeroes, @returns value before these changes */
+    Scalar modify(Scalar ones, Scalar zeroes){
+      Scalar was=cached;
+      operator =((cached|ones)&~zeroes);
+      return was;     
     }
-
-    /** actually send it*/
-    Transmission & go() {
-      if (begun && !sent) {
-        ww.End();
-        sent = true;
-        begun = false;
-      }
-      return *this;
-    }
-
-    /** abandon a transmission */
-    void oops() {
-      //underlying library doesn't seem to have a concept of quitting. One must hope that the next beginTransmission() takes care of a hanging one.
-      begun = false;
-      sent = true;
-    }
-
-    /** destruction sends the message, if started. @see oops() to prevent that from happening.*/
-    ~Transmission() {
-      go();
-    }
-
-    /** Transmission msg(ww);//for each message sent.
-      msg(register)(value)(anothervalue)--(register)(value);*/
-    Transmission &operator--(int) {
-      go();//finish pending, prepare for new.
-      sent = false;
-      //begin is false due to go()
-    }
-
+    
 };

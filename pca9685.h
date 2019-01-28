@@ -4,7 +4,11 @@
 
 /** PCA9685 interface, using Arduino Wire library for i2c access.  */
 class PCA9685 {
-  WireWrapper ww;
+    WireWrapper ww;
+    WIred<uint8_t> Mode1;
+    WIred<uint8_t> Prescale;
+    //addresses and channels are dynamically generated, they consume too much ram to force all users to allocate them. Construction is cheap.
+
   public:
     /** device i2C address, 7-bit, @param which is which i2c bus, 0 for the default, 1 for the 2nd available on some of the bigger processors. */
     PCA9685( uint8_t addr = 0x40, unsigned which = 0);
@@ -22,7 +26,7 @@ class PCA9685 {
 
       default hz is Adafruit choice.
     */
-    void begin(uint8_t mode2value = 0,unsigned hz=1000);
+    void begin(uint8_t mode2value = 0, unsigned hz = 1000);
 
     /** @returns the number of microseconds you should wait to ensure the device is ready for new values. */
     unsigned wake();
@@ -35,27 +39,25 @@ class PCA9685 {
     */
     uint8_t fromHz(unsigned hz);
 
-    /** set the prescalar, note: device is put to sleep inside this routine, you will need to wake it up after you have done your other settings, done to a gitch-free startup.*/
-    void setPrescale(uint8_t bookvalue);
+    /** set the prescalar, note: device is put to sleep inside this routine, if you don't set @param andRun then you will need to wake it up after you have done your other settings, we do this to allow a gitch-free startup.*/
+    void setPrescale(uint8_t bookvalue,bool andRun=false);
 
     /** We only support nominal Hz here. If reacting to something, such as a control knob, work in prescale units directly. No point in dragging in the whole floating point library for the rare user.   */
-    void setPWMFreq(unsigned hz) {
-      setPrescale(fromHz(hz));
-    }
+    void setPWMFreq(unsigned hz,bool andRun=true) ;
 
     /** modify a waveform. pass which=~0 for all. */
     void setChannel(uint8_t which, uint16_t on, uint16_t off = 0);
+
+
+    /** modify just the off */
+    void setWidth(uint8_t which, uint16_t endvalue);
 
     /** set one of 3 alternative I2C addresses, or if which =0 configure 'all call' address. This sets the address and the related enable bit.
       If the syntax were easier we would add this to begin. */
     void setAddress(uint8_t which, uint8_t sevenbit);
 
     /** set given range of channels to their channel number. */
-    void idChannels(uint8_t lowest=0, uint8_t highest=15) {
-      for (unsigned chi = highest; chi >= lowest; --chi) {
-        setChannel(chi, 0, chi << 8);
-      }
-    }
+    void idChannels(uint8_t lowest = 0, uint8_t highest = 15);
 
   private:
     /** alter the mode1 register, setting bits where there are 1's in @param ones and clearing bits where @param zeroes has <em>ones</em> */
