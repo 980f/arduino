@@ -20,9 +20,6 @@ void scanI2C() {
       case 4://other error
         Console("\nUnknown error for address ", address);
         break;
-      default:
-        Console(".");
-        break;
     }
   }
   Console("\nScanning for I2C devices is done.");

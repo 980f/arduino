@@ -108,7 +108,7 @@ unsigned PCA9685::sleep() {
 
 
 unsigned PCA9685::wake() {
-  uint8_t modewas = updatemode( Restarter, Sleeper); //ack restart, no sleep
+  uint8_t modewas = updatemode( 0, Sleeper); //ack restart, no sleep
   if (modewas & Sleeper) {
     return 500;//wakeup time from sleep
   }
