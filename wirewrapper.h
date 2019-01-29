@@ -51,7 +51,7 @@ class WireWrapper {
     }
 
     WireError End(bool stopit = true) {
-      return lastOp = bus.endTransmission(stopit);
+      return lastOp = WireError(bus.endTransmission(stopit));
     }
 
     /** reads a block into internal buffer */

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cheaptricks.h" //changed
+#include "cheaptricks.h" //for changed()
 
 /** a polled timer.
   suggested use is to call this in loop() and if it returns true then do your once per millisecond stuff.
@@ -14,23 +14,23 @@
   }
 */
 
-using TickType = unsigned long ; //return type of millis(), can I use declspec to get that?
-const TickType BadTick = ~0UL; //hacker trick for "max unsigned"
+using MilliTick = unsigned long ; //return type of millis(), can I use declspec to get that?
+const MilliTick BadTick = ~0UL; //hacker trick for "max unsigned"
 
 class SoftMilliTimer {
-    TickType lastchecked = 0; //0: will not return true until at least one ms has expired after reset.
+    MilliTick lastchecked = 0; //0: will not return true until at least one ms has expired after reset.
   public:
     /** true only when called in a different millisecond than it was last called in. */
     operator bool() {
       return changed(lastchecked, millis());
     }
     /** most recent sampling of millis(). You should be biased to use this instead of rereading millis().*/
-    TickType recent() const {
+    MilliTick recent() const {
       return lastchecked;
     }
 
     /** ticks since someone recorded recent(). */
-    unsigned since(TickType previous) {
+    unsigned since(MilliTick previous) {
       return unsigned(lastchecked - previous);
     }
 
@@ -47,11 +47,11 @@ SoftMilliTimer MilliTicked;
     configure via set() check in if(MilliTicked  ){}
 */
 class MonoStable {
-    TickType zero = BadTick;
-    TickType done;
+    MilliTick zero = BadTick;
+    MilliTick done;
   public:
     /** combined create and set, if nothing to set then a default equivalent to 'never' is used.*/
-    MonoStable(TickType duration = BadTick, boolean andStart = true): done(duration) {
+    MonoStable(MilliTick duration = BadTick, boolean andStart = true): done(duration) {
       if (andStart) {
         start();
       }
@@ -60,8 +60,8 @@ class MonoStable {
         @param andStart is whether to restart the timer as well, default yes.
         @returns prior duration.
     */
-    TickType set(TickType duration, boolean andStart = true) {
-      TickType old = done;
+    MilliTick set(MilliTick duration, boolean andStart = true) {
+      MilliTick old = done;
       done = duration;
       if (andStart) {
         start();
@@ -79,14 +79,14 @@ class MonoStable {
 
     /** @returns whether timer has started and not expired== it has been at least 'done' since start() was called */
     bool isRunning() const {
-      TickType now = MilliTicked.recent();
+      MilliTick now = MilliTicked.recent();
       return now > zero && done > (now - zero);
 
     }
 
     /** @returns whether time has expired, will be false if never started. */
     bool isDone() const {
-      TickType now = MilliTicked.recent();
+      MilliTick now = MilliTicked.recent();
       return now > zero && done <= (now - zero);
     }
 
@@ -104,7 +104,7 @@ class MonoStable {
       return perCycle();
     }
 
-    TickType due() const {
+    MilliTick due() const {
       return done + zero;
     }
 

@@ -66,7 +66,7 @@ uint8_t PCA9685::fromHz(unsigned hz) {
   if (prescaleval < 4) {
     return 3;//because hardware will convert it to this.
   }
-  return uint8_t(prescaleval) - 1;//so says the manual.
+  return uint8_t(prescaleval-1);//so says the manual.
 }
 
 void PCA9685::setPrescale(uint8_t bookvalue, bool andRun) {
