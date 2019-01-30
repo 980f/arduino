@@ -3,122 +3,185 @@
 #include "cheaptricks.h" //for changed()
 
 /** a polled timer with microsecond range. similar to millievent stuff but couldn't be merged due to need for range extension.
+    the addition of a 16 bit counter stretches the usable range from micros()'s 71 minutes to 8.9 years.
+    if we use just a byte for the wraps then we would have 12.7 days. I am going to do that.
 */
 
- struct MicroTick {
-
-using RawTick=unsigned long;//type of micros()
-   
-        RawTick micros; //0: will not return true until at least one us has expired after reset.
-        unsigned wraps;
- MicroTick(RawTick micros,unsigned wraps):micros(micros),wraps(wraps){
-  
- }
+struct MicroTick {
+    using RawTick = unsigned long; //type of micros()
+    using Cycler = uint8_t; //8 bits for 12.7 days, 16 bits for 8.9 years
+    /** what micros() returns */
+    RawTick micros; //0: will not return true until at least one us has expired after reset.
+    /** range extender*/
+    Cycler wraps;
+    /** internal use only. */
+    MicroTick(RawTick micros, Cycler wraps): micros(micros), wraps(wraps) {
+      //#done
+    }
   public:
-  MicroTick():micros(~0UL),wraps(~0U){
-//#done
-}
- 
-/**is valid if it has ever been assigned to from anything which is valid.*/
-operator bool () const {
-  return ~wraps && ~micros;
-}
+    MicroTick(): micros(~0), wraps(~0) {
+      //#done
+    }
 
- MicroTick operator +(RawTick increment)const {
-MicroTick future(micros+increment,wraps);
-if(future.micros<micros){
-  ++future.wraps
-}
-return future;
-}
+    /** @returns whether this ever been assigned to from anything which had ever been assigned to.
+        NB: the existence of this cast operator makes the compiler emit a caution that it considered doing this->bool->int when overloading operator +
+    */
+    operator bool () const {
+      return ~wraps && ~micros;
+    }
 
-   bool operator ==(MicroTick other){//#do NOT use const reference, in case item is updated in ISR, which is common. 
-	return wraps==other.wraps && micros==other.micros;
-   }
-   bool operator >(MicroTick other){
-return wraps>other.wraps ||( wraps==other.wraps && micros>other.micros);
-   }
-   bool operator >=(MicroTick other){
-//#not cascading due to code space and time efficiency
-return wraps>other.wraps ||( wraps==other.wraps && micros>=other.micros);
-   }
-  bool operator <(MicroTick other){
-return wraps<other.wraps ||( wraps==other.wraps && micros<other.micros);
-   }
-   bool operator >=(MicroTick other){
-//#not cascading due to code space and time efficiency
-return wraps<other.wraps ||( wraps==other.wraps && micros<=other.micros);
-   }
- };
+    /** @returns the value @param increment micros from this one. */
+    MicroTick operator +(unsigned increment)const {
+      MicroTick future(micros + increment, wraps);
+      if (future.micros < micros) {//wrapped, in asm would add w/carry to wraps.
+        ++future.wraps;
+      }
+      return future;
+    }
 
-class SoftMicroTimer {
-   MicroTick lastchecked;
+    //    /** @returns the number of microseconds after @param other that this is. */
+    //    int operator -(MicroTick other)const {
+    //      int diff = micros - other.micros;
+    //      if (diff < 0) { //either wrapped or overdue
+    //        if (wraps == other.wraps) {
+    //          return diff;
+    //        }
+    //        if (wraps > other.wraps) {
+    //          if (wraps == 1 + other.wraps) {
+    //            return -diff;
+    //          }
+    //          return INT_MAX;
+    //        }
+    //      }
+    //    }
 
-  public:
-    SoftMicroTimer() {
-lastchecked.micros= micros();
-lastchecked.wraps=0;
-    };
-    /** true only when called in a different tick than it was last called in. */
-    operator bool() {
-      RawTick was = lastchecked.micros;
-      if (changed(lastchecked.micros, micros())) {//if we don't check for exactly 2^32 microseconds then this logic fails.
-        if (lastchecked.micros < was) {//if you don't check often enough this logic will fail.
-          ++lastchecked.wraps;
+    /** update with presumed fresh reading of device clock. @returns whether that caused a change (else two clock reads were same instant- most likely you did something very strange)*/
+    bool refresh(RawTick clock) {
+      RawTick was = micros;
+      if (changed(micros, clock)) {//if we don't check for exactly 2^32 microseconds then this logic fails.
+        if (micros < was) {//if you don't check often enough this logic will fail.
+          ++wraps;
         }
         return true;
       } else {
         return false;
       }
     }
+
+    /** @returns truncated to 32 bits, same as micros() system call.*/
+    uint32_t us() const {
+      return micros;
+    }
+
+    /** debug access, shouldn't need to reference in application code. */
+    Cycler rollovers() {
+      return wraps;
+    }
+    /** rounded to nearest seconds */
+    uint32_t secs() const {
+      uint64_t nofloat = wraps;
+      nofloat <<= 32;
+      nofloat += micros;
+      nofloat += 500000;
+      nofloat /= 1000000;
+      return nofloat;
+    }
+
+
+  public: //compare operators
+    //in all of the compares we do NOT use a reference, as that would expose us to something being updated in an ISR.
+    //we also don't combine the simpler ones for the combined operationd for performance reasons.
+    bool operator ==(MicroTick other) const {
+      return wraps == other.wraps && micros == other.micros;
+    }
+
+    bool operator >(MicroTick other) const {
+      return wraps > other.wraps || ( wraps == other.wraps && micros > other.micros);
+    }
+
+    bool operator >=(MicroTick other) const {
+      //#not cascading due to code space and time efficiency
+      return wraps > other.wraps || ( wraps == other.wraps && micros >= other.micros);
+    }
+
+    bool operator <(MicroTick other) const {
+      return wraps < other.wraps || ( wraps == other.wraps && micros < other.micros);
+    }
+
+    bool operator <=(MicroTick other) const {
+      return wraps < other.wraps || ( wraps == other.wraps && micros <= other.micros);
+    }
+};
+
+class SoftMicroTimer {
+    MicroTick lastchecked;
+
+  public:
+    SoftMicroTimer() {
+      lastchecked.micros = micros();
+      lastchecked.wraps = 0;
+    };
+    /** true only when called in a different tick than it was last called in. */
+    operator bool() {
+      return lastchecked.refresh(micros());
+    }
     /** most recent sampling of micros(). You should be biased to use this instead of rereading micros() in a local scope.*/
     MicroTick recent() const {
       return lastchecked;
     }
-   /** using a short type for the increment as we only need precision for short intervals, use millievent if this doesn't have enough range. */
-MicroTick future(unsigned adder){
-  return lastchecked+adder;
+
+    /** force check of micros().*/
+    MicroTick now() {
+      lastchecked.refresh(micros());
+      return lastchecked;
+    }
+
+    /** using a short type for the increment as we only need precision for short intervals, use millievent if this doesn't have enough range. */
+    MicroTick future(unsigned adder) const {
+      return lastchecked + adder;
+    };
 };
 
 //only one is needed:
 SoftMicroTimer MicroTicked;
 
 /** a retriggerable soft pulse
+    if tested within an ISR then the foreground cannot call start() or stop() without disabling that ISR during the change.
 */
 class MicroStable {
-   
+
     MicroTick expires;
-unsigned duration;
+    unsigned duration;
   public:
     /** combined create and set, if nothing to set then a default equivalent to 'never' is used.*/
-    MonoStable(unsigned duration = BadTick, boolean andStart = true){
-      set(duration,andStart);
+    MicroStable(unsigned duration = BadTick, boolean andStart = true) {
+      set(duration, andStart);
     }
     /** sets duration, which you may change while running,
         @param andStart is whether to restart the timer as well, default yes.
         @returns prior duration.
     */
     void set(unsigned duration, boolean andStart = true) {
-     this->duration=duration;//for restarts.
-     
+      this->duration = duration; //for restarts.
+
       if (andStart) {
         start();
       }
-    
+
     }
     /** call to indicate running starts 'now', a.k.a. retriggerable monostable. */
     void start() {
-       expires = MicroTicked.future(duration);
+      expires = MicroTicked.future(duration);
     }
-/** stop it early, forgets last natural end.*/
+
+    /** stop it early, forgets last natural end.*/
     void stop() {
       expires = MicroTick();
     }
 
     /** @returns whether time has expired, will be false if never started. */
     bool isDone() const {
-      MicroTick now = MicroTicked.recent();
-      return now>=expires;
+      return MicroTicked.now() >= expires;
     }
 
     /** @returns whether time has expired, and if so restarts it. */
@@ -135,4 +198,14 @@ unsigned duration;
       return isDone();
     }
 
+    MicroTick expected() {
+      return expires;
+    }
+    //proving to be expensive, ignore for now.
+    //    MicroTick remaining() {
+    //      return expires - MicrotTicked.now();
+    //    }
+
 };
+///////////////////////////////////////////
+//a regression tester:

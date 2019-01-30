@@ -15,7 +15,7 @@
 */
 
 using MilliTick = unsigned long ; //return type of millis(), can I use declspec to get that?
-const MilliTick BadTick = ~0UL; //hacker trick for "max unsigned"
+const MilliTick BadTick = ~0UL;   //hacker trick for "max unsigned"
 
 class SoftMilliTimer {
     MilliTick lastchecked = 0; //0: will not return true until at least one ms has expired after reset.
