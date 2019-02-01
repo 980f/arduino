@@ -21,8 +21,6 @@ class WireWrapper {
     TwoWire &bus;
     WireError lastOp;
   public:
-
-
     WireWrapper( uint8_t addr, unsigned which = 0): base(addr),
 #if defined(ARDUINO_SAM_DUE)
       bus(which ? Wire1, Wire) //so far only two are supported.
@@ -32,7 +30,7 @@ class WireWrapper {
     {
       //#done
     }
-
+    /** someone needs to call begin on the bus, preferable just one entity.*/
     void begin() {
       bus.begin();
     }
@@ -54,12 +52,18 @@ class WireWrapper {
       return lastOp = WireError(bus.endTransmission(stopit));
     }
 
+    /** @returns whether device is present, ACK's its base address.*/
+    bool isPresent() {
+      Start();
+      return End() == WireError::None;
+    }
+
     /** reads a block into internal buffer */
     unsigned Read(unsigned numBytes) {
       return bus.requestFrom(base, numBytes);
     }
 
-    WireError Write(const uint8_t *peeker, unsigned numBytes, bool reversed = false) {
+    WireError Write(const uint8_t *peeker, unsigned numBytes, bool reversed = false) const {
       Start();
       for (unsigned bc = numBytes; bc-- > 0;) {
         emit(reversed ? peeker[bc] : *peeker++);
@@ -143,7 +147,7 @@ template <typename Scalar> class WIred {
     bool bigendian;//todo: move this onto ww if we see that no devices have per-register endianness (I've seen this with some non-I2C devices)
 
   public:
-    /** each time we read or write we update this value, handy for sequential bit flipping */
+    /** each time we read or write we update this value, handy for sequential bit flipping, but prevents consting the class instances. */
     Scalar cached;
     WireError lastOp;
   public:
@@ -166,10 +170,10 @@ template <typename Scalar> class WIred {
     }
 
     /** set @param ones, clear @param zeroes, @returns value before these changes */
-    Scalar modify(Scalar ones, Scalar zeroes){
-      Scalar was=cached;
-      operator =((cached|ones)&~zeroes);
-      return was;     
+    Scalar modify(Scalar ones, Scalar zeroes) {
+      Scalar was = cached;
+      operator =((cached | ones) & ~zeroes);
+      return was;
     }
-    
+
 };

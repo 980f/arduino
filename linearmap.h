@@ -8,6 +8,8 @@ struct LinearMap {
     top(top), bottom(bottom)  {
     //#done
   }
+
+  /** convert fraction of range in 1.15 format to unsigned output without using floating point. */
   unsigned operator ()(AnalogValue avin)const {
     auto scaledup = long(top - bottom) * avin;
     unsigned reduced = bottom + ((scaledup + (1 << 14)) >> 15);
@@ -15,4 +17,3 @@ struct LinearMap {
     return reduced;
   }
 };
-

@@ -6,7 +6,7 @@
 
 struct AnalogValue {
   protected:
-    unsigned raw;
+    uint16_t raw;
   public:
     AnalogValue(int physical = 0) {
       raw = physical; //todo: shift will be a function of input resolution (10 vs 12) and oversampling rate (8 samples is same as 3 bit shift)
@@ -17,10 +17,14 @@ struct AnalogValue {
       return raw;
     }
 
-    operator unsigned() const {
+    operator uint16_t() const {
       return raw;
     }
 
+    uint16_t *guts()const{
+      return &raw;
+    }
+    
 };
 
 /** makes analog output appear as if a simple variable. This is handy if you want to replace direct use with proxying to another guy, or to disable output but still see what the value would have been.*/
