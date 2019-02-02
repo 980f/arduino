@@ -2,8 +2,8 @@
 
 /** like arduino's map() but with subtle syntax and one axis with a fixed 0 as the low.*/
 struct LinearMap {
-  const unsigned top;
-  const unsigned bottom;
+  unsigned top;
+  unsigned bottom;
   LinearMap(unsigned top, unsigned bottom = 0):
     top(top), bottom(bottom)  {
     //#done
