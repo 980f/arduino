@@ -162,11 +162,15 @@ template <typename Scalar> class WIred {
     }
 
     /** @returns value read from device, check lastOp to see if it happened.  */
-    operator Scalar() {
+    Scalar fetch() {
       if (ww.ReadFrom(selector, numBytes, reinterpret_cast<uint8_t*>(&cached), bigendian)) {
         lastOp = WireError::None;
       }
       return cached;
+    }
+
+    operator Scalar() {
+      return fetch();
     }
 
     /** set @param ones, clear @param zeroes, @returns value before these changes */
