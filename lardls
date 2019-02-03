@@ -2,5 +2,8 @@
 ## when run from arduino project directory,
 ## which is exactly what we need to ignore when checking for new files
 
-find -type l -printf %f\\n | sort >.gitignore
+find -type l -printf %f\\n | sort >.lard.1
+cat .gitignore .lard.1 | sort | uniq >.lard.2
+cp .lard.2 .gitignore 
+#rm .lard.*
 
