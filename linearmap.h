@@ -16,4 +16,26 @@ struct LinearMap {
     //    dbg("\nLM:",top,"-",bottom, " in",avin, "\tup:", scaledup, "\tdone:", reduced);
     return reduced;
   }
+
+  unsigned clipped(unsigned raw)const {
+    if (raw > top) {
+      return top;
+    }
+    if (raw < bottom) {
+      return bottom;
+    }
+    return raw;
+  }
+
+  bool clip(unsigned &raw)const {
+    if (raw > top) {
+      raw = top;
+      return true;
+    }
+    if (raw < bottom) {
+      raw = bottom;
+      return true;
+    }
+    return false;
+  }
 };
