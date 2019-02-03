@@ -62,7 +62,7 @@ unsigned PCA9685::wake() {
 */
 uint8_t PCA9685::fromHz(unsigned hz) {
   uint32_t prescaleval = 25000000;//todo:1 optional support of external clock.
-  prescaleval /= hz * 4096;//order of operations matters to precision
+  prescaleval /= uint32_t (hz) * 4096;//order of operations matters to precision, cast required as well. else hz*4096 overflows then converts to u32.
 
   if (prescaleval >= 256) {//register is 8 bits
     return 255;
@@ -85,7 +85,6 @@ void PCA9685::setPrescale(uint8_t bookvalue, bool andRun) {
 void PCA9685::setPWMFreq(unsigned hz, bool andRun = true) {
   setPrescale(fromHz(hz), andRun);
 }
-
 
 static uint8_t ledReg(const uint8_t which) {
   if (~which == 0) { //cheat for ALL

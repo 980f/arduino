@@ -47,6 +47,11 @@ class PCA9685 {
     /** We only support nominal Hz here. If reacting to something, such as a control knob, work in prescale units directly. No point in dragging in the whole floating point library for the rare user.   */
     void setPWMFreq(unsigned hz, bool andRun = true) ;
 
+    /** @returns effective prescalar, not the literal hardware value.*/
+    unsigned getPrescale() {
+      uint8_t raw=Prescale;//#compiler gets confused if we try to inline this.
+      return 1+raw;
+    }
 
     /** set one of 3 alternative I2C addresses, or if which =0 configure 'all call' address. This sets the address and the related enable bit.
       If the syntax were easier we would add this to begin. */
