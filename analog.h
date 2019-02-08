@@ -12,6 +12,11 @@ struct AnalogValue {
       raw = physical; //todo: shift will be a function of input resolution (10 vs 12) and oversampling rate (8 samples is same as 3 bit shift)
     }
 
+    enum {
+      Min=0,
+      Max=0x7FFF //int16_t max, not unsigned max. we are leaving room for detecting wrap around.
+    };
+
     unsigned operator =(int physical) {
       raw = physical;
       return raw;
