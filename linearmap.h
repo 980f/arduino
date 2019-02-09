@@ -17,10 +17,10 @@ struct LinearMap {
   /** convert fraction of range in 1.15 format to unsigned output without using floating point. */
   unsigned operator ()(AnalogValue avin, bool clipit = true)const {
 #if AvoidFP
-    auto scaledup = long(top - bottom) * avin.raw;
+    auto scaledup = long(top - bottom) * ~avin;
     unsigned mapped = bottom + ((scaledup + (1 << 14)) >> 15);
 #else
-    float fract = avin.raw;
+    float fract = ~avin;
     fract /= 32768.0; //hopefully compiler will just twiddle the exponent
     unsigned mapped = unsigned(fract * (top - bottom) + 0.5 + bottom);
 #endif

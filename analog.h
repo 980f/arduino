@@ -4,9 +4,13 @@
     no Arduino will ever have 16 usable bits, that requires very careful board design.
 */
 
-struct AnalogValue {
+class AnalogValue {
+  protected:
     uint16_t raw;
   public:
+    static const uint16_t Min = (0);
+    static const uint16_t Max = (0x7FFF);
+
     AnalogValue(int physical = 0) {
       raw = physical; //todo: shift will be a function of input resolution (10 vs 12) and oversampling rate (8 samples is same as 3 bit shift)
     }
@@ -17,8 +21,17 @@ struct AnalogValue {
       return raw;
     }
 
-    static const uint16_t Min=(0);
-    static const uint16_t Max=(0x7FFF);
+    /** @returns raw value, a value like it.
+      operator int() created construction difficulties for objects which take an int construction arg as well as have an operator =(AnalogValue) */
+    unsigned operator ~() const {
+      return raw;
+    }
+
+    /** @returns value on other side of midpoint */
+    unsigned operator -() const {
+      return (Max + Min) - raw;
+    }
+
 
 };
 
@@ -33,7 +46,7 @@ struct AnalogOutput {
 
     //scaled/smoothed value
     void operator =(AnalogValue av) const {
-      analogWrite(pinNumber, av.raw >> 7); //15 bit normalized input, cut it down to 8 msbs of those 15. todo: configure for 10 and maybe 16 bit output.
+      analogWrite(pinNumber, ~av >> 7); //15 bit normalized input, cut it down to 8 msbs of those 15. todo: configure for 10 and maybe 16 bit output.
     }
 
     //traditional arduino value
@@ -58,7 +71,7 @@ struct AnalogInput {
 
   //get traditional 10 bit value.
   int raw()const {
-    return AnalogValue(analogRead(pinNumber)).raw;
+    return int(~AnalogValue(analogRead(pinNumber)));
   }
 };
 

@@ -44,7 +44,7 @@ class SoftMilliTimer {
 SoftMilliTimer MilliTicked;
 
 /** indicates an interval.
-    configure via set() check in if(MilliTicked  ){}
+    configure via set(), for efficiency check in if(MilliTicked){}
 */
 class MonoStable {
     MilliTick zero = BadTick;
@@ -68,6 +68,7 @@ class MonoStable {
       }
       return old;
     }
+
     /** call to indicate running starts 'now', a.k.a. retriggerable monostable. */
     void start() {
       zero = MilliTicked.recent();
@@ -81,13 +82,17 @@ class MonoStable {
     bool isRunning() const {
       MilliTick now = MilliTicked.recent();
       return now > zero && done > (now - zero);
-
     }
 
     /** @returns whether time has expired, will be false if never started. */
     bool isDone() const {
       MilliTick now = MilliTicked.recent();
       return now > zero && done <= (now - zero);
+    }
+
+    /** sugar for isDone() */
+    operator bool() {
+      return isDone();
     }
 
     /** @returns whether time has expired, and if so restarts it. */
@@ -100,10 +105,7 @@ class MonoStable {
       }
     }
 
-    operator bool() {
-      return perCycle();
-    }
-
+    /** @return when it will be done, which can be in the past if already done.*/
     MilliTick due() const {
       return done + zero;
     }
