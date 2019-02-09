@@ -5,32 +5,24 @@
 */
 
 struct AnalogValue {
-  protected:
     uint16_t raw;
   public:
     AnalogValue(int physical = 0) {
       raw = physical; //todo: shift will be a function of input resolution (10 vs 12) and oversampling rate (8 samples is same as 3 bit shift)
     }
 
-    enum {
-      Min=0,
-      Max=0x7FFF //int16_t max, not unsigned max. we are leaving room for detecting wrap around.
-    };
 
     unsigned operator =(int physical) {
       raw = physical;
       return raw;
     }
 
-    operator uint16_t() const {
-      return raw;
-    }
+    static const uint16_t Min=(0);
+    static const uint16_t Max=(0x7FFF);
 
-    uint16_t *guts()const{
-      return &raw;
-    }
-    
 };
+
+
 
 /** makes analog output appear as if a simple variable. This is handy if you want to replace direct use with proxying to another guy, or to disable output but still see what the value would have been.*/
 struct AnalogOutput {
@@ -41,7 +33,7 @@ struct AnalogOutput {
 
     //scaled/smoothed value
     void operator =(AnalogValue av) const {
-      analogWrite(pinNumber, av >> 7); //15 bit normalized input, cut it down to 8 msbs of those 15. todo: configure for 10 and maybe 16 bit output.
+      analogWrite(pinNumber, av.raw >> 7); //15 bit normalized input, cut it down to 8 msbs of those 15. todo: configure for 10 and maybe 16 bit output.
     }
 
     //traditional arduino value
@@ -66,7 +58,7 @@ struct AnalogInput {
 
   //get traditional 10 bit value.
   int raw()const {
-    return AnalogValue(analogRead(pinNumber));
+    return AnalogValue(analogRead(pinNumber)).raw;
   }
 };
 

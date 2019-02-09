@@ -1,6 +1,7 @@
 #pragma once //(C) 2019 Andy Heilveil, github/980f
 
 //this is a code fragment. You will have to define Console for the output.
+#include "Wire.h" //TwoWire class
 
 void scanI2C() {
   Console("\nScanning I2C bus:");

@@ -73,8 +73,8 @@ class PCA9685 {
 
     class Output {
         PCA9685 &dev;
-        const uint8_t which;
       public:
+        const uint8_t which;
         Output (PCA9685 &dev, uint8_t which): dev(dev), which(which) {}
         void operator =(uint16_t endvalue) {
           dev.setWidth(which, endvalue);
