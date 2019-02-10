@@ -47,6 +47,7 @@ SoftMilliTimer MilliTicked;
     configure via set(), for efficiency check in if(MilliTicked){}
 */
 class MonoStable {
+  protected:
     MilliTick zero = BadTick;
     MilliTick done;
   public:
@@ -91,12 +92,19 @@ class MonoStable {
     }
 
     /** sugar for isDone() */
-    operator bool() {
+    operator bool() const {
       return isDone();
     }
 
-    /** @returns whether time has expired, and if so restarts it. */
-    bool perCycle() {
+   /** @returns set time, use set() to modify it. */
+    operator MilliTick() const {
+      return done;
+    }
+
+    /** @returns whether time has expired, and if so restarts it.
+        made virtual for BiStable
+    */
+    virtual bool perCycle() {
       if (isDone()) {
         start();
         return true;
@@ -108,6 +116,36 @@ class MonoStable {
     /** @return when it will be done, which can be in the past if already done.*/
     MilliTick due() const {
       return done + zero;
+    }
+
+};
+
+/** a monostable that retriggers with alternating values */
+class BiStable : public MonoStable {
+    bool phase;
+    MilliTick biphase[2];
+  public:
+    BiStable(MilliTick obduration = BadTick, MilliTick produration = BadTick, boolean andStart = true):
+      MonoStable(produration, andStart),
+      phase(0) {
+      biphase[1] = obduration;
+      biphase[0] = produration;
+    }
+
+    /** sugar for isDone() */
+    operator bool() {
+      return phase;
+    }
+
+    virtual bool perCycle() {
+      if (MonoStable::isDone()) {
+        phase = !phase;
+        done = biphase[phase];
+        start();
+        return true;
+      } else {
+        return false;
+      }
     }
 
 };

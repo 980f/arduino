@@ -5,16 +5,17 @@
 */
 
 class AnalogValue {
+  using F15=uint16_t ;//1.15 fraction
   protected:
-    uint16_t raw;
+    F15 raw;
   public:
-    static const uint16_t Min = (0);
-    static const uint16_t Max = (0x7FFF);
+    static const F15 Min = (0);
+    static const F15 Half= (0x4000);
+    static const F15 Max = (0x7FFF);
 
     AnalogValue(int physical = 0) {
       raw = physical; //todo: shift will be a function of input resolution (10 vs 12) and oversampling rate (8 samples is same as 3 bit shift)
     }
-
 
     unsigned operator =(int physical) {
       raw = physical;
@@ -32,15 +33,14 @@ class AnalogValue {
       return (Max + Min) - raw;
     }
 
-
 };
 
 
 
 /** makes analog output appear as if a simple variable. This is handy if you want to replace direct use with proxying to another guy, or to disable output but still see what the value would have been.*/
 struct AnalogOutput {
-    const unsigned pinNumber;
-    AnalogOutput(unsigned pinNumber): pinNumber(pinNumber) {
+    const short pinNumber;
+    AnalogOutput(short pinNumber): pinNumber(pinNumber) {
       //#done
     }
 
@@ -60,8 +60,8 @@ struct AnalogOutput {
 
 /** makes analog input appear as if a simple variable. This is handy if you want to replace direct use with proxying to another guy, or to feed logic from a different source.*/
 struct AnalogInput {
-  const unsigned pinNumber;
-  AnalogInput(unsigned pinNumber): pinNumber(pinNumber) {
+  const short pinNumber;
+  AnalogInput(short pinNumber): pinNumber(pinNumber) {
     //#done
   }
 
@@ -70,12 +70,12 @@ struct AnalogInput {
   }
 
   //get traditional 10 bit value.
-  int raw()const {
+  int raw() const {
     return int(~AnalogValue(analogRead(pinNumber)));
   }
 };
 
-
+/* RC, aka exponential decay, averaging. */
 struct SmoothedAnalogValue: public AnalogValue {
   unsigned shift;//power of two scaling is faster than multiply. Someday we will import the 16*16/16 code and make this class better.
 
