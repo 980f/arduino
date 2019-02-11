@@ -1,12 +1,24 @@
 #pragma once  //(C)2019 Andy Heilveil, github/980F
 
 #include <EEPROM.h>
+struct EEreference {
+  const uint16_t addr;//address for EEPROM calls
+  EEreference(unsigned addr): addr(addr) {}
+  
+  operator char () {
+    return EEPROM.read(addr);
+  }
+  
+  void operator=(char value) {
+    EEPROM.write(addr, value);
+  }
+};
 
 /** both hasNext and next interfaces as well as *ptr++ */
-class EEStream {
+class EEPointer {
     uint16_t eeaddress;//address for EEPROM calls
   public:
-    EEStream(unsigned startaddress = 0): eeaddress(startaddress) {
+    EEPointer(unsigned startaddress = 0): eeaddress(startaddress) {
       //#done
     }
     //////////////////// javaish interface
@@ -23,20 +35,14 @@ class EEStream {
       return hasNext();
     }
 
-    char operator *() {
-      return EEPROM.read(eeaddress);
+    EEreference operator *() {
+      return EEreference(eeaddress);
     }
 
-    EEStream operator ++() {
-    	EEStream copy=*this;
+    EEPointer operator ++() {
+      EEPointer copy = *this;
       ++eeaddress;
       return copy;
-    }
-
-    /** This takes 3.3 ms */
-    EEStream &operator ()(char byte) {
-      EEPROM.write(eeaddress, byte);
-      return *this;
     }
 
     /** address of next cell */
