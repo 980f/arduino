@@ -1,8 +1,13 @@
 /** many things come in pairs.
-This template allows assignment of XY pair of assignable entities, 
-construction from 0,1, or 2 args of same type.
- */
-template<typename T> struct XY {
+  This template allows assignment of XY pair of assignable entities,
+  construction from 0,1, or 2 args of same type.
+
+  Made arduino specific by addition of printable.
+*/
+
+#include <Printable.h>
+
+template<typename T> struct XY: public Printable  {
   T X;
   T Y;
 
@@ -31,5 +36,8 @@ template<typename T> struct XY {
     Y = input.Y;
   }
 
-};
+  size_t printTo(Print& p) const {
+    return p.print(X) + p.print(',') + p.print(Y);
+  }
 
+};

@@ -4,13 +4,13 @@
     no Arduino will ever have 16 usable bits, that requires very careful board design.
 */
 
-class AnalogValue {
-  using F15=uint16_t ;//1.15 fraction
+class AnalogValue: public Printable {
+    using F15 = uint16_t ; //1.15 fraction
   protected:
     F15 raw;
   public:
     static const F15 Min = (0);
-    static const F15 Half= (0x4000);
+    static const F15 Half = (0x4000);
     static const F15 Max = (0x7FFF);
 
     AnalogValue(int physical = 0) {
@@ -33,6 +33,9 @@ class AnalogValue {
       return (Max + Min) - raw;
     }
 
+    size_t printTo(Print& p) const {
+      p.print(raw);
+    }
 };
 
 

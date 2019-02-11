@@ -7,7 +7,7 @@ struct UnsignedRecognizer {
   unsigned accumulator = 0;
 
   /** inspect incoming character, @returns whether it is part of the number and if so had added it to local number.*/
-  bool operator()(int key) {
+  bool operator()(char key) {
     if (Char(key).appliedDigit(accumulator)) {
       return true;
     } else {

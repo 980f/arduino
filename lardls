@@ -2,10 +2,15 @@
 ## when run from arduino project directory,
 ## which is exactly what we need to ignore when checking for new files
 
+#list files that are links into a temp file 
 find -type l -printf %f\\n | sort >.lard.1
+#merge those into .gitignore via another temp file
 cat .gitignore .lard.1 | sort | uniq >.lard.2
 cp .lard.2 .gitignore 
+#rebuild 'relib' script
 echo "## recreate links to library sources" >relib
+#we still have the file of files that are links, we produce a line for each into relib
 while read link ; do echo >>relib ln -sf $(readlink "$link") $link; done < .lard.1 
-#rm .lard.*
+#and now kill the temps. Comment this out while investigating/debugging this process.
+rm .lard.*
 
