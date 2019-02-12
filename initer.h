@@ -19,13 +19,8 @@ class Initer {
   public:
     Initer(RomAddr initdata, KeyHandler doKey, uint16_t start = 0): initdata(initdata), doKey(doKey), start(start) {}
 
-    void report(uint16_t bytecount) {
-      Console(FF("Init block is "), bytecount, " bytes");
-    }
-
     /** restore developer settings */
-    void restore(bool andsave = true) {    	
-      Console(FF("Init restore: "));//, reinterpret_cast<const __FlashStringHelper *>(initdata));
+    unsigned restore(bool andsave = true) {    	
       RomPointer rp(initdata);
       EEPointer eep = saver(); //create even if we aren't going to use, creation is cheap
       while (char c = *rp++) {
@@ -41,7 +36,7 @@ class Initer {
       if (andsave && eep) {//really should null to end of eeprom at least once. Perhaps on invocation of restore(true).
         *eep = 0;//terminating null
       }
-      report(rp - initdata);
+      return(rp - initdata);
     }
 
     /** generates commands to recreate the present state*/
@@ -49,8 +44,7 @@ class Initer {
       return EEPointer(start);
     }
 
-    void load() {
-      Console(FF("Configuring from eeprom: "));
+    unsigned load() {
       unsigned actuals=0;
       EEPointer eep = saver();//guarantee overlap
       while (eep) {//don't run off the end of existence
@@ -65,7 +59,7 @@ class Initer {
           break;
         }
       }
-      report(actuals);
+      return actuals;
     }
 
 };

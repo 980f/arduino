@@ -34,7 +34,7 @@ class AnalogValue: public Printable {
     }
 
     size_t printTo(Print& p) const {
-      p.print(raw);
+      return p.print(raw);
     }
 };
 

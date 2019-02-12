@@ -5,7 +5,7 @@
 /** like arduino's map() but with subtle syntax and one axis with a fixed 0 as the low.
     if AvoidFP is defined to anything other than 0 then we also laboriously use long instead of float to save ~1.5k of code. This could be made much more efficient if we were to indulge in some asm, work for the AVR family.
 */
-struct LinearMap {
+struct LinearMap : public Printable {
   unsigned top;
   unsigned bottom;
 
@@ -62,5 +62,9 @@ struct LinearMap {
     return false;
   }
 
+
+  size_t printTo(Print& p) const {
+    return p.print(top) + p.print(",") + p.print(bottom);//#this format is required for beholder init system
+  }
 
 };
