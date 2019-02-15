@@ -10,15 +10,15 @@ class TwinConsole {
       //#done unless we find we can call begin here.
     }
 
-    /** @returns keystrokes from every source, randomly interleaved, -1 if there are no strokes present. */
-    int getKey() {
+    /** @returns keystrokes from every source, randomly interleaved, 0 if there are no strokes present, nulls will get ignored. */
+    byte getKey() {
       if (Serial && Serial.available()) {
         return Serial.read();
       }
       if (Serial1.available()) {
         return Serial1.read();
       }
-      return -1;
+      return 0;
     }
 
     void begin(uint32_t uartbaud=115200) {

@@ -8,7 +8,7 @@
 #include "eepointer.h"
 #include "rompointer.h"
 
-using KeyHandler = void (*)(char key);
+using KeyHandler = void (*)(byte key);
 
 class Initer {
   public://made 'em all const, so read em and weep
@@ -23,7 +23,7 @@ class Initer {
     unsigned restore(bool andsave = true) {
       RomPointer rp(initdata);
       EEPointer eep =  EEPrinter(start); //create even if we aren't going to use, creation is cheap
-      while (char c = *rp++) {
+      while (byte c = *rp++) {
         if (doKey) {//compiler silently converter fn pointer into unsigned.
           (*doKey)(c);
         }
@@ -49,7 +49,7 @@ class Initer {
       unsigned actuals = 0;
       EEPointer eep = EEPointer(start);
       while (eep) {//don't run off the end of existence
-        char c = *eep++;
+        byte c = *eep++;
         if (c < 0 || c == 255 || c > '~') { //uninit eeprom. If we ever get the eeprom to init correctly we will make this a terminator.
           continue;
         }
