@@ -20,6 +20,8 @@ struct Hexly: public Printable {
   }
 };
 
+//c++11 version 
+#define HEXLY(varname) Hexly<decltype(varname)>(varname)
 
 struct ChainPrinter {
     Print &raw;

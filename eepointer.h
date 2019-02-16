@@ -27,8 +27,8 @@ class EEPointer {
       return eeaddress < EEPROM.length();
     }
 
-    byte next() {
-      return EEPROM.read(eeaddress++);
+    EEreference next() {
+      return EEreference(eeaddress++);
     }
 
     ////////////////// pointer like interface
@@ -51,7 +51,7 @@ class EEPointer {
       return eeaddress;
     }
 
-    /** crafted to satisfy Print but we don't make this class extend Print so as to not create a vtable is this method isn't used in that fashion.
+    /** crafted to satisfy Print but we don't make this class extend Print so as to not create a vtable if this method isn't used in that fashion.
         elsewhere we can extedn EEPointer to make it be a Print	*/
     size_t write(byte value) {
       if (hasNext()) {

@@ -9,7 +9,10 @@ struct UnsignedRecognizer {
   /** inspect incoming character, @returns whether it is part of the number and if so had added it to local number.*/
   bool operator()(char key) {
     if (Char(key).appliedDigit(accumulator)) {
-      return true;
+    	return true;
+    } else if(key=='~'){
+    	accumulator = ~0; //to help debug some stuff, delete if it gets bothersome.
+    	return true;
     } else {
       return false;
     }
