@@ -2,7 +2,7 @@
 
 #include "chainprinter.h"
 
-class TwinConsole {
+class TwinConsole: public Print {
   public:
     ChainPrinter usb;
     ChainPrinter uart;
@@ -21,7 +21,7 @@ class TwinConsole {
       return 0;
     }
 
-    void begin(uint32_t uartbaud=115200) {
+    void begin(uint32_t uartbaud = 115200) {
       Serial.begin(500000);//number here doesn't matter.
       Serial1.begin(uartbaud);//hardware serial. up the baud to reduce overhead.
     }
@@ -32,6 +32,11 @@ class TwinConsole {
         uart(args...);//uarts always are ready
       }
       return *this;
+    }
+
+    size_t write(byte value) override {
+      if (Serial) usb.raw.write(value);
+      return uart.raw.write(value);
     }
 
 };

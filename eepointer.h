@@ -19,7 +19,7 @@ class EEPointer {
   protected:
     uint16_t eeaddress;//address for EEPROM calls
   public:
-    EEPointer(unsigned startaddress = 0): eeaddress(startaddress) {
+    EEPointer(unsigned startaddress = ~0): eeaddress(startaddress) {
       //#done
     }
     //////////////////// javaish interface
@@ -65,7 +65,7 @@ class EEPointer {
 
 /** extend eep address manager into a formatted eewriter. Compared to a EEPointer this guy has a vtable and the state storage of Print. Altogether that is about 6 bytes of ram, and maybe 30 of extra code.   */
 struct EEPrinter : public EEPointer, public Print {
-  EEPrinter(unsigned addr): EEPointer(addr) {}
+  EEPrinter(unsigned addr=~0): EEPointer(addr) {}
   size_t write(byte value) override {
     return EEPointer::write(value);
   }

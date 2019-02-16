@@ -22,6 +22,13 @@ class AnalogValue: public Printable {
       return raw;
     }
 
+    bool operator ==(AnalogValue &&other) const {
+      return raw == other.raw;
+    }
+
+    bool operator !=(AnalogValue &&other) const {
+      return raw != other.raw;
+    }
     /** @returns raw value, a value like it.
       operator int() created construction difficulties for objects which take an int construction arg as well as have an operator =(AnalogValue) */
     unsigned operator ~() const {

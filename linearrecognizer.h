@@ -28,7 +28,7 @@ class LinearRecognizer {
     }
 
     /** @returns whether @param next was expected part of sequence. NUL's are ignored. */
-    bool operator ()(char next) {
+    bool operator ()(byte next) {
       if (next == 0) { //#if we don't exclude nulls we can overrun our sequence definitoin storage.
         return si != 0; //maintain state
       }
@@ -39,6 +39,17 @@ class LinearRecognizer {
         si = 0;
         return false;
       }
+    }
+
+    
+    /** @returns 1 if 'next' is exactly the first char after the sequence. 0 if it is part of the sequence, -1 if sequence not activated. */
+    int operator <=(byte next) {
+      if (*this) {
+        si = 0;
+        return 1;
+      } else {
+        return (*this)(next)?0:-1;
+      } 
     }
 
     /** coerce to 'recognized' else back to 0*/
