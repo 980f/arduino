@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>ProMicroOnNano</title>
+    <meta name="author" content="Andy Heilveil">
+  </head>
+  <body>
+    <p>Pro-micro on Nano carrier</p>
+    <p>Top View</p>
+    <table border="1">
+      <tbody>
+        <tr>
+          <td>Socket</td>
+          <td>PM</td>
+          <td>&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; <br>
+          </td>
+          <td>PM</td>
+          <td>Socket</td>
+        </tr>
+        <tr>
+          <td>TX</td>
+          <td>TX0</td>
+          <td><br>
+          </td>
+          <td>RAW</td>
+          <td>VIN</td>
+        </tr>
+        <tr>
+          <td>RX</td>
+          <td>RX1</td>
+          <td><br>
+          </td>
+          <td>GND</td>
+          <td>GND</td>
+        </tr>
+        <tr>
+          <td><strong><em>(RST)<sup>1</sup></em></strong></td>
+          <td>GND</td>
+          <td><br>
+          </td>
+          <td>RST</td>
+          <td>RST</td>
+        </tr>
+        <tr>
+          <td>GND</td>
+          <td>GND</td>
+          <td><br>
+          </td>
+          <td>VCC</td>
+          <td>5V</td>
+        </tr>
+        <tr>
+          <td>D2</td>
+          <td>D2</td>
+          <td><br>
+          </td>
+          <td>A3</td>
+          <td>A7</td>
+        </tr>
+        <tr>
+          <td>D3</td>
+          <td>D3</td>
+          <td><br>
+          </td>
+          <td>A2</td>
+          <td>A6</td>
+        </tr>
+        <tr>
+          <td>D4</td>
+          <td>D4 A6</td>
+          <td><br>
+          </td>
+          <td>A1</td>
+          <td>A5</td>
+        </tr>
+        <tr>
+          <td>D5</td>
+          <td>D5</td>
+          <td><br>
+          </td>
+          <td>A0</td>
+          <td>A4</td>
+        </tr>
+        <tr>
+          <td>D6</td>
+          <td>D6 A7</td>
+          <td><br>
+          </td>
+          <td>D15</td>
+          <td>A3</td>
+        </tr>
+        <tr>
+          <td>D7</td>
+          <td>D7</td>
+          <td><br>
+          </td>
+          <td>D14</td>
+          <td>A2</td>
+        </tr>
+        <tr>
+          <td>D8</td>
+          <td>D8 A8</td>
+          <td><br>
+          </td>
+          <td>D16</td>
+          <td>A1</td>
+        </tr>
+        <tr>
+          <td>D9</td>
+          <td>D9 A9</td>
+          <td><br>
+          </td>
+          <td>D10 A10</td>
+          <td>A0</td>
+        </tr>
+        <tr>
+          <td>D10</td>
+          <td rowspan="3" colspan="3"><br>
+          </td>
+          <td>AREF</td>
+        </tr>
+        <tr>
+          <td>D11</td>
+          <td>3V3</td>
+        </tr>
+        <tr>
+          <td>D12</td>
+          <td>D13</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><em><strong><sup>1</sup></strong></em>The left-hand reset must be cut
+      from its network or the 32U4 is permanently reset.<br>
+      Drilling out the feedthrough between the RST pins is easy.<br>
+    </p>
+    <table cellspacing="2" cellpadding="2" border="1">
+      <tbody>
+        <tr>
+          <td rowspan="1" colspan="2">Leonardo ICSP</td>
+        </tr>
+        <tr>
+          <td>PB2/MOSI</td>
+          <td>D16</td>
+        </tr>
+        <tr>
+          <td>PB1/SCK</td>
+          <td>D15</td>
+        </tr>
+        <tr>
+          <td>PB3/MISO</td>
+          <td>D14</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    Errors in my image of Leonardo<br>
+    A0..A5 is D18..D23<br>
+    rxled D17<br>
+    TXled D30<br>
+    <br>
+  </body>
+</html>
