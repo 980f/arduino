@@ -36,7 +36,7 @@ struct LinearMap : public Printable {
 #if AvoidFP
     return AnalogValue(  ((long(scaled) - bottom) << 15) / long(top - bottom)); //#casting here is crucial
 #else
-    return AnalogValue( ((float(scaled) / (top - bottom)) + bottom) * 32768.0);//todo:00 this is wrong! but I am in a hurry to get other stuff done!
+    return AnalogValue( ((float(scaled) / (top - bottom)) + bottom) * 32768.0, 15); //todo:00 this is wrong! but I am in a hurry to get other stuff done!
 #endif
   }
 

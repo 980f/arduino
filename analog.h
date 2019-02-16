@@ -13,14 +13,20 @@ class AnalogValue: public Printable {
     static const F15 Half = (0x4000);
     static const F15 Max = (0x7FFF);
 
-    AnalogValue(int physical = 0) {
-      raw = physical; //todo: shift will be a function of input resolution (10 vs 12) and oversampling rate (8 samples is same as 3 bit shift)
+    AnalogValue(unsigned physical, unsigned bits=15) {
+      raw = physical << (15 - bits);
     }
 
-    unsigned operator =(int physical) {
-      raw = physical;
-      return raw;
-    }
+    AnalogValue(): raw(0) {}
+
+    AnalogValue(AnalogValue &&other) = default;
+    AnalogValue(const AnalogValue &other) = default;
+    AnalogValue & operator =(const AnalogValue &other) = default;
+
+//    unsigned operator =(unsigned physical) {
+//      raw = physical;
+//      return raw;
+//    }
 
     bool operator ==(AnalogValue &&other) const {
       return raw == other.raw;
@@ -56,7 +62,7 @@ struct AnalogOutput {
 
     //scaled/smoothed value
     void operator =(AnalogValue av) const {
-      analogWrite(pinNumber, ~av >> 7); //15 bit normalized input, cut it down to 8 msbs of those 15. todo: configure for 10 and maybe 16 bit output.
+      analogWrite(pinNumber, ~av >> (15 - 8)); //15 bit normalized input, cut it down to 8 msbs of those 15. todo: configure for 10 and maybe 16 bit output.
     }
 
     //traditional arduino value
@@ -76,32 +82,32 @@ struct AnalogInput {
   }
 
   operator AnalogValue() const {
-    return AnalogValue(analogRead(pinNumber) << 5) ; //scale up until we get access to the hardware bit that does this.
+    return AnalogValue(analogRead(pinNumber) , 10) ; //scale up until we get access to the hardware bit that does this.
   }
 
   //get traditional 10 bit value.
   int raw() const {
-    return int(~AnalogValue(analogRead(pinNumber)));
+    return analogRead(pinNumber);
   }
 };
 
-/* RC, aka exponential decay, averaging. */
-struct SmoothedAnalogValue: public AnalogValue {
-  unsigned shift;//power of two scaling is faster than multiply. Someday we will import the 16*16/16 code and make this class better.
-
-  SmoothedAnalogValue(int physical = 0, unsigned shift = 5) :
-    AnalogValue(physical),
-    shift(shift) {
-    //#done
-  }
-
-
-  /** adding 2^-shift * input and subtracting out 2^-shift * present value, works like an RC filter with a decay of 2^-shift each 'clock'.
-       A moving average behaves better, but this is almost as good and is really cheap in memory usage.
-  */
-  unsigned operator =(int physical) {
-    raw += (physical - raw) >> shift;
-    return raw;
-  }
-
-};
+///* RC, aka exponential decay, averaging. */
+//struct SmoothedAnalogValue: public AnalogValue {
+//  unsigned shift;//power of two scaling is faster than multiply. Someday we will import the 16*16/16 code and make this class better.
+//
+//  SmoothedAnalogValue(int physical = 0, unsigned shift = 5) :
+//    AnalogValue(physical),
+//    shift(shift) {
+//    //#done
+//  }
+//
+//
+//  /** adding 2^-shift * input and subtracting out 2^-shift * present value, works like an RC filter with a decay of 2^-shift each 'clock'.
+//       A moving average behaves better, but this is almost as good and is really cheap in memory usage.
+//  */
+//  unsigned operator =(int physical) {
+//    raw += (physical - raw) >> shift;
+//    return raw;
+//  }
+//
+//};
