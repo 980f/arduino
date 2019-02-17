@@ -20,6 +20,9 @@ PCA9685::PCA9685( uint8_t addr, unsigned which):
 }
 
 bool PCA9685::begin(uint8_t mode2value, unsigned hz) {
+  if (shadow) {
+    shadow->begin(mode2value, hz);//we lose its success report.
+  }
   ww.begin();
   if (ww.isPresent()) {
     Mode1 = (Restarter | AutoIncrement);//init the cached value and trust it henceforth
@@ -32,6 +35,9 @@ bool PCA9685::begin(uint8_t mode2value, unsigned hz) {
 }
 
 uint8_t PCA9685::updatemode(uint8_t ones, uint8_t zeroes) {
+  if (shadow) {
+    shadow->updatemode(ones, zeroes);
+  }
   return Mode1.modify(ones, zeroes);
 }
 
@@ -75,6 +81,9 @@ uint8_t PCA9685::fromHz(unsigned hz) {
 }
 
 void PCA9685::setPrescale(uint8_t bookvalue, bool andRun) {
+  if (shadow) {
+    shadow->setPrescale(bookvalue, andRun);
+  }
   sleep();//required, prescale changes are ignored if not sleeping.
   Prescale = bookvalue;
   if (andRun) {
@@ -104,6 +113,9 @@ static const uint16_t FULL = 4096;
   @param which is either 0 to 15 OR all ones for ALL.
 */
 void PCA9685::setChannel(uint8_t which, uint16_t on, uint16_t off = 0) {
+  if (shadow) {
+    shadow->setChannel(which, on, off);
+  }
   uint8_t ledaddr = ledReg(which);
   if (ledaddr) {
     //normalize value for good luck (robustness against future changes to the chip).
@@ -118,6 +130,9 @@ void PCA9685::setChannel(uint8_t which, uint16_t on, uint16_t off = 0) {
 }
 
 void PCA9685::setWidth(uint8_t which, uint16_t endvalue) {
+  if (shadow) {
+    shadow->setWidth(which, endvalue);
+  }
   uint8_t ledaddr = ledReg(which);
   if (ledaddr) {
     WIred<uint16_t>(ww, ledaddr + 2) = endvalue >= FULL ? FULL : endvalue;
@@ -125,6 +140,9 @@ void PCA9685::setWidth(uint8_t which, uint16_t endvalue) {
 }
 
 void PCA9685::setPhase(uint8_t which, uint16_t endvalue) {
+  if (shadow) {
+    shadow->setPhase(which, endvalue);
+  }
   uint8_t ledaddr = ledReg(which);
   if (ledaddr) {
     WIred<uint16_t>(ww, ledaddr) = endvalue >= FULL ? FULL : endvalue;
@@ -133,6 +151,7 @@ void PCA9685::setPhase(uint8_t which, uint16_t endvalue) {
 
 //set a register 2,3,4, or 5 where 5 is ALL call.
 void PCA9685::setAddress(uint8_t which, uint8_t sevenbit) {
+  //not shadowing, would then clash with primary!
   which &= 3; //guard against bad value.
   // 5-which mapping of which to register number makes bit setting below easy.
   WIred<uint16_t>(ww, 5 - which) = sevenbit << 1;

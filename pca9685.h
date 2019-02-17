@@ -2,19 +2,22 @@
 
 #include "wirewrapper.h" //wrap usage of TwoWire class
 
-/** PCA9685 interface, using Arduino Wire library for i2c access.  */
+/** PCA9685 interface, using Arduino Wire library for i2c access.
+    The Strangest thing is the 'shadow' feature, where one is slaved to another. This can be used for a hot spare, split load without redoing software when redistributing the load, or with a little thought differential output or even just physically independent status light driver.
+*/
 class PCA9685 {
     /** which I2C bus and device*/
     WireWrapper ww;
   private: //internal registers, see device manual for names.
-    WIred<uint8_t> Mode1;
-    WIred<uint8_t> Prescale;
+    WIred<uint8_t> Mode1;   //maydo: create this locally, not called urgently.
+    WIred<uint8_t> Prescale;//maydo: create this locally, not called urgently.
     //addresses and channels are dynamically generated, they consume too much ram to force all users to allocate them. Construction on demand (on stack) is cheap.
+    //redundant/parallel device. For late in the game load splitting.
 
   public:
     /** device i2C address, 7-bit, @param which is which i2c bus, 0 for the default, 1 for the 2nd available on some of the bigger processors. */
     PCA9685( uint8_t addr = 0x40, unsigned which = 0);
-
+    PCA9685 *shadow = nullptr;
     /** set some defaults, starts operating at a nominal refresh rate to mimic adafruit library.
       argument is for output configuration byte for mode2 register, RTFM for now. Default value is that of powerup.
       1<<4 polarity when on by OE, typically only set when adding an NFet or Darlington between the device and the load.
@@ -49,8 +52,8 @@ class PCA9685 {
 
     /** @returns effective prescalar, not the literal hardware value.*/
     unsigned getPrescale() {
-      uint8_t raw=Prescale;//#compiler gets confused if we try to inline this.
-      return 1+raw;
+      uint8_t raw = Prescale; //#compiler gets confused if we try to inline this.
+      return 1 + raw;
     }
 
     /** set one of 3 alternative I2C addresses, or if which =0 configure 'all call' address. This sets the address and the related enable bit.

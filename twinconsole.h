@@ -20,7 +20,8 @@ class TwinConsole: public Print {
       }
       return 0;
     }
-
+    
+    /** init serial devices */
     void begin(uint32_t uartbaud = 115200) {
       Serial.begin(500000);//number here doesn't matter.
       Serial1.begin(uartbaud);//hardware serial. up the baud to reduce overhead.
@@ -34,6 +35,7 @@ class TwinConsole: public Print {
       return *this;
     }
 
+    /**satisfy Print interface*/
     size_t write(byte value) override {
       if (Serial) usb.raw.write(value);
       return uart.raw.write(value);
