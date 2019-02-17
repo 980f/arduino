@@ -17,7 +17,8 @@ enum WireError : uint8_t {
 };
 
 class WireWrapper {
-    uint8_t base;
+  public://for debug
+    const uint8_t base;
     TwoWire &bus;
     WireError lastOp;
   public:

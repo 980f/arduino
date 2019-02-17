@@ -2,6 +2,9 @@
 #include "pca9685.h"
 #include <Arduino.h> //to get hardware options.
 
+#include "twinconsole.h"
+extern TwinConsole Console;
+
 enum ControlBits : uint8_t {
   Restarter = 1 << 7,  //on read indicates restart advisable, write 1 to clear the flag
   //1<<6: ext clock not yet supported
@@ -130,9 +133,10 @@ void PCA9685::setChannel(uint8_t which, uint16_t on, uint16_t off = 0) {
 }
 
 void PCA9685::setWidth(uint8_t which, uint16_t endvalue) {
-  if (shadow) {
+  if (shadow) {    
     shadow->setWidth(which, endvalue);
   }
+//  Console(FF(""),which," dev ",ww.base);
   uint8_t ledaddr = ledReg(which);
   if (ledaddr) {
     WIred<uint16_t>(ww, ledaddr + 2) = endvalue >= FULL ? FULL : endvalue;

@@ -42,3 +42,7 @@ class TwinConsole: public Print {
     }
 
 };
+
+
+//marker for codespace strings, with newline prefixed. Without this or the Arduino provided F() constr strings take up ram as well as rom.
+#define FF(farg)  F( "\n" farg)
