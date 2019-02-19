@@ -41,6 +41,10 @@ template<typename T> struct XY: public Printable  {
     return changed(X, input.X) | changed(Y , input.Y); //# single '|' or required! do not chnge to ||, we need to evaluate both operands.
   }
 
+  /** @return whether both members are each equal to @param cf*/
+  bool both(T cf) const {
+    return X == cf && Y == cf;
+  }
 
   size_t printTo(Print& p) const {
     return p.print(X) + p.print(',') + p.print(Y);

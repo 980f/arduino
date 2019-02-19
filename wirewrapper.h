@@ -64,7 +64,7 @@ class WireWrapper {
       return bus.requestFrom(base, numBytes);
     }
 
-    WireError Write(const uint8_t *peeker, unsigned numBytes, bool reversed = false) const {
+    WireError Write(const uint8_t *peeker, unsigned numBytes, bool reversed = false) {
       Start();
       for (unsigned bc = numBytes; bc-- > 0;) {
         emit(reversed ? peeker[bc] : *peeker++);

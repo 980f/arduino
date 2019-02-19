@@ -40,7 +40,7 @@ class EEPointer {
       return EEreference(eeaddress);
     }
 
-    EEPointer operator ++() {
+    EEPointer operator ++(int) {
       EEPointer copy = *this;
       ++eeaddress;
       return copy;

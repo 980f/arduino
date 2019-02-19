@@ -7,10 +7,7 @@
   Note: we use double but AVR uses 32bit for that. */
 struct Microseconds {
   unsigned long micros;
-
-  operator = (unsigned long ticks) {
-    micros = ticks;
-  }
+  
   operator unsigned long()const {
     return micros;
   }
@@ -18,8 +15,16 @@ struct Microseconds {
   operator double()const {
     return double(micros) / 1e6;
   }
-  operator = (double seconds) {
+
+
+  Microseconds& operator = (unsigned long ticks) {
+    micros = ticks;
+    return *this;
+  }
+
+  Microseconds &operator = (double seconds) {
     micros = seconds * 1e6; //truncating!
+    return *this;
   }
 
 
@@ -59,6 +64,7 @@ struct Microseconds {
     }
     return cycles;
   }
+  
   bool operator >(const Microseconds &that) const {
     return micros > that.micros;
   }
@@ -66,6 +72,7 @@ struct Microseconds {
   bool operator >=(const Microseconds &that) const {
     return micros > that.micros ;
   }
+  
   bool operator <(const Microseconds &that) const {
     return micros < that.micros;
   }
@@ -98,7 +105,7 @@ struct Microseconds {
   }
 
   bool isNever()const {
-    return micros == ~0;
+    return micros == ~0U;
   }
 
   bool isZero() const noexcept {
@@ -113,7 +120,7 @@ struct Microseconds {
 
 };
 
-using Timebase=Microseconds;
+using Timebase = Microseconds;
 /** an interval timer using Arduino micros() */
 class StopWatch {
 

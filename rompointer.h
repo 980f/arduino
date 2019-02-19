@@ -12,7 +12,7 @@ struct RomPointer  {
     return pgm_read_byte(addr);
   };
 
-  RomPointer operator ++() {//# do NOT return a reference
+  RomPointer operator ++(int) {//# do NOT return a reference
     RomPointer copyme = *this;
     ++addr;
     return copyme;

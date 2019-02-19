@@ -44,13 +44,14 @@ class Initer {
       return EEPrinter(start);
     }
 
-    /** EEprom content passed byte at a time to supplied keyhandler */
+    /** EEprom content passed byte at a time to supplied keyhandler.
+      Ignores chars beyond 'normal' ascii. */
     unsigned load() {
       unsigned actuals = 0;
       EEPointer eep = EEPointer(start);
       while (eep) {//don't run off the end of existence
         byte c = *eep++;
-        if (c < 0 || c == 255 || c > '~') { //uninit eeprom. If we ever get the eeprom to init correctly we will make this a terminator.
+        if (c > '~') { //most likely uninit eeprom.
           continue;
         }
         if (c) {

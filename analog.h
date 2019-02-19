@@ -13,7 +13,7 @@ class AnalogValue: public Printable {
     static const F15 Half = (0x4000);
     static const F15 Max = (0x7FFF);
 
-    AnalogValue(unsigned physical, unsigned bits=15) {
+    AnalogValue(unsigned physical, unsigned bits = 15) {
       raw = physical << (15 - bits);
     }
 
@@ -23,14 +23,19 @@ class AnalogValue: public Printable {
     AnalogValue(const AnalogValue &other) = default;
     AnalogValue & operator =(const AnalogValue &other) = default;
 
-//    unsigned operator =(unsigned physical) {
-//      raw = physical;
-//      return raw;
-//    }
+    //    unsigned operator =(unsigned physical) {
+    //      raw = physical;
+    //      return raw;
+    //    }
 
     bool operator ==(AnalogValue &&other) const {
       return raw == other.raw;
     }
+
+    bool operator ==(AnalogValue other) const {
+      return raw == other.raw;
+    }
+
 
     bool operator !=(AnalogValue &&other) const {
       return raw != other.raw;

@@ -46,7 +46,7 @@ uint8_t PCA9685::updatemode(uint8_t ones, uint8_t zeroes) {
 
 
 unsigned PCA9685::sleep() {
-  uint8_t modewas = updatemode( Restarter | Sleeper, 0); //ack restart, set sleep
+  updatemode( Restarter | Sleeper, 0); //ack restart, set sleep
   return 0;//make it look like wake so that we can use ternary to invoke wake else sleep
 }
 
@@ -94,12 +94,12 @@ void PCA9685::setPrescale(uint8_t bookvalue, bool andRun) {
   }
 }
 
-void PCA9685::setPWMFreq(unsigned hz, bool andRun = true) {
+void PCA9685::setPWMFreq(unsigned hz, bool andRun) {
   setPrescale(fromHz(hz), andRun);
 }
 
 static uint8_t ledReg(const uint8_t which) {
-  if (~which == 0) { //cheat for ALL
+  if (which == 255) { //cheat for ALL
     return 0xFA;// is 'all'. It is write-only and modifies the per led registers
   } else if (which > 15) {
     return 0; //invalid address
