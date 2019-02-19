@@ -115,7 +115,7 @@ static const uint16_t FULL = 4096;
   if both requested then 'full off' wins. The other 12 bits don't matter.
   @param which is either 0 to 15 OR all ones for ALL.
 */
-void PCA9685::setChannel(uint8_t which, uint16_t on, uint16_t off = 0) {
+void PCA9685::setChannel(uint8_t which, uint16_t on, uint16_t off) {
   if (shadow) {
     shadow->setChannel(which, on, off);
   }
@@ -164,7 +164,7 @@ void PCA9685::setAddress(uint8_t which, uint8_t sevenbit) {
 
 
 /** set given range of channels to their channel number. */
-void PCA9685::idChannels(uint8_t lowest = 0, uint8_t highest = 15) {
+void PCA9685::idChannels(uint8_t lowest, uint8_t highest) {
   for (unsigned chi = lowest; chi <= highest; ++chi) {
     setWidth(chi, chi << 8);
   }
