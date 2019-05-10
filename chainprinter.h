@@ -4,11 +4,11 @@
 //avr is missing this stuff: #include <type_traits>
 /** somewhat simple printer extension.
     This wraps a Print object to allow printing a series of fields in one call:
-    usage;  ChainPrinter chp(somePrinter);
+    usage;  ChainPrinter log(somePrinter);
             ...
-            chp("This", 42, 'c', 12.4, anythingforwhichthereisaprintvariant);
+            log("This", 42, 'c', 12.4, anythingforwhichthereisaprintvariant, HEXLY(0x980F));
 
-    Initial design returns what the Print::print routines do, all nicely added up. This however precludes chaining to an end-of-line function.
+    Initial design returns what the Print::print routines do, all nicely added up. This however precludes chaining to an end-of-line function. OTOH since we have variable length args we can add a Newline as an argument.
 */
 template<typename Intish>
 struct Hexly: public Printable {
@@ -34,14 +34,15 @@ struct ChainPrinter {
       return raw.print(first) + PrintItem(args ...);
     }
 
-
+    /** this is how you terminate processing a varargs template */
     template<typename Single> unsigned PrintItem(Single &&arg) {
       return raw.print(arg);
     }
 
   public:
+    /** by overloading operator () we can make invocations look like common logging functions calls. Name your chainprinter dbg or log.*/
     template<typename ... Args> unsigned operator()(const Args ... args) {
-      if (sizeof... (args)) {
+      if (sizeof... (args)) {//this check keeps us from having to implement a no-args PrintItem. 
         return PrintItem(args ...);
       } else {
         return 0;
