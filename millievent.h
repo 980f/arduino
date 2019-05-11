@@ -29,6 +29,11 @@ class SoftMilliTimer {
       return lastchecked;
     }
 
+    /** alias for @see recent() */
+    operator MilliTick() const {
+      return recent();
+    }
+
     /** ticks since someone recorded recent(). */
     unsigned since(MilliTick previous) {
       return unsigned(lastchecked - previous);
@@ -48,7 +53,7 @@ SoftMilliTimer MilliTicked;
 */
 class MonoStable {
   protected:
-    MilliTick zero = BadTick;
+    MilliTick zero = BadTick;//this choice ensures that both isDone and isRunning are false until an real cycle has at least begun.
     MilliTick done;
   public:
     /** combined create and set, if nothing to set then a default equivalent to 'never' is used.*/

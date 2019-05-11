@@ -8,11 +8,15 @@ class Stepper {
 
   public:
     enum Iface {Uni4, Bip4, Disk3}; //we are slow enough to not want to pay extra for virtual function call.
-    Iface iface = Uni4; //
+    Iface iface = Bip4; //2 bit grey code with complements for those without inverters handy,
     int step = 0;
     //  unsigned perRevolution=200;
     //  unsigned phase=0;
     //
+
+    operator unsigned() const {
+    	return step;
+    }
 
     void applyPhase(unsigned phase)const;
 
