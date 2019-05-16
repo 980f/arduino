@@ -1,25 +1,34 @@
 #pragma once
-#include "pinclass.h"
-#include "bitbanger.h"
-#include "minimath.h"
+#include "hook.h"
 
-
+/** nascent class for stepper interface.
+  will be adding accleration and other speed management into this guy over time. */
 class Stepper {
-
-  public:
-    enum Iface {Uni4, Bip4, Disk3}; //we are slow enough to not want to pay extra for virtual function call.
-    Iface iface = Bip4; //2 bit grey code with complements for those without inverters handy,
     int step = 0;
+    int stepOffset=0;
     //  unsigned perRevolution=200;
     //  unsigned phase=0;
-    //
-
-    operator unsigned() const {
-    	return step;
+    
+  public:
+  /** assign a function which takes a nibble and routes it to your wires.*/
+    Hook<byte> interface;
+    using Interface=Hook<byte>::Pointer;
+    
+    operator int() const {
+      return step;
     }
 
-    void applyPhase(unsigned phase)const;
+		void operator =(int location){
+			stepOffset=(location^step)&3;
+			step=location;
+      applyPhase(step);
+		}
 
+    byte applyPhase(unsigned step)const {
+      interface(step);
+    }
+
+    /** step either forward or back*/
     void operator ()(bool fwd) {
       step += fwd ? 1 : -1;
       applyPhase(step);
@@ -32,8 +41,7 @@ class Stepper {
     }
 
     void operator ++() {
-      ++step;
-      applyPhase(step);
+      applyPhase(++step);
       //    if((++phase)==perRevolution){
       //      phase=0;
       //    }
@@ -41,12 +49,10 @@ class Stepper {
     }
 
     void operator --() {
-      --step;
-      applyPhase(step);
+      applyPhase(--step);
       //    if((phase==0){
       //      phase=perRevolution;
       //    }
       //  --phase;
-
     }
 };
