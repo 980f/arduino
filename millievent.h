@@ -75,6 +75,12 @@ class MonoStable {
       return old;
     }
 
+    /** sugar for setting the duration and starting, i.e. trigger with new value.  */
+    MonoStable &operator =(MilliTick duration) {
+      set(duration);
+      return *this;
+    }
+
     /** call to indicate running starts 'now', a.k.a. retriggerable monostable. */
     void start() {
       zero = MilliTicked.recent();
@@ -101,7 +107,7 @@ class MonoStable {
       return isDone();
     }
 
-   /** @returns set time, use set() to modify it. */
+    /** @returns set time, use set() to modify it. */
     operator MilliTick() const {
       return done;
     }
