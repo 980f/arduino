@@ -1,7 +1,7 @@
 #pragma once
 #include "hook.h"
 #include "minimath.h"//signof
-
+#include <Arduino.h> //pc version did not need this to get to 'byte'
 /** nascent class for stepper interface.
   will be adding accleration and other speed management into this guy over time. */
 class Stepper {
@@ -27,7 +27,7 @@ class Stepper {
       applyPhase(step);
 		}
 
-    byte applyPhase(unsigned step) { //had to remove const on this method due to compiler bug, the Hook should not have inherited constness from the object.
+    void applyPhase(unsigned step) { //had to remove const on this method due to compiler bug, the Hook should not have inherited constness from the object.
       interface(byte(step));
     }
 
