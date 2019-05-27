@@ -4,12 +4,11 @@
 //for sharing Arduino and Maple codebases.
 
 #ifdef STMDUINO
-
-using PinNumberType=unsigned;//added this while figuring out I had a bad #if, left it in for formalities sake
+using PinNumberType=unsigned;//added this while figuring out I had a bad #if, left it in for formality's sake
 using PinModeType=WiringPinMode; //maple lib forces this on us.
 
 #else
-using PinNumberType=unsigned;//added this while figuring out I had a bad #if, left it in for formalities sake
+using PinNumberType=unsigned;//added this while figuring out I had a bad #if, left it in for formality's sake
 using PinModeType=unsigned;
 #endif
 
@@ -25,4 +24,3 @@ void pinMode(PinNumberType pinnum, PinModeType PINMODE);
 bool digitalRead(PinNumberType pinnum);
 void digitalWrite(PinNumberType pinnum, bool);
 #endif
-

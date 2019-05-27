@@ -2,8 +2,7 @@
 
 #include "Wire.h" //TwoWire class
 
-/** condense use of I2C.
-*/
+/** condensed use of I2C. */
 
 
 /** symbols for value returned from endTransmission:
@@ -16,6 +15,7 @@ enum WireError : uint8_t {
   Other
 };
 
+/** remembers your base address and which bus you are using, and keeps the last error handy. */
 class WireWrapper {
   public://for debug
     const uint8_t base;
@@ -36,18 +36,23 @@ class WireWrapper {
       bus.begin();
     }
 
+/** send another byte, call Start sometime before you start calling this */
     void emit(uint8_t bite) {
       bus.write(bite);
     }
 
+/** take control of the I2C bus */
     void Start() {
       bus.beginTransmission(base);
     }
 
+/** first phase of common device pattern of a register select before an operation */
     void Start(uint8_t addr) {
       bus.beginTransmission(base);
       emit(addr);
     }
+
+/** end an I2C operation, @param stopit should be false if it is the first part of a repeated start situation */
 
     WireError End(bool stopit = true) {
       return lastOp = WireError(bus.endTransmission(stopit));
@@ -64,6 +69,7 @@ class WireWrapper {
       return bus.requestFrom(base, numBytes);
     }
 
+/** send a block of data, with @param reversed determining byte order. default is what is natural for your processor, so you should probably never use the default! */
     WireError Write(const uint8_t *peeker, unsigned numBytes, bool reversed = false) {
       Start();
       for (unsigned bc = numBytes; bc-- > 0;) {
@@ -72,6 +78,7 @@ class WireWrapper {
       return End();
     }
 
+/** send a block of data to an 8 bit subsystem of your device.*/
     WireError Write(uint8_t selector, const uint8_t *peeker, unsigned numBytes, bool reversed = false) {
       Start(selector);
       for (unsigned bc = numBytes; bc-- > 0;) {
@@ -152,6 +159,7 @@ template <typename Scalar> class WIred {
     Scalar cached;
     WireError lastOp;
   public:
+/** @param ww is the device address container. @param selector is one of 256 subsystems within the device. @param bigendian controls the order in which the bytes of a block are moved to and from the device. */
     WIred( WireWrapper &ww, uint8_t selector, bool bigendian = false): ww(ww), selector(selector), bigendian(bigendian) {}
 
     /**write to device register */
@@ -170,7 +178,8 @@ template <typename Scalar> class WIred {
       return cached;
     }
 
-    operator Scalar() {
+   /** makes a device read appear to be a simple variable access */ 
+   operator Scalar() {
       return fetch();
     }
 

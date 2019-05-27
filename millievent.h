@@ -102,6 +102,18 @@ class MonoStable {
       return now > zero && done <= (now - zero);
     }
 
+    /** @returns whether this is the first time called since became 'isDone', then alters object so that it will not return true again without another start.
+     *  This is what 'isDone' should have been, but we aren't going to change that.
+    */
+    bool hasFinished() {
+      if (isDone()) {
+        stop();
+        return true;
+      } else {
+        return false;
+      }
+    }
+
     /** sugar for isDone() */
     operator bool() const {
       return isDone();
