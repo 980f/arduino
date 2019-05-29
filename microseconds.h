@@ -119,7 +119,7 @@ struct Microseconds {
 
   /** arduino specific call to time since last program start. */
   Microseconds &snap(){
-    *this= micros();
+    *this= ::micros();
     return *this;
   }
 
