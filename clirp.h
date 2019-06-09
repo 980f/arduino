@@ -1,13 +1,14 @@
 #pragma once  //(C) 2018-2019 Andy Heilveil, github/980f
 
+#include "cheaptricks.h" //take()
+#include "unsignedrecognizer.h"  //recognize numbers but doesn't deal with +/-
+
 /**
   Command Line Interpreter, Reverse Polish input
-
 
   If you have a 2-arg function
   then the prior arg is take(pushed)
 */
-#include "unsignedrecognizer.h"  //recognize numbers but doesn't deal with +/-
 
 class CLIRP {
     UnsignedRecognizer numberparser;
@@ -37,12 +38,12 @@ class CLIRP {
     }
 
     template <typename Ret> Ret call(Ret (*fn)(unsigned, unsigned)) {
-      (*fn)(take(pushed), arg);
+      (*fn)(take(pushed), take(arg));
     }
 
     template <typename Ret> Ret call(Ret (*fn)(unsigned)) {
       pushed = 0; //forget unused arg.
-      (*fn)(arg);
+      (*fn)(take(arg));
     }
 
 };
