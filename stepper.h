@@ -29,7 +29,7 @@ class Stepper {
       applyPhase(step);
     }
 
-    bool applyPhase(unsigned step) { //had to remove const on this method due to compiler bug, the Hook should not have inherited constness from the object.
+    void applyPhase(unsigned step) { //had to remove const on this method due to compiler bug, the Hook should not have inherited constness from the object.
       interface(byte(step));
     }
 
