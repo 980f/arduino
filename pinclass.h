@@ -26,7 +26,7 @@ template <PinNumberType arduinoNumber, PinModeType mode, unsigned polarity = HIG
   static constexpr bool inverse(bool active) {
     return (HIGH + LOW) - active;
   }
-  enum :int {
+  enum :PinNumberType {
     /** in case you have to interface with something that takes the digitalXXX number*/
     number = arduinoNumber,
     active = polarity,

@@ -6,3 +6,6 @@ ln -sf ../shared/arduous .
 #use this to make a list of your links, usually routed to a file for making a zip.
 ln -sf ../shared/lardls
 
+#a handy link, I got tired of typing ../shared when trying to autocomplete making a library link
+ln -sf ../shared lib
+

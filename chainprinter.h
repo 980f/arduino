@@ -10,18 +10,42 @@
 
     Initial design returns what the Print::print routines do, all nicely added up. This however precludes chaining to an end-of-line function. OTOH since we have variable length args we can add a Newline as an argument.
 */
-template<typename Intish>
-struct Hexly: public Printable {
+
+/** Arduino Print functionality is type aware, and supports an interface class Printable.
+ *  we use that to output numbers in different bases by using this class to pass the number and pass as a single argument to the ChainPrinter.
+*/
+template<typename Intish,int base>
+struct Basely: public Printable {
   Intish value;
-  Hexly(Intish value): value(value) {}
+  Basely(Intish value): value(value) {}
 
   size_t printTo(Print& p) const {
-    return p.print(value,16);
+    return p.print(value,base);
   }
 };
 
+/** this class is only useful if:
+1) the choice of base is runtime variable (who does that?)
+or
+2) you need to squeeze program space by sharing code across different bases. 
+*/
+template<typename Intish>
+struct Based: public Printable {
+  Intish value;
+  int base;
+  Based(Intish value,int base): value(value),base(base) {}
+
+  size_t printTo(Print& p) const {
+    return p.print(value,base);
+  }
+};
+
+
 //c++11 version 
-#define HEXLY(varname) Hexly<decltype(varname)>(varname)
+#define HEXLY(varname) Basely<decltype(varname),16>(varname)
+
+#define BITLY(varname) Basely<decltype(varname),2>(varname)
+
 
 struct ChainPrinter {
     Print &raw;
@@ -29,7 +53,7 @@ struct ChainPrinter {
   private:
     /** this is how you process the nth item of a varargs template group.
         It can generate a surprising amount of code, a function for every combination of argument types, AND all right hand subsets thereof.
-        Fortunately multiple print statements with the same argument types share code, there is no dependency on the format arg or the argument values. */
+        Fortunately multiple print statements with the same argument types share code, there is no dependency on the argument values. */
     template<typename First, typename ... Args> unsigned PrintItem(First &&first, Args&& ... args) {
       return raw.print(first) + PrintItem(args ...);
     }

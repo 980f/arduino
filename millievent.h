@@ -21,9 +21,16 @@ class SoftMilliTimer {
     MilliTick lastchecked = 0; //0: will not return true until at least one ms has expired after reset.
   public:
     /** true only when called in a different millisecond than it was last called in. */
-    operator bool() {
+    
+        /** true only when called in a different millisecond than it was last called in. */
+    bool ticked() {
       return changed(lastchecked, millis());
     }
+    
+    operator bool() {
+      return ticked();
+    }
+    
     /** most recent sampling of millis(). You should be biased to use this instead of rereading millis().*/
     MilliTick recent() const {
       return lastchecked;
