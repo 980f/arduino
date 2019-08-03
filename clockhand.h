@@ -10,7 +10,7 @@ class ClockHand {
     Stepper mechanism;
     //ms per step
     unsigned thespeed = ~0U;
-    unsigned pulseWidth = 5; //empirical for 1st class of driver.
+    unsigned pulseWidth = 1; //5: for BYJ 
     unsigned stepperrev = 200;// a common direct drive.
     enum Unit {
       Seconds,

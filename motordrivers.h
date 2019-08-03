@@ -24,14 +24,14 @@ byte motorNibble(byte step) {
 }
 
 
-/** 4 wire 2 phase unipolar drive */
+/** 4 wire 2 phase unipolar drive. bipolar complementary drive and unipolar fullwave both can use this. */
 template <PinNumberType xp, PinNumberType xn, PinNumberType yp, PinNumberType yn> class FourBanger {
-  protected:
+  public:
     OutputPin<xp> mxp;
     OutputPin<xn> mxn;
     OutputPin<yp> myp;
     OutputPin<yn> myn;
-
+  public:
     void operator()(byte step) {
       bool x = greylsb(step);
       bool y = greymsb(step);
