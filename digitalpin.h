@@ -1,7 +1,7 @@
 #pragma once
 
-/** TODO: use debug printer instead of direct access to Serial.
-    This variation of Pin wrapping (see pinclass.h fpr te,[;tae version) can be passed by reference, which includes being able to be put into an array.
+/** .
+    This variation of Pin wrapping (see pinclass.h for template version) can be passed by reference, which includes being able to be put into an array.
     It generates more code at each point of use. An aggressively optimizing compiler might eliminate that extra code,
     but for the template version of this functionality the compiler most likely will write minimal code without being asked nicely
 
@@ -26,38 +26,26 @@
 
 #include "pinuser.h"
 
-//to get verbose debug info define DebugDigitalPin to be the name of the device you wish to Print to.
-#ifdef DebugDigitalPin
-#include "chainprinter.h"
-ChainPrinter dpdbg(DebugDigitalPin);
-#else
-#define dpdbg(...)
-#endif
-
 class DigitalPin {
-	public:
-	
   public:
     const unsigned number;
     const unsigned polarity;
 
     explicit DigitalPin(PinNumberType arduinoNumber, PinModeType mode, unsigned polarity = HIGH): number(arduinoNumber), polarity(polarity) {
-//      dpdbg("\ndigital construct ",arduinoNumber);
       pinMode(arduinoNumber, mode);
     }
 
-	//disallowing copy construction, it interferes with using pin as a boolean, compiler wants to create a copy of the pin instead of assign the value of one pin to another.
+    //disallowing copy construction, it interferes with using pin as a boolean, compiler wants to create a copy of the pin instead of assign the value of one pin to another.
     DigitalPin(DigitalPin &&any) = delete;
     DigitalPin(const DigitalPin &any) = delete;
 
-  /**formal 'toggled' computation, just in case some vendor defines HIGH and LOW as other than 1 and 0 */
+    /**formal 'toggled' computation, just in case some vendor defines HIGH and LOW as other than 1 and 0 */
     static constexpr bool inverse(bool active) {
       return (HIGH + LOW) - active;
     }
 
-/** read the pin. @returns true when pin is at configured polarity */
+    /** read the pin. @returns true when pin is at configured polarity */
     operator bool() const {
-    	dpdbg("\ndigital read ",number);
       return digitalRead(number) == polarity;
     }
 
@@ -75,27 +63,47 @@ class DigitalInput: public DigitalPin {
 class DigitalOutput: public DigitalPin {
   public:
     DigitalOutput(unsigned arduinoNumber, unsigned polarity = HIGH): DigitalPin(arduinoNumber, OUTPUT, polarity) {}
-/** write the pin, applying configured polarity */
+    /** write the pin, applying configured polarity */
     bool operator =(bool value)const {
-    	dpdbg("\ndigital write bool ",value);
       digitalWrite(number , value ? polarity : inverse(polarity));
       return value;
     }
 
+    /** if operand is true then activate this pin, else leave it as is.
+      @returns state of the pin */
+    bool operator |=(bool value)const {
+      if (value) {
+        return operator =(int(polarity));
+      } else {
+        return operator bool();
+      }
+    }
+
+    /** if operand is false then deactivate this pin, else leave it as is.
+      @returns state of the pin */
+    bool operator &=(bool value)const {
+      if (!value) {
+        return operator =(inverse(polarity));
+      } else {
+        return operator bool();
+      }
+    }
+
+
+    /** set  pin to whether @param nonzero is not zero */
     bool operator =(int nonzero)const {
-      dpdbg("\ndigital write int ",nonzero);
       return operator =(nonzero != 0);
     }
 
+    /** set  pin to the value of @param rhs  */
     bool operator =(const DigitalPin &rhs)const {
-      dpdbg("digital write from pin ",rhs.number);
-      return operator =(bool(rhs));
+      return operator =(bool(rhs)); //older compiler needed some help here, newer one doesn't mind it.
     }
 
     bool operator =(DigitalPin &&rhs)const {
-      dpdbg("digital write from &&pin ",rhs.number);
       return operator =(bool(rhs));
     }
+
 
   public:   /// the following are utility functions, not essential to this class
     bool toggle()const {

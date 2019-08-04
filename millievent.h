@@ -67,7 +67,7 @@ class MonoStable {
     MilliTick done;
   public:
     /** combined create and set, if nothing to set then a default equivalent to 'never' is used.*/
-    MonoStable(MilliTick duration = BadTick, boolean andStart = true): done(duration) {
+    MonoStable(MilliTick duration = BadTick, bool andStart = true): done(duration) {
       if (andStart) {
         start();
       }
@@ -76,7 +76,7 @@ class MonoStable {
         @param andStart is whether to restart the timer as well, default yes.
         @returns prior duration.
     */
-    MilliTick set(MilliTick duration, boolean andStart = true) {
+    MilliTick set(MilliTick duration, bool andStart = true) {
       MilliTick old = done;
       done = duration;
       if (andStart) {
@@ -158,7 +158,7 @@ class BiStable : public MonoStable {
     bool phase;
     MilliTick biphase[2];
   public:
-    BiStable(MilliTick obduration = BadTick, MilliTick produration = BadTick, boolean andStart = true):
+    BiStable(MilliTick obduration = BadTick, MilliTick produration = BadTick, bool andStart = true):
       MonoStable(produration, andStart),
       phase(0) {
       biphase[1] = obduration;
