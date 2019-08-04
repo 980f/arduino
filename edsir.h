@@ -1,7 +1,9 @@
 #pragma once //(C) 2019 Andy Heilveil, github/980f
 
 #include "wirewrapper.h"
-
+/* Electric Dollar Store infrared receiver and xmitter.
+ *  at the moment this is just the simplest mode of use.
+*/
 class EDSir: public WireWrapper {
     WIred<char> irchar;
   public:
