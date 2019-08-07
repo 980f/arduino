@@ -27,7 +27,7 @@ struct MicroTick {
         NB: the existence of this cast operator makes the compiler emit a caution that it considered doing this->bool->int when overloading operator +
     */
     operator bool () const {
-      return ~wraps && ~micros;
+      return ~wraps!=0 && ~micros!=0;
     }
 
     /** @returns the value @param increment micros from this one. */
@@ -143,7 +143,12 @@ class SoftMicroTimer {
 };
 
 //only one is needed:
-SoftMicroTimer MicroTicked;
+extern SoftMicroTimer MicroTicked;
+//only one is needed:
+
+//mention this in just one module:
+#define Using_MicroTicker SoftMicroTimer MicroTicked;
+
 
 /** a retriggerable soft pulse
     if tested within an ISR then the foreground cannot call start() or stop() without disabling that ISR during the change.
@@ -154,7 +159,7 @@ class MicroStable {
     unsigned duration;
   public:
     /** combined create and set, if nothing to set then a default equivalent to 'never' is used.*/
-    MicroStable(unsigned duration = BadTick, boolean andStart = true) {
+    MicroStable(unsigned duration = ~0, boolean andStart = true) {
       set(duration, andStart);
     }
     /** sets duration, which you may change while running,
@@ -179,9 +184,27 @@ class MicroStable {
       expires = MicroTick();
     }
 
+      /** @returns whether timer has started and not expired== it has been at least 'done' since start() was called */
+    bool isRunning() const {
+      MicroTick now = MicroTicked.recent();
+      return expires && expires > now;
+    }
+
     /** @returns whether time has expired, will be false if never started. */
     bool isDone() const {
       return MicroTicked.now() >= expires;
+    }
+
+  /** @returns whether this is the first time called since became 'isDone', then alters object so that it will not return true again without another start.
+     *  This is what 'isDone' should have been, but we aren't going to change that.
+    */
+    bool hasFinished() {
+      if (isDone()) {
+        stop();
+        return true;
+      } else {
+        return false;
+      }
     }
 
     /** @returns whether time has expired, and if so restarts it. */
@@ -207,5 +230,3 @@ class MicroStable {
     //    }
 
 };
-///////////////////////////////////////////
-//a regression tester:

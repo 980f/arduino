@@ -1,7 +1,11 @@
 #pragma once  //(C) 2019, Andy Heilveil, github/980f
 #include "stepper.h"
-//soft millisecond timers are adequate for minutes and hours.
-#include "millievent.h"
+////soft millisecond timers are adequate for minutes and hours.
+//#include "millievent.h"
+
+//increased speed needed for elevator gag
+#include "microevent.h"
+using MonoStable=MicroStable; //patch until we make a common interface for microstable and monoStable.
 
 /** ClockHand deals with scaling from milliseconds to angle of the clock face, given stepper motor parameters */
 
