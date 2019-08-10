@@ -2,6 +2,10 @@
 
 #include "cheaptricks.h" //for changed()
 
+
+#include "easyconsole.h"
+static EasyConsole<decltype(Serial)> udbg(Serial,true /*autofeed*/);
+
 /** a polled timer with microsecond range. similar to millievent stuff but couldn't be merged due to need for range extension.
     the addition of a 16 bit counter stretches the usable range from micros()'s 71 minutes to 8.9 years.
     if we use just a byte for the wraps then we would have 12.7 days. I am going to do that.
@@ -90,7 +94,7 @@ struct MicroTick {
 
   public: //compare operators
     //in all of the compares we do NOT use a reference, as that would expose us to something being updated in an ISR.
-    //we also don't combine the simpler ones for the combined operationd for performance reasons.
+    //we also don't combine the simpler ones for the combined operations for performance reasons.
     bool operator ==(MicroTick other) const {
       return wraps == other.wraps && micros == other.micros;
     }
@@ -120,9 +124,11 @@ class SoftMicroTimer {
     SoftMicroTimer() {
       lastchecked.micros = micros();
       lastchecked.wraps = 0;
+      udbg("ut start:",lastchecked.micros);
     };
     /** true only when called in a different tick than it was last called in. */
-    operator bool() {
+    operator bool() {    	
+//    	udbg("ut bool:",lastchecked.micros);
       return lastchecked.refresh(micros());
     }
     /** most recent sampling of micros(). You should be biased to use this instead of rereading micros() in a local scope.*/
@@ -132,6 +138,7 @@ class SoftMicroTimer {
 
     /** force check of micros().*/
     MicroTick now() {
+//    	udbg("ut now:",lastchecked.micros);
       lastchecked.refresh(micros());
       return lastchecked;
     }
@@ -192,7 +199,7 @@ class MicroStable {
 
     /** @returns whether time has expired, will be false if never started. */
     bool isDone() const {
-      return MicroTicked.now() >= expires;
+      return MicroTicked.recent() >= expires;
     }
 
   /** @returns whether this is the first time called since became 'isDone', then alters object so that it will not return true again without another start.
@@ -210,6 +217,7 @@ class MicroStable {
     /** @returns whether time has expired, and if so restarts it. */
     bool perCycle() {
       if (isDone()) {
+//only got here every 20ms when debug is spewing:      	udbg("perCycle:",expires.micros);
         start();
         return true;
       } else {

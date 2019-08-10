@@ -7,7 +7,7 @@ class EasyConsole: public ChainPrinter {
   public:
     Serialish &conn; //output is wrapped by ChainPrinter
 
-    EasyConsole(Serialish &serial): ChainPrinter(serial), conn(serial) {
+    EasyConsole(Serialish &serial, bool autofeed = false): ChainPrinter(serial,autofeed), conn(serial) {
       //#done
     }
 
