@@ -2,9 +2,13 @@
 
 #include "cheaptricks.h" //for changed()
 
-
+#ifdef Serial4Debug //serial was notpresent in avr build.
 #include "easyconsole.h"
 static EasyConsole<decltype(Serial)> udbg(Serial,true /*autofeed*/);
+#else
+static void udbg(...){}
+#endif
+
 
 /** a polled timer with microsecond range. similar to millievent stuff but couldn't be merged due to need for range extension.
     the addition of a 16 bit counter stretches the usable range from micros()'s 71 minutes to 8.9 years.
