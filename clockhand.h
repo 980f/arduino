@@ -1,11 +1,11 @@
 #pragma once  //(C) 2019, Andy Heilveil, github/980f
 #include "stepper.h"
 ////soft millisecond timers are adequate for minutes and hours.
-//#include "millievent.h"
+#include "millievent.h"
 
 //increased speed needed for elevator gag
-#include "microevent.h"
-using MonoStable=MicroStable; //patch until we make a common interface for microstable and monoStable.
+//#include "microevent.h"
+using TickTimer=MonoStable; //patch until we make a common interface for microstable and monoStable.
 
 /** ClockHand deals with scaling from milliseconds to angle of the clock face, given stepper motor parameters */
 
@@ -47,9 +47,9 @@ class ClockHand {
     //think we are on
     bool energized = false; //actually is unknown at init
     /** time to next step */
-    MonoStable ticker;
+    TickTimer ticker;
     /** time that driver must be on for each step. Someday will make this conditional.*/
-    MonoStable pulseOn;//need to wait a bit for power down, maybe also for power up.
+    TickTimer pulseOn;//need to wait a bit for power down, maybe also for power up.
 
     //where we want to be
     int target = ~0U;

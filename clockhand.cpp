@@ -41,6 +41,7 @@ bool ClockHand::onTick() {
       mechanism.interface(~0);
       return false;
     }
+    return true;//how do we get here?
   } else {
     return pulseOn.isRunning();//could simplify return logic, unconditionally return this line.
   }

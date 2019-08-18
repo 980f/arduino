@@ -35,7 +35,7 @@ struct MicroTick {
         NB: the existence of this cast operator makes the compiler emit a caution that it considered doing this->bool->int when overloading operator +
     */
     operator bool () const {
-      return ~wraps!=0 && ~micros!=0;
+      return wraps!=~0U && micros!=~0U;
     }
 
     /** @returns the value @param increment micros from this one. */
