@@ -12,17 +12,46 @@
   #include "WProgram.h"
 #endif
 
-#include "AFMotor.h"
+#include "spibridges.h"
 
 
+// Arduino pin names for interface to 74HCT595 latch
+#define MOTORLATCH 12
+#define MOTORCLK 4
+#define MOTORENABLE 7
+#define MOTORDATA 8
+//11,3 are one set of enables
+// 5,6 the other.  hardware pwm outputs.
+//total used: 3,4,5,6,7,8,11,12   2,9,10,13 available (0,1 uart)
+
+
+
+/*
+Brutal control pinout, might as well be random.
+
+From reading code:
+msb..lsb
+34321124
+BBABBAAA
+
+
+From V1.2 schematic:  (3 and 4 swapped)
+msb..lsb
+43421123
+BBABBAAA
+
+D7 en pulled up.
+D4 clock
+D8 data
+D12 latch
+
+pwm1a&B goto servo connectors, D9,D10
+pwm2A&B goto M1&2, D11,D3
+pwm0A&B goto M3&4, D6,D5
+*/
 
 static uint8_t latch_state;
 
-#if (MICROSTEPS == 8)
-uint8_t microstepcurve[] = {0, 50, 98, 142, 180, 212, 236, 250, 255};
-#elif (MICROSTEPS == 16)
-uint8_t microstepcurve[] = {0, 25, 50, 74, 98, 120, 141, 162, 180, 197, 212, 225, 236, 244, 250, 253, 255};
-#endif
 
 AFMotorController::AFMotorController(void) {
     TimerInitalized = false;
