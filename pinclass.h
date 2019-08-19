@@ -95,3 +95,35 @@ template <PinNumberType arduinoNumber, unsigned polarity = HIGH> struct OutputPi
   }
 
 };
+
+/** to drive a pair of pins in tandem, for when you need more drive or there is some other reason they should always match*/
+template <unsigned p1,unsigned p2>
+struct DuplicateOutput {
+  const OutputPin<p1> theone;
+  const OutputPin<p2> theother;
+  void operator=(bool on) {
+  	//todo: consider disabling interrupts here
+    theone = on;
+    theother = on;
+  }
+
+  operator bool () const {
+    return theone;
+  }
+};
+
+/** to drive a pair of pins in tandem, for when one is always the complement of the other.*/
+template <unsigned ppin,unsigned npin>
+struct ComplementaryOutput {
+	const OutputPin<ppin,1> nominal;
+  const OutputPin<npin,0> complement;
+  void operator=(bool on) {
+  	//todo: break before make etc
+    nominal = on;
+    complement = on;
+  }
+
+  operator bool () const {
+    return nominal;
+  }
+}
