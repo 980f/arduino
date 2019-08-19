@@ -155,11 +155,6 @@ class SoftMicroTimer {
 
 //only one is needed:
 extern SoftMicroTimer MicroTicked;
-//only one is needed:
-
-//mention this in just one module:
-#define Using_MicroTicker SoftMicroTimer MicroTicked;
-
 
 /** a retriggerable soft pulse
     if tested within an ISR then the foreground cannot call start() or stop() without disabling that ISR during the change.

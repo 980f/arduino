@@ -55,9 +55,6 @@ class SoftMilliTimer {
 //only one is needed:
 extern SoftMilliTimer MilliTicked;
 
-//mention this in just one module:
-#define Using_MilliTicker SoftMilliTimer MilliTicked;
-
 /** indicates an interval.
     configure via set(), for efficiency check in if(MilliTicked){}
 */
