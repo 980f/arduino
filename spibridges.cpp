@@ -14,15 +14,76 @@
 
 #include "spibridges.h"
 
+template <unsigned clkpin,unsigned datapin,unsigned cspin>
+class SoftSpi {
+  OutputPin<clkpin> CK;//todo: cpol param for clock, and add an idle state for it as well.
+  OutputPin<datapin> D;
+  OutputPin<cspin> CS;
 
-// Arduino pin names for interface to 74HCT595 latch
-#define MOTORLATCH 12
-#define MOTORCLK 4
-#define MOTORENABLE 7
-#define MOTORDATA 8
-//11,3 are one set of enables
-// 5,6 the other.  hardware pwm outputs.
-//total used: 3,4,5,6,7,8,11,12   2,9,10,13 available (0,1 uart)
+  void beIdle(){
+    CS=1;
+    CK=1;
+  }
+
+  //msb first
+  void send(unsigned data,unsigned numbits=8){
+    CS=0;
+    unsigned picker= 1<<(numbits-1);
+    while(numbits-->0){
+      CK=0;
+      D= (data&picker)?1:0;
+      picker>>=1; //placed here to increase data setup time before clock edge, helps if driving an isolator.
+      CK=1;
+    }
+    CS=1;	
+  }
+
+};
+
+
+/** we take advantage of the compatible timing between a typical spi cs and the HC595 output register clock to pretend that the HC595 is a normal spi device */
+template <unsigned clkpin,unsigned datapin,unsigned rckpin,unsigned cspin>
+class HC595: SoftSpi<clkpin,datapin,rckpin>{
+  OutputPin<rckpin> OE;
+  void start(bool free=false){
+    phasors.send(free?~0:0);
+    OE=0;
+  }	
+};
+
+
+
+
+class SpiDualBridgeBoard {
+  const HC595<4,8,12,7> phasors;
+  uint8_t phases;
+  
+  OutputPin<11> M1en;
+  OutputPin<3> M2en;
+  OutputPin<6> M3en;
+  OutputPin<5> M4en;
+
+  void start(bool free=false){
+    phasors.start(free);
+    M1en=1;
+    M2en=1;
+    M3en=1;
+    M4en=1;
+  }
+
+  void send(){
+    phasors.send(phases);
+  }
+
+  void setBridge(bool second,bool x, bool y){
+    if(second){
+		
+    }
+  }
+
+};
+
+
 
 
 
@@ -48,9 +109,13 @@ D12 latch
 pwm1a&B goto servo connectors, D9,D10
 pwm2A&B goto M1&2, D11,D3
 pwm0A&B goto M3&4, D6,D5
+
+
+//2,13 available (also 0,1 uart)
+
+
 */
 
-static uint8_t latch_state;
 
 
 AFMotorController::AFMotorController(void) {

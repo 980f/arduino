@@ -1,5 +1,5 @@
 #pragma once
-
+#include <Arduino.h>
 #include "cheaptricks.h" //for changed()
 
 /** a polled timer.

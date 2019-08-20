@@ -126,4 +126,4 @@ struct ComplementaryOutput {
   operator bool () const {
     return nominal;
   }
-}
+};

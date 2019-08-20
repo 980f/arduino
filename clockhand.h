@@ -1,11 +1,14 @@
 #pragma once  //(C) 2019, Andy Heilveil, github/980f
 #include "stepper.h"
-////soft millisecond timers are adequate for minutes and hours.
-#include "millievent.h"
 
+#if 0
+//soft millisecond timers are adequate for minutes and hours.
+#include "millievent.h"
+#else
 //increased speed needed for elevator gag
-//#include "microevent.h"
-using TickTimer=MonoStable; //patch until we make a common interface for microstable and monoStable.
+#include "microevent.h"
+using TickTimer=MicroStable; 
+#endif
 
 /** ClockHand deals with scaling from milliseconds to angle of the clock face, given stepper motor parameters */
 
@@ -86,9 +89,7 @@ class ClockHand {
     }
 
     //placeholder for incomplete code for remote interface
-    ClockHand() {
-
-    }
+    ClockHand()=default;
     
     /** must be called every millisecond (your best effort, will fail gracefully)
       @returns whether the interface is energized. */
@@ -103,9 +104,13 @@ class ClockHand {
     	int step= actual? int(mechanism) : target;
       //ignoring step<0 issues
     	int rem= step % stepperrev;
+//false alarm:
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wfor-loop-analysis"
     	while(rem<0){//should be 0 or 1 iterations.
     		rem+=stepperrev;
     	}
+#pragma clang diagnostic pop
     	//rem/stepperrev is now fraction of cycle
     	return rate(timeperrev()*rem,stepperrev);
     }

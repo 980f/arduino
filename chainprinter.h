@@ -18,7 +18,7 @@ template<typename Intish, int base> struct Basely: public Printable {
   Intish value;
   Basely(Intish value): value(value) {}
 
-  size_t printTo(Print& p) const {
+  size_t printTo(Print& p) const override {
     return p.print(value, base);
   }
 };
@@ -33,7 +33,7 @@ template<typename Intish> struct Based: public Printable {
   int base;
   Based(Intish value, int base): value(value), base(base) {}
 
-  size_t printTo(Print& p) const {
+  size_t printTo(Print& p) const override {
     return p.print(value, base);
   }
 };
@@ -44,11 +44,10 @@ template<typename Intish> struct Based: public Printable {
 
 #define BITLY(varname) Basely<decltype(varname),2>(varname)
 
-
 struct ChainPrinter {
     Print &raw;
     bool autofeed;
-    ChainPrinter(Print &raw, bool autofeed = false): raw(raw), autofeed(autofeed) {}
+    explicit ChainPrinter(Print &raw, bool autofeed = false): raw(raw), autofeed(autofeed) {}
   private:
     /** this is how you process the nth item of a varargs template group.
         It can generate a surprising amount of code, a function for every combination of argument types, AND all right hand subsets thereof.
@@ -64,7 +63,7 @@ struct ChainPrinter {
 
   public:
     /** by overloading operator () we can make invocations look like common logging functions calls. Name your chainprinter dbg or log.*/
-    template<typename ... Args> unsigned operator()(const Args ... args) {
+    template<typename ... Args>  unsigned operator()(const Args ... args) {
       if (sizeof... (args)) {//this check keeps us from having to implement a no-args PrintItem.
         return PrintItem(args ...) + (autofeed ? endl() : 0);
       } else {
@@ -72,7 +71,7 @@ struct ChainPrinter {
       }
     }
 
-    //print with a newline after all the given args,
+    //print with a newline after all the given args, use when autofeed is off to mark last entities.
     template<typename ... Args> unsigned line(const Args ... args) {
       return operator()(args ...) + endl();
     }
@@ -86,7 +85,7 @@ struct ChainPrinter {
         ChainPrinter &printer;
         bool wasFeeding;
         
-        FeedSuppressor(ChainPrinter &printer): printer(printer)	{
+        explicit FeedSuppressor(ChainPrinter &printer): printer(printer)	{
           wasFeeding = take(printer.autofeed);
         }
         ~FeedSuppressor() {
@@ -96,3 +95,11 @@ struct ChainPrinter {
 
 
 };
+
+struct CrLf: public Printable {
+  size_t printTo(Print& p) const override {
+    return p.println();
+  }
+};
+
+const CrLf CRLF;

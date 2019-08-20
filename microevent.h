@@ -1,10 +1,10 @@
 #pragma once  //(C) 2018,2019 Andy Heilveil, github/980f
-
+#include <Arduino.h> //added for avr build. curious how different the build is for different processors.
 #include "cheaptricks.h" //for changed()
 
 #ifdef Serial4Debug //serial was notpresent in avr build.
 #include "easyconsole.h"
-static EasyConsole<decltype(Serial)> udbg(Serial,true /*autofeed*/);
+static EasyConsole<decltype(Serial4Debug)> udbg(Serial4Debug,true /*autofeed*/);
 #else
 static void udbg(...){}
 #endif
@@ -15,15 +15,16 @@ static void udbg(...){}
     if we use just a byte for the wraps then we would have 12.7 days. I am going to do that.
 */
 
+
+using RawMicros = decltype(micros());
 struct MicroTick {
-    using RawTick = unsigned long; //type of micros()
     using Cycler = uint8_t; //8 bits for 12.7 days, 16 bits for 8.9 years
     /** what micros() returns */
-    RawTick micros; //0: will not return true until at least one us has expired after reset.
+    RawMicros micros; //0: will not return true until at least one us has expired after reset.
     /** range extender*/
     Cycler wraps;
     /** internal use only. */
-    MicroTick(RawTick micros, Cycler wraps): micros(micros), wraps(wraps) {
+    MicroTick(RawMicros micros, Cycler wraps): micros(micros), wraps(wraps) {
       //#done
     }
   public:
@@ -64,8 +65,8 @@ struct MicroTick {
     //    }
 
     /** update with presumed fresh reading of device clock. @returns whether that caused a change (else two clock reads were same instant- most likely you did something very strange)*/
-    bool refresh(RawTick clock) {
-      RawTick was = micros;
+    bool refresh(RawMicros clock) {
+      RawMicros was = micros;
       if (changed(micros, clock)) {//if we don't check for exactly 2^32 microseconds then this logic fails.
         if (micros < was) {//if you don't check often enough this logic will fail.
           ++wraps;
@@ -85,7 +86,7 @@ struct MicroTick {
     Cycler rollovers() {
       return wraps;
     }
-    /** rounded to nearest seconds */
+    /** rounded to nearest seconds. avoiding float to make program smaller if it otherwise didn't need float */
     uint32_t secs() const {
       uint64_t nofloat = wraps;
       nofloat <<= 32;
@@ -97,7 +98,7 @@ struct MicroTick {
 
 
   public: //compare operators
-    //in all of the compares we do NOT use a reference, as that would expose us to something being updated in an ISR.
+    //in all of the compares we do NOT use a reference, as that would expose us to something being updated in an ISR. (actually there is no guarantee of an atomic push, so this is moot alh:20aug2019)
     //we also don't combine the simpler ones for the combined operations for performance reasons.
     bool operator ==(MicroTick other) const {
       return wraps == other.wraps && micros == other.micros;
@@ -162,7 +163,7 @@ extern SoftMicroTimer MicroTicked;
 class MicroStable {
 
     MicroTick expires;
-    unsigned duration;
+    RawMicros duration;
   public:
     /** combined create and set, if nothing to set then a default equivalent to 'never' is used.*/
     MicroStable(unsigned duration = ~0, boolean andStart = true) {
@@ -170,7 +171,6 @@ class MicroStable {
     }
     /** sets duration, which you may change while running,
         @param andStart is whether to restart the timer as well, default yes.
-        @returns prior duration.
     */
     void set(unsigned duration, boolean andStart = true) {
       this->duration = duration; //for restarts.
