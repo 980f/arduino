@@ -2,8 +2,8 @@
 ## when run from arduino project directory,
 ## which is exactly what we need to ignore when checking for new files
 
-#list files that are links into a temp file 
-find -type l -printf %f\\n | sort >.lard.1
+#list files that are links but not directory into a temp file 
+find -type l ! -xtype d -printf %f\\n | sort >.lard.1
 #merge those into .gitignore via another temp file
 cat .gitignore .lard.1 | sort | uniq >.lard.2
 cp .lard.2 .gitignore 
