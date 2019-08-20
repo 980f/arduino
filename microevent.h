@@ -161,18 +161,21 @@ extern SoftMicroTimer MicroTicked;
     if tested within an ISR then the foreground cannot call start() or stop() without disabling that ISR during the change.
 */
 class MicroStable {
+	public:
+ 		using Tick = RawMicros;
+	private:
 
     MicroTick expires;
-    RawMicros duration;
+    Tick duration;
   public:
     /** combined create and set, if nothing to set then a default equivalent to 'never' is used.*/
-    MicroStable(unsigned duration = ~0, boolean andStart = true) {
+    MicroStable(Tick duration = ~0, boolean andStart = true) {
       set(duration, andStart);
     }
     /** sets duration, which you may change while running,
         @param andStart is whether to restart the timer as well, default yes.
     */
-    void set(unsigned duration, boolean andStart = true) {
+    void set(Tick duration, boolean andStart = true) {
       this->duration = duration; //for restarts.
 
       if (andStart) {
@@ -216,7 +219,6 @@ class MicroStable {
     /** @returns whether time has expired, and if so restarts it. */
     bool perCycle() {
       if (isDone()) {
-//only got here every 20ms when debug is spewing:      	udbg("perCycle:",expires.micros);
         start();
         return true;
       } else {

@@ -1,3 +1,6 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "hicpp-signed-bitwise"
+
 #pragma once //(C) 2019 Andy Heilveil, github/980f
 
 #include "pinclass.h"
@@ -11,34 +14,17 @@ bool greymsb(byte step) {
   return (step & 3) >> 1;
 }
 
-//for 4 bit packed field:
-byte motorNibble(byte step) {
-  bool x = greylsb(step);
-  bool y = greymsb(step);
-  byte nib = 0;
-  if ( x) nib |= 1;
-  if (!x) nib |= 2;
-  if ( y) nib |= 4;
-  if (!y) nib |= 8;
-  return nib;
-}
 
 
 /** 4 wire 2 phase unipolar drive. bipolar complementary drive and unipolar fullwave both can use this. */
 template <PinNumberType xp, PinNumberType xn, PinNumberType yp, PinNumberType yn> class FourBanger {
   public:
-    OutputPin<xp> mxp;
-    OutputPin<xn> mxn;
-    OutputPin<yp> myp;
-    OutputPin<yn> myn;
+   ComplementaryOutput<xp,xn> mx;
+   ComplementaryOutput<yp,yn> my;
   public:
     void operator()(byte step) {
-      bool x = greylsb(step);
-      bool y = greymsb(step);
-      mxp = x;
-      mxn = !x;
-      myp = y;
-      myn = !y;
+      mx = greylsb(step);
+      my = greymsb(step);
     }
 
 };
@@ -56,10 +42,8 @@ template <PinNumberType xp, PinNumberType xn, PinNumberType yp, PinNumberType yn
 
     void powerDown() {
       //this-> or Super:: needed because C++ isn't yet willing to use the obvious base class.
-      this->mxp = 0;
-      this->mxn = 0;
-      this->myp = 0;
-      this->myn = 0;
+      this->mx.oob(0);
+      this->my.oob(0);
     }
 };
 
@@ -85,5 +69,7 @@ template <PinNumberType xp, PinNumberType xn, PinNumberType yp, PinNumberType yn
 //old chips in hand:
 template <PinNumberType xp, PinNumberType xn, PinNumberType yp, PinNumberType yn, PinNumberType pwr> class UDN2540: public FourBangerWithPower<xp, xn, yp, yn, pwr, LOW> {};//to test by switching between this and DRV8833
 
-//popular dual bridge, which curiously has same driver pattern as unipolar.
+//popular dual bridge
 template <PinNumberType xp, PinNumberType xn, PinNumberType yp, PinNumberType yn, PinNumberType pwr> class DRV8833: public FourBangerWithPower<xp, xn, yp, yn, pwr, HIGH> {};
+
+#pragma clang diagnostic pop

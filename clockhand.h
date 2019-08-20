@@ -51,9 +51,7 @@ class ClockHand {
     bool energized = false; //actually is unknown at init
     /** time to next step */
     TickTimer ticker;
-    /** time that driver must be on for each step. Someday will make this conditional.*/
-    TickTimer pulseOn;//need to wait a bit for power down, maybe also for power up.
-
+   
     //where we want to be
     int target = ~0U;
     //ignore position, run forever in the given direction
@@ -85,7 +83,6 @@ class ClockHand {
 
     ClockHand(Unit unit, Stepper::Interface interface): unit(unit) {
       mechanism.interface = interface;
-      pulseOn.set(pulseWidth, false); //preload but wait until we step.
     }
 
     //placeholder for incomplete code for remote interface
@@ -104,13 +101,9 @@ class ClockHand {
     	int step= actual? int(mechanism) : target;
       //ignoring step<0 issues
     	int rem= step % stepperrev;
-//false alarm:
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wfor-loop-analysis"
-    	while(rem<0){//should be 0 or 1 iterations.
-    		rem+=stepperrev;
+    	if(rem<0){//C has strange idea of how modulus should work. clang Linter has bad check on loop variables so switched from prophylatic while to an if.
+    		rem += stepperrev;
     	}
-#pragma clang diagnostic pop
     	//rem/stepperrev is now fraction of cycle
     	return rate(timeperrev()*rem,stepperrev);
     }

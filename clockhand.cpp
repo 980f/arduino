@@ -3,7 +3,7 @@
 void ClockHand::freeze() {
   freerun = 0;
   if (changed(enabled, false)) {
-    ;
+    ;//might need to delay before starting again.
   }
 }
 
@@ -26,25 +26,19 @@ void ClockHand::setFromMillis(unsigned ms) {
 bool ClockHand::onTick() {
   if (ticker.perCycle()) {
     if (freerun) {
-      mechanism += freerun;
-      pulseOn.start();
+      mechanism += freerun;     
       return true;
     }
     if (enabled) {
-      mechanism += (target - mechanism);//automatic 'signof' under the hood in Stepper class
-      pulseOn.start();
+      mechanism += (target - mechanism);//automatic 'signof' under the hood in Stepper class     
       if (target == mechanism) {
         enabled = 0;
       }
       return true;
-    } else if (pulseOn.hasFinished()) {
-      mechanism.interface(~0);
-      return false;
-    }
-    return true;//how do we get here?
-  } else {
-    return pulseOn.isRunning();//could simplify return logic, unconditionally return this line.
+    } 
+    return false;//not enabled, didn't step
   }
+  return false;//not needing to step
 }
 
 /** update speed, where speed is millis per step */
