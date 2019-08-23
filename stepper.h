@@ -66,4 +66,9 @@ class Stepper {
       return target-step;
     }
 
+     /** @returns absolute position relative to current location */
+    int operator +(Step target){
+      return target+step;
+    }
+
 };

@@ -5,7 +5,8 @@
 #pragma once
 #include <Arduino.h> //some IDE's need this
 #include "pinuser.h" //maple and some other guys deviated a bit on pin declaration syntax, this guy deals with that.
-
+//#include "bitbanger.h" //BoolishRef
+#include "boolish.h" // so that OutputPin may be passed to a generic bit flipping service
 /* @param arduinoNumber is such as 13 for the typical LED pin.
   @param mode should be one of:: INPUT(0), INPUT_PULLUP(2), and OUTPUT(1)
   @param polarity is HIGH(1) if true means output pin high, LOW(0) if true means pin low.
@@ -31,7 +32,7 @@ template <PinNumberType arduinoNumber, PinModeType mode, unsigned polarity = HIG
   static constexpr bool inverse(bool active) {
     return (HIGH + LOW) - active;
   }
-  enum :PinNumberType {
+  enum : PinNumberType {
     /** in case you have to interface with something that takes the digitalXXX number*/
     number = arduinoNumber,
     active = polarity,
@@ -39,7 +40,7 @@ template <PinNumberType arduinoNumber, PinModeType mode, unsigned polarity = HIG
   };
 
   Pin() {
-    pinMode(number, mode); 
+    pinMode(number, mode);
   }
 
   /** derived classes have operator bool(), we don't do that here as some variants do something special on read and we don't want the cost of virtual functions. */
@@ -68,13 +69,19 @@ template <PinNumberType arduinoNumber, PinModeType mode, unsigned polarity = HIG
     Note that the InputPin uses pullup mode.
     Also note that some devices have more options such as pulldown, that arduino does not provide access to.
 */
-template <PinNumberType arduinoNumber, unsigned polarity = HIGH, PinModeType puller= polarity?INPUT_PULLDOWN:INPUT_PULLUP> struct InputPin: public Pin<arduinoNumber, puller, polarity> {
+template < PinNumberType arduinoNumber, unsigned polarity = HIGH, PinModeType puller = polarity ? INPUT_PULLDOWN : INPUT_PULLUP > struct InputPin : public Pin<arduinoNumber, puller, polarity>, public BoolishRef {
+  using super = Pin<arduinoNumber, puller, polarity>;
   operator bool() const {
-    return Pin<arduinoNumber, puller, polarity>::get();
+    return super::get();
   }
+
+  //abused to change pullup state, ignores defined polarity
+  bool operator=(bool on) const override {
+    pinMode(super::number, on ? INPUT_PULLUP : INPUT_PULLDOWN);
+  }
+
 };
 
-#include "boolish.h" // so that OutputPin may be passed to a generic bit flipping service
 
 template <PinNumberType arduinoNumber, unsigned polarity = HIGH> struct OutputPin: public Pin<arduinoNumber, OUTPUT, polarity>, public BoolishRef {
   using super = Pin<arduinoNumber, OUTPUT, polarity>;
@@ -102,12 +109,12 @@ template <PinNumberType arduinoNumber, unsigned polarity = HIGH> struct OutputPi
 };
 
 /** to drive a pair of pins in tandem, for when you need more drive or there is some other reason they should always match*/
-template <unsigned p1,unsigned p2>
-struct DuplicateOutput:public BoolishRef {
+template <unsigned p1, unsigned p2>
+struct DuplicateOutput: public BoolishRef {
   const OutputPin<p1> theone;
   const OutputPin<p2> theother;
   bool operator=(bool on) const override {
-  	//todo: consider disabling interrupts around the pair
+    //todo: consider disabling interrupts around the pair
     theone = on;
     theother = on;
   }
@@ -119,12 +126,12 @@ struct DuplicateOutput:public BoolishRef {
 };
 
 /** to drive a pair of pins in tandem, for when one is always the complement of the other.*/
-template <unsigned ppin,unsigned npin>
-struct ComplementaryOutput :public BoolishRef{
-	const OutputPin<ppin,1> nominal;
-  const OutputPin<npin,0> complement;
+template <unsigned ppin, unsigned npin>
+struct ComplementaryOutput : public BoolishRef {
+  const OutputPin<ppin, 1> nominal;
+  const OutputPin<npin, 0> complement;
   bool operator=(bool on)const override {
-  	//todo: break before make etc
+    //todo: break before make etc
     nominal = on;
     complement = on;
     return on;
@@ -134,12 +141,12 @@ struct ComplementaryOutput :public BoolishRef{
     return nominal;
   }
 
-	/** out of band signalling, neither 1 nor zero. */
-  void oob(bool on=false) const {
-  	nominal = on;
+  /** out of band signalling, neither 1 nor zero. */
+  void oob(bool on = false) const {
+    nominal = on;
     complement = !on;
   }
-  
+
 };
 
 #pragma clang diagnostic pop
