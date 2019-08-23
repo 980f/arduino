@@ -14,3 +14,4 @@ while read link ; do echo >>relib ln -sf $(readlink "$link") $link; done < .lard
 #and now kill the temps. Comment this out while investigating/debugging this process.
 rm .lard.*
 
+## ps: the name is a typo, it was supposed to be "list arduino library links" but didn't get the nk from links.

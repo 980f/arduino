@@ -1,3 +1,5 @@
-## usage: from projectdir> ../arduous pathtolibfile
-
+## usage: from projectdir> ./arduous pathtolibfile
+# link file
 ln -sf $1 `basename $1`
+#and update git tracking
+./lardls
