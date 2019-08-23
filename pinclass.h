@@ -26,8 +26,6 @@
 
 */
 
-//arduino numbers are ints elsewhere, tired of fighting different compiler vintages, AVR one won't cast unsigned to int for linker
-
 template <PinNumberType arduinoNumber, PinModeType mode, unsigned polarity = HIGH> struct Pin {
   /** pretending to not know that HIGH=1 and LOW=0 ... constexpr should inline '1-active' at each place of use and not actually do a function call */
   static constexpr bool inverse(bool active) {
@@ -46,11 +44,11 @@ template <PinNumberType arduinoNumber, PinModeType mode, unsigned polarity = HIG
 
   /** derived classes have operator bool(), we don't do that here as some variants do something special on read and we don't want the cost of virtual functions. */
   bool get()const {
-    return digitalRead(arduinoNumber) == active;
+    return digitalRead(number) == active;
   }
 
   bool setto(bool value) const { //const is allowed as this operation doesn't change the code, only the real world pin
-    digitalWrite(arduinoNumber, value ? active : inactive);
+    digitalWrite(number, value ? active : inactive);
     return value;
   }
 

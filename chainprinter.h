@@ -82,12 +82,13 @@ struct ChainPrinter {
 
     /** constructing one of these turns off auto linefeed, destruction restores the autofeed status. Nesting works. */
     class FeedSuppressor {
-        ChainPrinter &printer;
         bool wasFeeding;
-        
+      public:
+        ChainPrinter &printer;
         explicit FeedSuppressor(ChainPrinter &printer): printer(printer)	{
           wasFeeding = take(printer.autofeed);
         }
+
         ~FeedSuppressor() {
           printer.autofeed = wasFeeding;
         }
