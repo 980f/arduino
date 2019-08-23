@@ -1,48 +1,57 @@
 #include "Arduino.h"  //IDE needs this
 #include "spibridges.h"
 #include "pinclass.h"
+#include "bitbanger.h"
+
+#ifdef SoftSpiSpew
+#include "chainprinter.h"
+static ChainPrinter sdbg(SoftSpiSpew, true);
+#else
+#define sdbg(...)
+#endif
 
 template<unsigned clkpin, unsigned datapin, unsigned cspin>
 class SoftSpi {
-  OutputPin <clkpin> CK;//todo: cpol param for clock, and add an idle state for it as well.
-  OutputPin <datapin> D;
-  OutputPin <cspin,LOW> CS;
-public:
-  void beIdle() const {
-    CS = 0;
-    CK = 1;
-  }
+    OutputPin <clkpin> CK;//todo: cpol param for clock, and add an idle state for it as well.
+    OutputPin <datapin> D;
+    OutputPin <cspin, LOW> CS;
+  public:
+    void beIdle() const {
+      CS = 0;
+      CK = 1;
+    }
 
-  //msb first
-  void send(unsigned data, unsigned numbits = 8) const {
-    CS = 1;
-    unsigned picker = 1 << (numbits - 1);
+    //msb first
+    void send(unsigned data, unsigned numbits = 8) const {
+      sdbg("Send:", BITLY(data));
+      CS = 1;
+      unsigned picker = 1 << (numbits - 1);
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wfor-loop-analysis"
-    do {
-      CK = 0;
-      D = (data & picker) ? 1 : 0;
-      picker >>= 1; //placed here to increase data setup time before clock edge, helps if driving an isolator.
-      CK = 1;
-    } while (picker);
+      do {
+        CK = 0;
+        D = (data & picker) ? 1 : 0;
+        picker >>= 1; //placed here to increase data setup time before clock edge, helps if driving an isolator.
+        CK = 1;
+      } while (picker);
 #pragma clang diagnostic pop
-    CS = 0;
-  }
+      CS = 0;
+    }
 };
 
 /** we take advantage of the compatible timing between a typical spi cs and the HC595 output register clock to pretend that the HC595 is a normal spi device */
 template<unsigned clkpin, unsigned datapin, unsigned rckpin, unsigned oepin>
 struct HC595 : SoftSpi<clkpin, datapin, rckpin> {
-  OutputPin <oepin,LOW> OE;
-  using Super=SoftSpi<clkpin, datapin, rckpin>;
-  
+  OutputPin <oepin, LOW> OE;
+  using Super = SoftSpi<clkpin, datapin, rckpin>;
+
   void start()const {
-  	Super::beIdle();
+    Super::beIdle();
     OE = 1;
   }
 
   void send(unsigned data, unsigned numbits = 8) const {
-  	Super::send(data, numbits );
+    Super::send(data, numbits );
   }
 };
 
@@ -61,91 +70,92 @@ static bool greymsb(byte step) {
 //BBABBAAA
 
 class SpiDualBridgeBoard_Impl {
-  const HC595<4, 8, 12, 7> phasors;
-  uint8_t phases;
+    const HC595<4, 8, 12, 7> phasors;
+    uint8_t phases;
 
-public:
-  DuplicateOutput<11, 3> enfirst;
-  DuplicateOutput<6, 5> ensecond;
+  public:
+    DuplicateOutput<11, 3> enfirst;
+    DuplicateOutput<6, 5> ensecond;
 
-  void start(bool free = false) {
-  	phases=free?~0U:0;//matters to unipolar rig.
-    phasors.send(phases);
-    phasors.start();
-    enfirst = 1;
-    ensecond = 1;
-  }
-
-  void setBridge(bool second, bool x, bool y) {
-    if (second) {
-      phases &= 0x78;//2nd bridge is inverse mask of first
-      phases |= x ? (1 << 0) : (1 << 6); //not putting the ternary in the shift as cortexm parts can load with constant shift.
-      phases |= y ? (1 << 5) : (1 << 7);
-    } else {
-      phases &= ~0x78;
-      phases |= x ? (1 << 2) : (1 << 3);
-      phases |= y ? (1 << 1) : (1 << 4);
+    void start(bool free = false) {
+      phases = free ? ~0U : 0; //matters to unipolar rig.
+      phasors.send(phases);
+      phasors.start();
+      enfirst = 1;
+      ensecond = 1;
     }
-    phasors.send(phases);
-  }
 
-  void setBridge(bool second, uint8_t phase) {
-    setBridge(second, greymsb(phase), greylsb(phase));
-  }
-
-  void power(bool second,bool on) {
-    if (second) {
-      ensecond = on; //leave the phases alone.
-    } else {
-      enfirst = on; //leave the phases alone.
+    void setBridge(bool second, bool x, bool y) {
+      const static uint8_t nibbler = BitWad<7, 6, 5, 0>::mask; //bits for 'second' motor
+      if (second) {
+        phases &= ~nibbler;//2nd bridge is inverse mask of first
+        phases |= x ? bit(0) : bit(6); //not putting the ternary in the bit() as cortexm parts can load with constant shift.
+        phases |= y ? bit(5) : bit(7); //.. and doing it this way leans on the compiler to do the bit() at compile time.
+      } else {
+        phases &= ~~nibbler;
+        phases |= x ? bit(2) : bit(3);
+        phases |= y ? bit(1) : bit(4);
+      }
+      phasors.send(phases);
     }
-  }
+
+    void setBridge(bool second, uint8_t phase) {
+      setBridge(second, greymsb(phase), greylsb(phase));
+    }
+
+    void power(bool second, bool on) {
+      if (second) {
+        ensecond = on; //leave the phases alone.
+      } else {
+        enfirst = on; //leave the phases alone.
+      }
+    }
 };
 
 SpiDualBridgeBoard_Impl theBoard;//there can be only one, it takes up too many pins for two.
 
-  void SpiDualBridgeBoard::start(bool free ) {
-    theBoard.start(free);
-  }
+void SpiDualBridgeBoard::start(bool free ) {
+  theBoard.start(free);
+}
 
-  void SpiDualBridgeBoard::setBridge(bool second, bool x, bool y)  {
-    theBoard.setBridge(second, x, y);
-  }
+void SpiDualBridgeBoard::setBridge(bool second, bool x, bool y)  {
+  theBoard.setBridge(second, x, y);
+}
 
-  void SpiDualBridgeBoard::setBridge(bool second, uint8_t phase)  {
-    theBoard.setBridge(second, phase);
-  }
+void SpiDualBridgeBoard::setBridge(bool second, uint8_t phase)  {
+  theBoard.setBridge(second, phase);
+}
 
 /** a hard kill tries to lock the rotor, a soft one lets it spin */
-  void SpiDualBridgeBoard::power(bool second, bool on) {
-    theBoard.power(second,on);
-  }
+void SpiDualBridgeBoard::power(bool second, bool on) {
+  theBoard.power(second, on);
+}
 
 /*
-Brutal control pinout, might as well be random.
+  Brutal control pinout, might as well be random.
 
-From reading code:
-msb..lsb
-34321124
-BBABBAAA
-
-
-From V1.2 schematic:  (3 and 4 swapped)
-msb..lsb
-43421123
-BBABBAAA
-
-D7 en pulled up.
-D4 clock
-D8 data
-D12 latch
-
-pwm1a&B goto servo connectors, D9,D10
-pwm2A&B goto M1&2, D11,D3
-pwm0A&B goto M3&4, D6,D5
+  From reading code:
+  msb..lsb
+  34321124
+  BBABBAAA
 
 
-//2,13 available (also 0,1 uart)
+  From V1.2 schematic:  (3 and 4 swapped)
+  msb..lsb
+  43421123
+  BBABBAAA
+
+  D7 en pulled up.
+  D4 clock
+  D8 data
+  D12 latch
+
+  pwm1a&B goto servo connectors, D9,D10
+  pwm2A&B goto M1&2, D11,D3
+  pwm0A&B goto M3&4, D6,D5
+
+
+  //2,13 available (also 0,1 uart)
 
 
 */

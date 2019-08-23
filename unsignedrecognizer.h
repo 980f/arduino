@@ -3,8 +3,11 @@
 #include "char.h"
 /** recognize a sequence of digits. if asked for the value provide it, but clear it. You can peek at the value, but shouldn't except for debugging this module itself.
   leading zeroes are effectively ignored, they do not trigger octal interpretation. */
+
+
+template<typename Unsigned>
 struct UnsignedRecognizer {
-  unsigned accumulator = 0;
+  Unsigned accumulator = 0;
 
   /** inspect incoming character, @returns whether it is part of the number and if so had added it to local number.*/
   bool operator()(char key) {
@@ -26,7 +29,7 @@ struct UnsignedRecognizer {
   }
 
   /** look at it and it is gone! */
-  operator unsigned() {
+  operator Unsigned() {
     return take(accumulator);
   }
 };

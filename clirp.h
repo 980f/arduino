@@ -10,12 +10,13 @@
   then the prior arg is take(pushed)
 */
 
+template<typename Unsigned>
 class CLIRP {
-    UnsignedRecognizer numberparser;
+    UnsignedRecognizer<Unsigned> numberparser;
     //for 2 parameter commands, gets value from param.
   public://until we get template to work.
-    unsigned arg = 0;
-    unsigned pushed = 0;
+    Unsigned arg = 0;
+    Unsigned pushed = 0;
   public:
     /** command processor */
     bool doKey(byte key) {
@@ -37,11 +38,11 @@ class CLIRP {
       return true;//we did NOT handle it, you look at it.
     }
 
-    template <typename Ret> Ret call(Ret (*fn)(unsigned, unsigned)) {
+    template <typename Ret,typename U1,typename U2> Ret call(Ret (*fn)(U1, U2)) {
       (*fn)(take(pushed), take(arg));
     }
 
-    template <typename Ret> Ret call(Ret (*fn)(unsigned)) {
+    template <typename Ret,typename U1> Ret call(Ret (*fn)(U1)) {
       pushed = 0; //forget unused arg.
       (*fn)(take(arg));
     }
