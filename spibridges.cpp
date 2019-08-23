@@ -1,35 +1,21 @@
-// Adafruit Motor shield library
-// copyright Adafruit Industries LLC, 2009
-// this code is public domain, enjoy!
-
-
-#if (ARDUINO >= 100)
-
-#include "Arduino.h"
-
-#else
-#if defined(__AVR__)
-#include <avr/io.h>
-#endif
-#include "WProgram.h"
-#endif
-
+#include "Arduino.h"  //IDE needs this
 #include "spibridges.h"
+#include "pinclass.h"
 
 template<unsigned clkpin, unsigned datapin, unsigned cspin>
 class SoftSpi {
   OutputPin <clkpin> CK;//todo: cpol param for clock, and add an idle state for it as well.
   OutputPin <datapin> D;
-  OutputPin <cspin> CS;
-
-  void beIdle() {
-    CS = 1;
+  OutputPin <cspin,LOW> CS;
+public:
+  void beIdle() const {
+    CS = 0;
     CK = 1;
   }
 
   //msb first
-  void send(unsigned data, unsigned numbits = 8) {
-    CS = 0;
+  void send(unsigned data, unsigned numbits = 8) const {
+    CS = 1;
     unsigned picker = 1 << (numbits - 1);
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wfor-loop-analysis"
@@ -40,18 +26,23 @@ class SoftSpi {
       CK = 1;
     } while (picker);
 #pragma clang diagnostic pop
-    CS = 1;
+    CS = 0;
   }
 };
 
 /** we take advantage of the compatible timing between a typical spi cs and the HC595 output register clock to pretend that the HC595 is a normal spi device */
-template<unsigned clkpin, unsigned datapin, unsigned rckpin, unsigned cspin>
-class HC595 : SoftSpi<clkpin, datapin, rckpin> {
-  OutputPin <rckpin> OE;
+template<unsigned clkpin, unsigned datapin, unsigned rckpin, unsigned oepin>
+struct HC595 : SoftSpi<clkpin, datapin, rckpin> {
+  OutputPin <oepin,LOW> OE;
+  using Super=SoftSpi<clkpin, datapin, rckpin>;
+  
+  void start()const {
+  	Super::beIdle();
+    OE = 1;
+  }
 
-  void start(bool free = false) {
-    phasors.send(free ? ~0 : 0);
-    OE = 0;
+  void send(unsigned data, unsigned numbits = 8) const {
+  	Super::send(data, numbits );
   }
 };
 
@@ -78,7 +69,9 @@ public:
   DuplicateOutput<6, 5> ensecond;
 
   void start(bool free = false) {
-    phasors.start(free);
+  	phases=free?~0U:0;//matters to unipolar rig.
+    phasors.send(phases);
+    phasors.start();
     enfirst = 1;
     ensecond = 1;
   }
@@ -111,24 +104,23 @@ public:
 
 SpiDualBridgeBoard_Impl theBoard;//there can be only one, it takes up too many pins for two.
 
-namespace SpiDualBridgeBoard {
-  void start(bool free = false) {
+  void SpiDualBridgeBoard::start(bool free ) {
     theBoard.start(free);
   }
 
-  void setBridge(bool x, bool y) const {
+  void SpiDualBridgeBoard::setBridge(bool second, bool x, bool y)  {
     theBoard.setBridge(second, x, y);
   }
 
-  void setBridge(uint8_t phase) const {
+  void SpiDualBridgeBoard::setBridge(bool second, uint8_t phase)  {
     theBoard.setBridge(second, phase);
   }
 
 /** a hard kill tries to lock the rotor, a soft one lets it spin */
-  void power(bool on) {
+  void SpiDualBridgeBoard::power(bool second, bool on) {
     theBoard.power(second,on);
   }
-};
+
 /*
 Brutal control pinout, might as well be random.
 

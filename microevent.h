@@ -163,8 +163,8 @@ extern SoftMicroTimer MicroTicked;
 class MicroStable {
 	public:
  		using Tick = RawMicros;
-	private:
 
+  public: //for diagnostic access
     MicroTick expires;
     Tick duration;
   public:
