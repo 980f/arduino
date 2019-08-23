@@ -5,7 +5,7 @@
   leading zeroes are effectively ignored, they do not trigger octal interpretation. */
 
 
-template<typename Unsigned>
+template<typename Unsigned=unsigned>
 struct UnsignedRecognizer {
   Unsigned accumulator = 0;
 
