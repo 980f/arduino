@@ -18,7 +18,8 @@ class CLIRP {
     Unsigned arg = 0;
     Unsigned pushed = 0;
   public:
-    /** command processor */
+    /** command processor. pass it each char as they arrive.
+    @returns false if char was used internally, true if you should inspect it*/
     bool doKey(byte key) {
       if (key == 0) { //ignore nulls, might be used for line pacing.
         return false;
@@ -27,8 +28,9 @@ class CLIRP {
       if (numberparser(key)) { //part of a number, do no more
         return false;
       }
+      //ansi escape sequence doober would go here if we bring it back. it is a state machine that accumulats ansi sequence and stored it on a member herein, returning true when sequence complete.
       arg = numberparser; //read and clear, regardless of whether used.
-      switch (key) {//used: aAbcdDefFhHiIjlMmNnoprstwxyzZ  :@ *!,.   tab cr newline
+      switch (key) {
         case '\t'://ignore tabs, makes param files easier to read.
           return false;
         case ','://push a parameter for 2 parameter commands.
@@ -39,12 +41,12 @@ class CLIRP {
     }
 
     template <typename Ret,typename U1,typename U2> Ret call(Ret (*fn)(U1, U2)) {
-      (*fn)(take(pushed), take(arg));
+      return (*fn)(take(pushed), take(arg));
     }
 
     template <typename Ret,typename U1> Ret call(Ret (*fn)(U1)) {
       pushed = 0; //forget unused arg.
-      (*fn)(take(arg));
+      return (*fn)(take(arg));
     }
 
 };
