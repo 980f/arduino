@@ -89,11 +89,21 @@ struct ChainPrinter {
           wasFeeding = take(printer.autofeed);
         }
 
+        /** make a copy but keep destructor of prior from doing anything, just so parent class can have a factory for these. */
+        FeedSuppressor(FeedSuppressor &&other):wasFeeding(other.wasFeeding),printer(other.printer){
+        	other.wasFeeding=false;	
+        }
+        
+        FeedSuppressor(const FeedSuppressor &other)=delete;
+        
         ~FeedSuppressor() {
           printer.autofeed = wasFeeding;
         }
     };
 
+    FeedSuppressor nofeeds(){
+    	return FeedSuppressor(*this);
+    }
 
 };
 

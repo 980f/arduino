@@ -12,17 +12,16 @@ struct StepperMotor {
   //time between steps
   MicroStable ticker;
 
-  //configuration
-  Stepper::Step homeWidth = 15; //todo:eeprom
-  MicroStable::Tick homeSpeed = 250000; //todo:eeprom
+  //configuration, class default should be non functional.
+  Stepper::Step homeWidth = ~0;
+  MicroStable::Tick homeSpeed = ~0;
   BoolishRef *homeSensor;
 
   bool which;//used for trace messages
   bool edgy;//used to detect edges of homesensor
-  Stepper::Step homeOn;
-  Stepper::Step homeOff;
 
   void setTick(MicroStable::Tick perstep) {
+  	dbg("Setting slew[",which,"]:", perstep);
     ticker.set(perstep);
   }
 
@@ -35,11 +34,12 @@ struct StepperMotor {
   };
   Homing homing = NotHomed;
 
-  //command in progress. might someday make a queue and this would be q not empty.
+  /** command in progress. might someday make a queue and this would be q not empty. 
+   *  used to send a report when the target is reached. */
   bool cip = false;
 
   void report() const {
-    dbg("{W:", which, ",M:", pos, "}");//let host know we are done.
+    dbg("{W:", which, ",M:", pos, '}');//let host know we are done.
   }
 
   void moveto(Stepper::Step location,MicroStable::Tick perstep=0){
@@ -95,7 +95,7 @@ struct StepperMotor {
           dbg("Homing started:", target, " @", homing, " width:", homeWidth);
           break;
 
-        case ForwardOff://HM:3
+        case ForwardOff://HM:1
           if (!edgy) {
             dbg("Homing backed off sensor, at ", pos);
             pos = homeWidth;//a negative pos will be a timeout
@@ -117,7 +117,7 @@ struct StepperMotor {
           }
           break;
 
-        case BackwardsOff://HM:1
+        case BackwardsOff://HM:3
           if (!edgy) {
             dbg("Homing found off edge at ", pos);
             pos = (homeWidth + pos) / 2;
@@ -169,4 +169,3 @@ struct StepperMotor {
     setTick(homeSpeed);
   }
 };
-

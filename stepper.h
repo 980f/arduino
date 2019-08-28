@@ -21,7 +21,6 @@ class Stepper {
     Hook<byte> interface;
     using Interface = Hook<byte>::Pointer;
 
-
     /** @returns nominal location */
     operator Step() const { // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
       return step;

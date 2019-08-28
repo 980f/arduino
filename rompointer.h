@@ -2,7 +2,7 @@
 /** pointer for reading from PROGMEM
 */
 
-using RomAddr = const PROGMEM char *;
+using RomAddr = unsigned;//const PROGMEM char *;
 
 struct RomPointer  {
   RomAddr addr;
@@ -23,3 +23,4 @@ struct RomPointer  {
   }
 
 };
+

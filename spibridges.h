@@ -1,5 +1,5 @@
 #pragma once
-
+#include <stdint.h>
 /** a minimal interface to the DK Electronics dual stepper/dual servo board, only exposing dual stepper capability */
 
 namespace SpiDualBridgeBoard {
