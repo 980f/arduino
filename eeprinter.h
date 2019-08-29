@@ -1,8 +1,9 @@
-#pramga once //(C) 2019 Andy Heilveil, github/980f
-//eeprom allocations:
+#pragma once //(C) 2019 Andy Heilveil, github/980f
 #include <Print.h>
 
 #ifdef ARDUINO_ARCH_AVR
+#define HaveEEPrinter 1
+
 #include <EEPROM.h>
 #if defined(ARDUINO_AVR_LEONARDO)
 #define EESIZE 1024
@@ -13,18 +14,22 @@
 #else
 #define EESIZE 512
 #endif
-/*
-ARDUINO_ARCH_SAMD
+#endif //arch_avr
 
-ARDUINO_ARCH_AVR
+/* todo:
+  ARDUINO_ARCH_SAMD
+
+  ARDUINO_ARCH_SAM ARDUINO_SAM_DUE __SAM3X8E__
 */
+#ifdef ARDUINO_ARCH_AVR
+
 class EEPrinter : public Print {
     unsigned ptr;
 
   public:
     explicit EEPrinter(int start): ptr(start) {}
-    size_t write(uint8_t data) override {      
-      EEPROM.write(ptr++, data);    
+    size_t write(uint8_t data) override {
+      EEPROM.write(ptr++, data);
     };
 
     int availableForWrite() override {
