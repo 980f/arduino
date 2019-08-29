@@ -16,14 +16,15 @@ class EEPrinter : public Print {
 
   public:
     explicit EEPrinter(int start): ptr(start) {}
+    
     size_t write(uint8_t data) override {
-      EEPROM.write(ptr++, data);
+//    	dbg(ptr,':',data,' ',char(data));
+      EEPROM.write(ptr++, char(data));//#without the char cast data was corrupted. Someday we will take it out and figure out why.
     };
 
     int availableForWrite() override {
       return EEPROM.length() - ptr;
     }
-    //  virtual void flush() {  }
 };
 
 #else

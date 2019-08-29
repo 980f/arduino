@@ -136,7 +136,7 @@ struct StepperMotor {
   //active state report, formatted as lax JSON (no quotes except for escaping framing)
   void stats(ChainPrinter *adbg) {
     if (adbg) {
-      (*adbg)("{W:", which, ", T:", target, ", P:", int(pos), ", FR:", freeRun ? run : 0, ", HM:", homing, ", tick:", ticker.duration, '}');
+      (*adbg)("{W:", which, ", T:", target, ", P:", pos, ", FR:", freeRun ? run : 0, ", HM:", homing, ", tick:", ticker.duration, '}');
     }
   }
 
