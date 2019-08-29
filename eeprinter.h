@@ -1,20 +1,7 @@
 #pragma once //(C) 2019 Andy Heilveil, github/980f
 #include <Print.h>
 
-#ifdef ARDUINO_ARCH_AVR
-#define HaveEEPrinter 1
-
 #include <EEPROM.h>
-#if defined(ARDUINO_AVR_LEONARDO)
-#define EESIZE 1024
-#elif defined(ARDUINO_AVR_UNO)
-#define EESIZE 1024
-#elif defined(ARDUINO_AVR_MEGA)
-#define EESIZE 4096
-#else
-#define EESIZE 512
-#endif
-#endif //arch_avr
 
 /* todo:
   ARDUINO_ARCH_SAMD
@@ -22,6 +9,7 @@
   ARDUINO_ARCH_SAM ARDUINO_SAM_DUE __SAM3X8E__
 */
 #ifdef ARDUINO_ARCH_AVR
+#define HaveEEPrinter 1
 
 class EEPrinter : public Print {
     unsigned ptr;
@@ -33,7 +21,7 @@ class EEPrinter : public Print {
     };
 
     int availableForWrite() override {
-      return EESIZE - ptr;
+      return EEPROM.length() - ptr;
     }
     //  virtual void flush() {  }
 };
