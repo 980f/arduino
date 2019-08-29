@@ -1,5 +1,7 @@
 #pragma once
 #include <stdint.h>
+#include "boolish.h"
+
 /** a minimal interface to the DK Electronics dual stepper/dual servo board, only exposing dual stepper capability */
 
 namespace SpiDualBridgeBoard {
@@ -11,6 +13,14 @@ void setBridge(bool second, uint8_t phase) ;
 
 void power(bool second, bool on);
 
+};
+
+class SpiDualPowerBit: public BoolishRef {
+    bool second;
+  public:
+    SpiDualPowerBit(bool second): second(second) {}
+    bool operator =(bool)const override;
+    operator bool()const override;
 };
 
 class SpiDualStepper {

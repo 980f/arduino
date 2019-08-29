@@ -16,6 +16,7 @@ struct StepperMotor {
   Stepper::Step homeWidth = ~0;
   MicroStable::Tick homeSpeed = ~0;
   BoolishRef *homeSensor;
+  BoolishRef *powerControl;
 
   bool which;//used for trace messages
   bool edgy;//used to detect edges of homesensor
@@ -146,6 +147,12 @@ struct StepperMotor {
     target = pos;
   }
 
+  void power(bool on){
+  	if(powerControl!= nullptr){
+  		 *powerControl=on;
+  	}
+  }
+
   /** not actually there until the step has had time to settle down. pessimistically that is when the next step would occur if we were still moving.*/
   bool there() const {
     return run == 0 && target == pos;
@@ -156,10 +163,11 @@ struct StepperMotor {
     pos = 0;
   }
 
-  void start(bool second, Stepper::Interface iface, BoolishRef *homer) {
+  void start(bool second, Stepper::Interface iface, BoolishRef *homer, BoolishRef *powerGizmo) {
     which = second;
     pos.interface = iface;
-    if (changed(homeSensor, homer)) {
+    powerControl=powerGizmo;//no action needed on connect
+    if (changed(homeSensor, homer)) {//on connect update 'homed' state
       if (homeSensor != nullptr) {
         homing = NotHomed;
       } else {
