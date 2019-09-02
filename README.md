@@ -9,5 +9,8 @@ cd <your arduino install>/libraries/980f
 git clone https://github.com/980f/ezcpp.git
 
 
+The above line is in "onclone.sh".
+
+
 
 
