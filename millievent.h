@@ -61,7 +61,7 @@ extern SoftMilliTimer MilliTicked;
 class MonoStable {
   protected:
     MilliTick zero = BadTick;//this choice ensures that both isDone and isRunning are false until an real cycle has at least begun.
-    MilliTick done;
+    MilliTick done; //time after zero at which the timer is done.
   public:
     /** combined create and set, if nothing to set then a default equivalent to 'never' is used.*/
     MonoStable(MilliTick duration = BadTick, bool andStart = true): done(duration) {

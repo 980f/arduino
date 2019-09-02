@@ -44,6 +44,28 @@ template<typename Intish> struct Based: public Printable {
 
 #define BITLY(varname) Basely<decltype(varname),2>(varname)
 
+
+/** for printing chunks of ram. */
+struct BlockDumper : public Printable {
+  uint8_t *base;
+  unsigned length;
+  char comma;
+  BlockDumper(uint8_t *base, unsigned length, char comma = ' '): base(base), length(length), comma(comma)  {  }
+
+  size_t printTo(Print& p) const override {
+    size_t emitted = 0;
+    for (size_t i = 0; i < length; ++i) {
+      emitted += p.print(base[i], HEX);
+      if (comma) {
+        emitted += p.print(comma);
+      }
+    }
+    return emitted;
+  }
+};
+
+#define BLOCK(...) BlockDumper( __VA_ARGS__ )
+
 struct ChainPrinter {
     Print &raw;
     bool autofeed;
@@ -80,7 +102,7 @@ struct ChainPrinter {
       return raw.println();
     }
 
-    /** constructing one of these turns off auto linefeed, destruction restores the autofeed status. Nesting works. */
+    /** constructing one of these temporarily turns off auto linefeed, destruction restores the autofeed status. Nesting works. */
     class FeedSuppressor {
         bool wasFeeding;
       public:
@@ -90,19 +112,20 @@ struct ChainPrinter {
         }
 
         /** make a copy but keep destructor of prior from doing anything, just so parent class can have a factory for these. */
-        FeedSuppressor(FeedSuppressor &&other):wasFeeding(other.wasFeeding),printer(other.printer){
-        	other.wasFeeding=false;	
+        FeedSuppressor(FeedSuppressor &&other): wasFeeding(other.wasFeeding), printer(other.printer) {
+          other.wasFeeding = false;
         }
-        
-        FeedSuppressor(const FeedSuppressor &other)=delete;
-        
+
+        FeedSuppressor(const FeedSuppressor &other) = delete;
+
         ~FeedSuppressor() {
           printer.autofeed = wasFeeding;
         }
     };
 
-    FeedSuppressor nofeeds(){
-    	return FeedSuppressor(*this);
+    /** you must assign this to a named thing to ensure the compiler doesn't elide it.*/
+    FeedSuppressor nofeeds() {
+      return FeedSuppressor(*this);
     }
 
 };
