@@ -20,15 +20,15 @@ using RawMicros = decltype(micros());
 struct MicroTick {
     using Cycler = uint8_t; //8 bits for 12.7 days, 16 bits for 8.9 years
     /** what micros() returns */
-    RawMicros micros; //0: will not return true until at least one us has expired after reset.
+    RawMicros ticks; //0: will not return true until at least one us has expired after reset.
     /** range extender*/
     Cycler wraps;
     /** internal use only. */
-    MicroTick(RawMicros micros, Cycler wraps): micros(micros), wraps(wraps) {
+    MicroTick(RawMicros ticks, Cycler wraps): ticks(ticks), wraps(wraps) {
       //#done
     }
   public:
-    MicroTick(): micros(~0), wraps(~0) {
+    MicroTick(): MicroTick(~0,~0) {
       //#done
     }
 
@@ -36,13 +36,13 @@ struct MicroTick {
         NB: the existence of this cast operator makes the compiler emit a caution that it considered doing this->bool->int when overloading operator +
     */
     operator bool () const {
-      return wraps!=~0U && micros!=~0U;
+      return wraps!=~0U && ticks!=~0U;
     }
 
     /** @returns the value @param increment micros from this one. */
     MicroTick operator +(unsigned increment)const {
-      MicroTick future(micros + increment, wraps);
-      if (future.micros < micros) {//wrapped, in asm would add w/carry to wraps.
+      MicroTick future(ticks + increment, wraps);
+      if (future.ticks < ticks) {//wrapped, in asm would add w/carry to wraps.
         ++future.wraps;
       }
       return future;
@@ -66,9 +66,9 @@ struct MicroTick {
 
     /** update with presumed fresh reading of device clock. @returns whether that caused a change (else two clock reads were same instant- most likely you did something very strange)*/
     bool refresh(RawMicros clock) {
-      RawMicros was = micros;
-      if (changed(micros, clock)) {//if we don't check for exactly 2^32 microseconds then this logic fails.
-        if (micros < was) {//if you don't check often enough this logic will fail.
+      RawMicros was = ticks;
+      if (changed(ticks, clock)) {//if we don't check for exactly 2^32 microseconds then this logic fails.
+        if (ticks < was) {//if you don't check often enough this logic will fail.
           ++wraps;
         }
         return true;
@@ -78,8 +78,8 @@ struct MicroTick {
     }
 
     /** @returns truncated to 32 bits, same as micros() system call.*/
-    uint32_t us() const {
-      return micros;
+    RawMicros us() const {
+      return ticks;
     }
 
     /** debug access, shouldn't need to reference in application code. */
@@ -90,7 +90,7 @@ struct MicroTick {
     uint32_t secs() const {
       uint64_t nofloat = wraps;
       nofloat <<= 32;
-      nofloat += micros;
+      nofloat += ticks;
       nofloat += 500000;
       nofloat /= 1000000;
       return nofloat;
@@ -101,24 +101,24 @@ struct MicroTick {
     //in all of the compares we do NOT use a reference, as that would expose us to something being updated in an ISR. (actually there is no guarantee of an atomic push, so this is moot alh:20aug2019)
     //we also don't combine the simpler ones for the combined operations for performance reasons.
     bool operator ==(MicroTick other) const {
-      return wraps == other.wraps && micros == other.micros;
+      return wraps == other.wraps && ticks == other.ticks;
     }
 
     bool operator >(MicroTick other) const {
-      return wraps > other.wraps || ( wraps == other.wraps && micros > other.micros);
+      return wraps > other.wraps || ( wraps == other.wraps && ticks > other.ticks);
     }
 
     bool operator >=(MicroTick other) const {
       //#not cascading due to code space and time efficiency
-      return wraps > other.wraps || ( wraps == other.wraps && micros >= other.micros);
+      return wraps > other.wraps || ( wraps == other.wraps && ticks >= other.ticks);
     }
 
     bool operator <(MicroTick other) const {
-      return wraps < other.wraps || ( wraps == other.wraps && micros < other.micros);
+      return wraps < other.wraps || ( wraps == other.wraps && ticks < other.ticks);
     }
 
     bool operator <=(MicroTick other) const {
-      return wraps < other.wraps || ( wraps == other.wraps && micros <= other.micros);
+      return wraps < other.wraps || ( wraps == other.wraps && ticks <= other.ticks);
     }
 };
 
@@ -127,9 +127,9 @@ class SoftMicroTimer {
 
   public:
     SoftMicroTimer() {
-      lastchecked.micros = micros();
+      lastchecked.ticks = micros();
       lastchecked.wraps = 0;
-      udbg("ut start:",lastchecked.micros);
+      udbg("ut start:",lastchecked.ticks);
     };
     /** true only when called in a different tick than it was last called in. */
     operator bool() {    	
@@ -177,12 +177,15 @@ class MicroStable {
     */
     void set(Tick duration, boolean andStart = true) {
       this->duration = duration; //for restarts.
-
       if (andStart) {
         start();
       }
-
     }
+
+    void operator = (Tick duration){//#non standard oper=
+    	set(duration);
+    }
+    
     /** call to indicate running starts 'now', a.k.a. retriggerable monostable. */
     void start() {
       expires = MicroTicked.future(duration);
