@@ -16,6 +16,9 @@ struct UnsignedRecognizer {
     } else if(key=='~'){
     	accumulator = ~0; //to help debug some stuff, delete if it gets bothersome.
     	return true;
+     } else if(key==8 || key ==0x7F){//bs or del
+    	accumulator /= 10;
+    	return true;
     } else {
       return false;
     }
