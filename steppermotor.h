@@ -27,8 +27,11 @@ struct StepperMotor {
     //desired speed
     Tick cruise = 0; //formerly the one and only speed, trust to be less than or equal to start.
 
-    /** go fast, but honor acceleration limit */
+    /** velocity mode (aka freeRun) computation */
     Tick operator()(Tick present) const {
+    	if(present>start){
+    		return start;
+    	}
       if ((present - cruise) > accel) {
         return present - accel;
       }
@@ -37,9 +40,7 @@ struct StepperMotor {
 
     /** @return time for next step given number of steps remaining, will do the abs value locally */
     Tick operator()(Stepper::Step remaining, Tick present) const {
-      if (remaining < 0) {
-        remaining = -remaining;
-      }
+      signabs(remaining);//ignore sign
       //the following merits caching:
       unsigned ramp = quanta(cruise - start, accel); //change in speed desired / number of steps to do it in
       if (remaining < ramp) {
@@ -74,7 +75,6 @@ struct StepperMotor {
   bool which;//used for trace messages
   BoolishRef *homeSensor;
   BoolishRef *powerControl;
-
 
   void setTick(Tick perstep) {
     mdbg("Setting slew[", which, "]:", perstep);
@@ -111,7 +111,16 @@ struct StepperMotor {
     cip = pos != target;
     if (!cip) {
       report();
+    } 
+    if(!run){
+    	operator()();
     }
+  }
+
+/** freerun mode, aka velocity mode*/
+  void Run(bool forward){
+  	run=forward?1:-1;
+  	freeRun=true;
   }
 
   /** call this when timer has ticked */
@@ -238,6 +247,11 @@ struct StepperMotor {
   bool atIndex() {
     freeze();
     pos = 0;
+  }
+
+/** start homing */
+  void home(){
+  	homing = NotHomed;
   }
 
   void start(bool second, Stepper::Interface iface, BoolishRef *homer, BoolishRef *powerGizmo) {
