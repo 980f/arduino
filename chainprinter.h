@@ -8,7 +8,8 @@
             ...
             log("This", 42, 'c', 12.4, anythingforwhichthereisaprintvariant, HEXLY(0x980F));
 
-    Initial design returns what the Print::print routines do, all nicely added up. This however precludes chaining to an end-of-line function. OTOH since we have variable length args we can add a Newline as an argument.
+    Initial design returns what the Print::print routines do, all nicely added up. This however precludes chaining to an end-of-line function. 
+    OTOH since we have variable length args we can add a Newline as an argument.
 */
 
 /** Arduino Print functionality is type aware, and supports an interface class Printable.
@@ -65,6 +66,7 @@ struct BlockDumper : public Printable {
 };
 
 #define BLOCK(...) BlockDumper( __VA_ARGS__ )
+
 
 struct ChainPrinter {
     Print &raw;

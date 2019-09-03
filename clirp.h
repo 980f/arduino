@@ -7,19 +7,21 @@
   Command Line Interpreter, Reverse Polish input
 
   If you have a 2-arg function
-  then the prior arg is take(pushed)
+  then the prior arg is pushed
 */
 
 template<typename Unsigned>
 class CLIRP {
+
     UnsignedRecognizer<Unsigned> numberparser;
-    //for 2 parameter commands, gets value from param.
-  public://until we get template to work.
-    Unsigned arg = 0;
-    Unsigned pushed = 0;
+    //for 2 parameter commands, pushed gets value from param.
   public:
+    COR<Unsigned> arg = 0;
+    COR<Unsigned> pushed = 0;
+  public:
+    using Value = Unsigned;
     /** command processor. pass it each char as they arrive.
-    @returns false if char was used internally, true if you should inspect it*/
+      @returns false if char was used internally, true if you should inspect it*/
     bool doKey(byte key) {
       if (key == 0) { //ignore nulls, might be used for line pacing.
         return false;
@@ -34,19 +36,24 @@ class CLIRP {
         case '\t'://ignore tabs, makes param files easier to read.
           return false;
         case ','://push a parameter for 2 parameter commands.
-          pushed = arg;//by not using take() here 1234,X will behave like 1234,1234X
+          pushed = arg;//pushing now clears accumulator  123,X => 123,0X
           return false;
       }
       return true;//we did NOT handle it, you look at it.
     }
 
-    template <typename Ret,typename U1,typename U2> Ret call(Ret (*fn)(U1, U2)) {
-      return (*fn)(take(pushed), take(arg));
+    bool twoargs() const {
+      return bool(pushed);
     }
 
-    template <typename Ret,typename U1> Ret call(Ret (*fn)(U1)) {
+		/** NB: the argument order is the reverse of the RPN entry order. We can debate whether this is a good choice, but it matches early usage of this class.*/
+    template <typename Ret, typename U1, typename U2> Ret operator()(Ret (*fn)(U1, U2)) {
+      return (*fn)(arg,pushed);
+    }
+
+    template <typename Ret, typename U1> Ret operator()(Ret (*fn)(U1)) {
       pushed = 0; //forget unused arg.
-      return (*fn)(take(arg));
+      return (*fn)(arg);
     }
 
 };

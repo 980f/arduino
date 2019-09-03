@@ -26,17 +26,15 @@ class SoftSpi {
       sdbg("Send:", BITLY(data));
       CS = 1;
       unsigned picker = 1 << (numbits - 1);
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wfor-loop-analysis"
       do {
         CK = 0;
         D = (data & picker) ? 1 : 0;
         picker >>= 1; //placed here to increase data setup time before clock edge, helps if driving an isolator.
         CK = 1;
       } while (picker);
-#pragma clang diagnostic pop
       CS = 0;
     }
+
 };
 
 /** we take advantage of the compatible timing between a typical spi cs and the HC595 output register clock to pretend that the HC595 is a normal spi device */
@@ -53,6 +51,7 @@ struct HC595 : SoftSpi<clkpin, datapin, rckpin> {
   void send(unsigned data, unsigned numbits = 8) const {
     Super::send(data, numbits);
   }
+
 };
 
 static bool greylsb(byte step) {
@@ -126,6 +125,7 @@ class SpiDualBridgeBoard_Impl {
       bool graylsb = bitFrom(phases, second ? 5 : 1);
       return graymsb << 1 | (graylsb ^ graymsb);
     }
+
 };
 
 SpiDualBridgeBoard_Impl theBoard;//there can be only one, it takes up too many pins for two.
