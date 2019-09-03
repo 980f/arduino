@@ -20,6 +20,7 @@ struct StepperMotor {
 
   //time between steps
   MicroStable ticker;
+  ///////////////////////////////
   struct GasPedal {
     //configuration
     Tick start = 0;
@@ -29,34 +30,42 @@ struct StepperMotor {
 
     /** velocity mode (aka freeRun) computation */
     Tick operator()(Tick present) const {
-    	if(present>start){
-    		return start;
-    	}
-      if ((present - cruise) > accel) {
+      if (present > start) {
+//        mdbg("jumpto:", start);
+        return start;
+      }
+      if (present >= (cruise + accel)) {
+        mdbg("changeto:", present - accel);
         return present - accel;
       }
+      mdbg("cruising:", cruise);
       return cruise;
     }
 
     /** @return time for next step given number of steps remaining, will do the abs value locally */
     Tick operator()(Stepper::Step remaining, Tick present) const {
-      signabs(remaining);//ignore sign
+      if (0 == signabs(remaining)) {
+//        mdbg("Stopping timer");
+        return ~0;//kill timer
+      }
       //the following merits caching:
       unsigned ramp = quanta(cruise - start, accel); //change in speed desired / number of steps to do it in
       if (remaining < ramp) {
-        return start - accel * ramp;
+        auto newrate = start - accel * ramp;
+        mdbg("newrate:", newrate);
+        return newrate;
       }
       return operator()(present);
     }
 
     void configure(decltype(accel) a, decltype(start) p) {
-      accel = a;
-      if (p != 0) { //if 2 args start speed then delta us/step.
+      accel = a; //#NB: a zero acceleration is allowed.
+      if (p != 0) {//# but a zero speed implies 'retain present'
         start = p;
       }
     }
   } g;
-
+  /////////////////////////////////////////////////////////
   //configuration, class default should be non functional.
   struct Wheel {
     Stepper::Step rev = 200; //pretty much the largest at hand, although there is a 2k/rev on our supplies it moves slowly.
@@ -66,7 +75,7 @@ struct StepperMotor {
         rev = p;
       }
       if (a) {
-        width = a;        
+        width = a;
       }
     }
   } h;
@@ -77,10 +86,10 @@ struct StepperMotor {
   BoolishRef *powerControl;
 
   void setTick(Tick perstep) {
-    mdbg("Setting slew[", which, "]:", perstep);
     if (changed(g.cruise, perstep)) {
-      //might condition this on homing state
-      ticker.set(g.cruise);
+      mdbg("Setting slew[", which, "]:", perstep);
+    } else {
+      mdbg("unchanged slew[", which, "]:", perstep);
     }
   }
 
@@ -111,21 +120,21 @@ struct StepperMotor {
     cip = pos != target;
     if (!cip) {
       report();
-    } 
-    if(!run){
-    	operator()();
+    }
+    if (!run) {
+      operator()();
     }
   }
 
-/** freerun mode, aka velocity mode*/
-  void Run(bool forward){
-  	run=forward?1:-1;
-  	freeRun=true;
+  /** freerun mode, aka velocity mode*/
+  void Run(bool forward) {
+    run = forward ? 1 : -1;
+    freeRun = true;
   }
 
   /** call this when timer has ticked */
   void operator()() {
-    if (ticker.perCycle()) {
+    if (ticker.perCycle()) {//using perCycle instead of isDone to keep the timer going on all paths through this function.
       bool homeChanged = homeSensor && changed(edgy, *homeSensor);
       if (homeChanged) {
         dbg("W:", which, " sensor:", edgy);
@@ -133,7 +142,7 @@ struct StepperMotor {
       switch (homing) {
         case Homed://normal motion logic
           if (freeRun) {
-            ticker.set(g(ticker.duration));
+            ticker = g(ticker.duration);
           } else {
             if (changed(run , pos - target)) {
               if (cip && run == 0) {
@@ -141,11 +150,11 @@ struct StepperMotor {
                 report();
               }
             }
-            ticker.set(g(run, ticker.duration));
+            ticker = g(run, ticker.duration);
           }
           pos += run;//steps if run !0
           if (run) mdbg("speed:", ticker.duration, " run:", run);
-          break;
+          return;//#NB
 
         case NotHomed://set up slow move one way or the other
           freeRun = 0;
@@ -249,9 +258,9 @@ struct StepperMotor {
     pos = 0;
   }
 
-/** start homing */
-  void home(){
-  	homing = NotHomed;
+  /** start homing */
+  void home() {
+    homing = NotHomed;
   }
 
   void start(bool second, Stepper::Interface iface, BoolishRef *homer, BoolishRef *powerGizmo) {
