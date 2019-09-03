@@ -1,6 +1,10 @@
 //(C) Copyright 2018, Andrew Heilveil, github/980F.
 #pragma once
 
+//F() is misfiring, increasing strings instead of halving them, at least when used with ChainPrinter
+#undef F
+#define F(arg) arg
+
 #include "cheaptricks.h"  //take()
 /** somewhat simple printer extension.
     This wraps a Print object to allow printing a series of fields in one call:

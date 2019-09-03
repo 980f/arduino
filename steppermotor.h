@@ -31,28 +31,23 @@ struct StepperMotor {
     /** velocity mode (aka freeRun) computation */
     Tick operator()(Tick present) const {
       if (present > start) {
-//        mdbg("jumpto:", start);
         return start;
       }
       if (present >= (cruise + accel)) {
-        mdbg("changeto:", present - accel);
         return present - accel;
       }
-      mdbg("cruising:", cruise);
       return cruise;
     }
 
     /** @return time for next step given number of steps remaining, will do the abs value locally */
     Tick operator()(Stepper::Step remaining, Tick present) const {
       if (0 == signabs(remaining)) {
-//        mdbg("Stopping timer");
         return ~0;//kill timer
       }
       //the following merits caching:
       unsigned ramp = quanta(cruise - start, accel); //change in speed desired / number of steps to do it in
       if (remaining < ramp) {
         auto newrate = start - accel * ramp;
-        mdbg("newrate:", newrate);
         return newrate;
       }
       return operator()(present);
@@ -85,12 +80,10 @@ struct StepperMotor {
   BoolishRef *homeSensor;
   BoolishRef *powerControl;
 
-  void setTick(Tick perstep) {
+  void setCruise(Tick perstep) {
     if (changed(g.cruise, perstep)) {
-      mdbg("Setting slew[", which, "]:", perstep);
-    } else {
-      mdbg("unchanged slew[", which, "]:", perstep);
-    }
+//  do we want to perturb something?
+    } 
   }
 
   enum Homing { //arranged to count down to zero
@@ -114,7 +107,7 @@ struct StepperMotor {
 
   void moveto(Stepper::Step location,  Tick perstep = 0) {
     if (perstep) {//0== same speed
-      setTick(perstep);
+      setCruise(perstep);
     }
     target = location;
     cip = pos != target;
@@ -137,7 +130,7 @@ struct StepperMotor {
     if (ticker.perCycle()) {//using perCycle instead of isDone to keep the timer going on all paths through this function.
       bool homeChanged = homeSensor && changed(edgy, *homeSensor);
       if (homeChanged) {
-        dbg("W:", which, " sensor:", edgy);
+        mdbg("W:", which, " sensor:", edgy);
       }
       switch (homing) {
         case Homed://normal motion logic
@@ -153,7 +146,6 @@ struct StepperMotor {
             ticker = g(run, ticker.duration);
           }
           pos += run;//steps if run !0
-          if (run) mdbg("speed:", ticker.duration, " run:", run);
           return;//#NB
 
         case NotHomed://set up slow move one way or the other
@@ -174,13 +166,13 @@ struct StepperMotor {
             target = 0;
             homing = Homed;//told to home but no sensor then just clear positions and proclaim we are there.
           }
-          setTick(g.start);
-          dbg("Homing started:", target, " @", homing, " width:", h.width);
+          setCruise(g.start);
+          mdbg("Homing started:", target, " @", homing, " width:", h.width);
           break;
 
         case ForwardOff://HM:1
           if (!edgy) {
-            dbg("Homing backed off sensor, at ", pos);
+            mdbg("Homing backed off sensor, at ", pos);
             pos = h.width;//a negative pos will be a timeout
             target = 0;
             homing = BackwardsOn;
@@ -191,7 +183,7 @@ struct StepperMotor {
 
         case BackwardsOn://HM:2
           if (edgy) {
-            dbg("Homing found on edge at ", pos);
+            mdbg("Homing found on edge at ", pos);
             pos = h.width;//so that a negative pos means we should give up.
             target = 0;
             homing = BackwardsOff;
@@ -202,7 +194,7 @@ struct StepperMotor {
 
         case BackwardsOff://HM:3
           if (!edgy) {
-            dbg("Homing found off edge at ", pos);
+            mdbg("Homing found off edge at ", pos);
             pos = (h.width + pos) / 2;
             target = 0;
             homing = Homed;
@@ -274,7 +266,7 @@ struct StepperMotor {
         homing = Homed;
       }
     }
-    setTick(g.start);
+    setCruise(g.start);
     ticker.set(g.start);//without this the logic doesn't run, the ticker powers up disabled.
   }
 };
