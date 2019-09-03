@@ -40,24 +40,18 @@ class Stepper {
     }
 
     /** if 0 then don't move, else move one step in direction given by sign of @param dir */
-    void operator +=(int dir) {
+    bool operator +=(int dir) {
       step += signof(dir);
       applyPhase(step);
+      return dir!=0;
     }
 
     void operator ++() {
       applyPhase(++step);
-      //    if((++phase)==perRevolution){
-      //      phase=0;
-      //    }
     }
 
     void operator --() {
       applyPhase(--step);
-      //    if((phase==0){
-      //      phase=perRevolution;
-      //    }
-      //  --phase;
     }
 
     /** @returns best direction to step to get to target, presumes circular mechanism.  */
