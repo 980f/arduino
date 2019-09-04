@@ -1,4 +1,6 @@
 #include "char.h"
+#include "microevent.h"
+#include "millievent.h"
 
 #ifdef MotorDebug
 #include "chainprinter.h"
@@ -17,9 +19,13 @@ struct StepperMotor {
   bool freeRun = false;
   /** if and which direction to step*/
   int run = 0;//1,0,-1
-
+	/** stopped is true while we are in low power state. */
+	bool stopped=false;
+	
   //time between steps
   MicroStable ticker;
+  //time to lower pwer so motor doesn't burn. 
+  MonoStable powersave();
   ///////////////////////////////
   struct GasPedal {
     //configuration

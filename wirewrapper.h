@@ -36,23 +36,23 @@ class WireWrapper {
       bus.begin();
     }
 
-/** send another byte, call Start sometime before you start calling this */
+    /** send another byte, call Start sometime before you start calling this */
     void emit(uint8_t bite) {
       bus.write(bite);
     }
 
-/** take control of the I2C bus */
+    /** take control of the I2C bus */
     void Start() {
       bus.beginTransmission(base);
     }
 
-/** first phase of common device pattern of a register select before an operation */
+    /** first phase of common device pattern of a register select before an operation */
     void Start(uint8_t addr) {
       bus.beginTransmission(base);
       emit(addr);
     }
 
-/** end an I2C operation, @param stopit should be false if it is the first part of a repeated start situation */
+    /** end an I2C operation, @param stopit should be false if it is the first part of a repeated start situation */
 
     WireError End(bool stopit = true) {
       return lastOp = WireError(bus.endTransmission(stopit));
@@ -69,16 +69,18 @@ class WireWrapper {
       return bus.requestFrom(base, numBytes);
     }
 
-/** send a block of data, with @param reversed determining byte order. default is what is natural for your processor, so you should probably never use the default! */
+    /** send a block of data, with @param reversed determining byte order. default is what is natural for your processor, so you should probably never use the default! */
     WireError Write(const uint8_t *peeker, unsigned numBytes, bool reversed = false) {
       Start();
-      for (unsigned bc = numBytes; bc-- > 0;) {
-        emit(reversed ? peeker[bc] : *peeker++);
-      }
+      if (numBytes == 1) {//expedite common case, reversed is moot
+        emit(*peeker);
+      } else for (unsigned bc = numBytes; bc-- > 0;) {
+          emit(reversed ? peeker[bc] : *peeker++);
+        }
       return End();
     }
 
-/** send a block of data to an 8 bit subsystem of your device.*/
+    /** send a block of data to an 8 bit subsystem of your device.*/
     WireError Write(uint8_t selector, const uint8_t *peeker, unsigned numBytes, bool reversed = false) {
       Start(selector);
       for (unsigned bc = numBytes; bc-- > 0;) {
@@ -138,11 +140,60 @@ class WireWrapper {
         return was;
       }
       return ~0;
+    }
 
+    /** for simple single chunk devices */
+    template <typename Scalar> WireError send(Scalar datum) {
+      return Write(&datum, sizeof(Scalar));
+    }
+
+    /** for simple single chunk devices. If not all bytes are read then datum is unchanged and this returns false */
+    template <typename Scalar> bool fetch(Scalar &datum, bool reversed = false) {
+      if (Read(sizeof(Scalar)) != sizeof(Scalar)) {
+        return false;
+      }
+
+      if (sizeof(Scalar) == 1) {//expedite common case, reversed is moot
+        datum = next();
+        return true;
+      }
+      byte *peeker = &datum;
+      for (unsigned bc = sizeof(Scalar); bc-- > 0;) {
+        uint8_t bite = next();
+        if (reversed) {
+          peeker[bc] = bite;
+        } else {
+          *peeker++ = bite;
+        }
+      }
+      return true;
     }
 
 };
 
+
+/***/
+template <typename Scalar> class WIredThing : WireWrapper {
+  public:
+    WIredThing ( uint8_t addr, unsigned which = 0): WireWrapper(addr, which) {
+
+    }
+    //read
+    operator Scalar() { 
+      Scalar red;
+      if (fetch(&red)) {
+        return red;
+      } else {
+        return 0;//todo: what is best default for failure? zeroes?
+      }
+    }
+
+    Scalar operator =(Scalar output) {
+      send(output);
+      return output;
+    }
+
+};
 ////////////////////////////////////////////////////////////////////////////////
 
 /** a register within a multi register I2C device.
@@ -159,7 +210,7 @@ template <typename Scalar> class WIred {
     Scalar cached;
     WireError lastOp;
   public:
-/** @param ww is the device address container. @param selector is one of 256 subsystems within the device. @param bigendian controls the order in which the bytes of a block are moved to and from the device. */
+    /** @param ww is the device address container. @param selector is one of 256 subsystems within the device. @param bigendian controls the order in which the bytes of a block are moved to and from the device. */
     WIred( WireWrapper &ww, uint8_t selector, bool bigendian = false): ww(ww), selector(selector), bigendian(bigendian) {}
 
     /**write to device register */
@@ -178,8 +229,8 @@ template <typename Scalar> class WIred {
       return cached;
     }
 
-   /** makes a device read appear to be a simple variable access */ 
-   operator Scalar() {
+    /** makes a device read appear to be a simple variable access */
+    operator Scalar() {
       return fetch();
     }
 
