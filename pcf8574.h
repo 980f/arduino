@@ -36,27 +36,27 @@ class PCF8574: public WIredThing<uint8_t> {
       return operator = (( (lastwrote & ~mask) | (value & mask)));
     }
 
-    
-
-    public:
-    /** make the physical pin look like a boolean */
-    class Bit {
-      const unsigned mask; //0..15
-      const bool polarity;
-      PCF8574 &group;
-public:
-      Bit (PCF8574 & group, unsigned which, bool polarity = 1): mask(1 << which), polarity(polarity), group(group) {
-        //don't do anything, so that we can sanely static construct.
-      }
-
-      operator bool() {
-        //default to opposite of declared polarity for error return.
-        return ((group.fetch(polarity ? 0 : ~0) & mask) != 0) == polarity; //compiler will generate an extract bit instruction for cortex parts.
-      }
-
-      void operator =(bool bit) {
-        group.send(bit == polarity ? (group.lastwrote | mask) : (group.lastwrote & ~mask)); //no need to use assign ops here, the group tracks the word written.
-      }
-    };
-friend class PCF8574::Bit;
+// not efficient enough (yet) hiding to work on other problems 		
+//    public:
+//    /** make the physical pin look like a boolean */
+//    class Bit {
+//      const unsigned mask; //0..15
+//      const bool polarity;
+//      PCF8574 &group;
+//public:
+//      Bit (PCF8574 & group, unsigned which, bool polarity = 1): mask(1 << which), polarity(polarity), group(group) {
+//        //don't do anything, so that we can sanely static construct.
+//      }
+//
+//      operator bool() {
+//        //default to opposite of declared polarity for error return.
+//        
+//        return ((group.fetch(polarity ? 0 : ~0) & mask) != 0) == polarity; //compiler will generate an extract bit instruction for cortex parts.
+//      }
+//
+//      void operator =(bool bit) {
+//        group.send(bit == polarity ? (group.lastwrote | mask) : (group.lastwrote & ~mask)); //no need to use assign ops here, the group tracks the word written.
+//      }
+//    };
+//friend class PCF8574::Bit;
 };
