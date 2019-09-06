@@ -109,29 +109,35 @@ struct ChainPrinter {
     }
 
     /** constructing one of these temporarily turns off auto linefeed, destruction restores the autofeed status. Nesting works. */
-    class FeedSuppressor {
+    class FeedStacker {
         bool wasFeeding;
+        bool owner;
       public:
         ChainPrinter &printer;
-        explicit FeedSuppressor(ChainPrinter &printer): printer(printer)	{
-          wasFeeding = take(printer.autofeed);
+        explicit FeedStacker(ChainPrinter &printer,bool beFeeding): printer(printer)	{
+          wasFeeding = printer.autofeed;
+          printer.autofeed= beFeeding;
+          owner=true;
         }
 
         /** make a copy but keep destructor of prior from doing anything, just so parent class can have a factory for these. */
-        FeedSuppressor(FeedSuppressor &&other): wasFeeding(other.wasFeeding), printer(other.printer) {
-          other.wasFeeding = false;
+        FeedStacker(FeedStacker &&other): wasFeeding(other.wasFeeding), printer(other.printer) {
+          other.owner = false;
         }
 
-        FeedSuppressor(const FeedSuppressor &other) = delete;
+        FeedStacker(const FeedStacker &other) = delete;
 
-        ~FeedSuppressor() {
-          printer.autofeed = wasFeeding;
+        ~FeedStacker() {
+        	if(owner){
+          	printer.autofeed = wasFeeding;
+        	}
         }
     };
 
-    /** you must assign this to a named thing to ensure the compiler doesn't elide it.*/
-    FeedSuppressor nofeeds() {
-      return FeedSuppressor(*this);
+    /** you must assign this to a named thing to ensure the compiler doesn't elide it.
+    suggested usage:  auto pop= printer.stackFeeder(local_preference_for_linefeeding) */
+    FeedStacker stackFeeder(bool beFeeding=false) {//default value for legacy upgrade from nofeeds
+      return FeedStacker(*this,beFeeding);
     }
 
 };
