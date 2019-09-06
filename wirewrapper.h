@@ -17,12 +17,15 @@ enum WireError : uint8_t {
 
 /** remembers your base address and which bus you are using, and keeps the last error handy. */
 class WireWrapper {
+    static unsigned bus_kHz;//todo: will need to be an array coindexed with bus selection, or learn how to read it back from the TwoWire object.
+    unsigned kHz;
   public://for debug
     const uint8_t base;
     TwoWire &bus;
     WireError lastOp;
   public:
-    WireWrapper( uint8_t addr, unsigned which = 0): base(addr),
+    /** 7 bit address (arduino convention), kHz (e.g. 100 not 100000), for due etc 0 based selection of which */
+    WireWrapper( uint8_t addr, unsigned kHz = 100, unsigned which = 0): base(addr), kHz(kHz),
 #if defined(ARDUINO_SAM_DUE)
       bus(which ? Wire1, Wire) //so far only two are supported.
 #else
@@ -42,13 +45,11 @@ class WireWrapper {
     }
 
     /** take control of the I2C bus */
-    void Start() {
-      bus.beginTransmission(base);
-    }
+    void Start();
 
     /** first phase of common device pattern of a register select before an operation */
     void Start(uint8_t addr) {
-      bus.beginTransmission(base);
+      Start();
       emit(addr);
     }
 
@@ -70,54 +71,16 @@ class WireWrapper {
     }
 
     /** send a block of data, with @param reversed determining byte order. default is what is natural for your processor, so you should probably never use the default! */
-    WireError Write(const uint8_t *peeker, unsigned numBytes, bool reversed = false) {
-      Start();
-      if (numBytes == 1) {//expedite common case, reversed is moot
-        emit(*peeker);
-      } else for (unsigned bc = numBytes; bc-- > 0;) {
-          emit(reversed ? peeker[bc] : *peeker++);
-        }
-      return End();
-    }
+    WireError Write(const uint8_t *peeker, unsigned numBytes, bool reversed = false) ;
 
     /** send a block of data to an 8 bit subsystem of your device.*/
-    WireError Write(uint8_t selector, const uint8_t *peeker, unsigned numBytes, bool reversed = false) {
-      Start(selector);
-      for (unsigned bc = numBytes; bc-- > 0;) {
-        emit(reversed ? peeker[bc] : *peeker++);
-      }
-      return End();
-    }
+    WireError Write(uint8_t selector, const uint8_t *peeker, unsigned numBytes, bool reversed = false);
 
     /** writes a select then reads a block */
-    unsigned ReadFrom(uint8_t selector, unsigned numBytes) {
-      Start(selector);
-      End(false);//setup repeated start.
-      return Read(numBytes);
-    }
+    unsigned ReadFrom(uint8_t selector, unsigned numBytes) ;
 
     /** writes a select then reads a block into a buffer IFFI the whole block was read, else partial read data is still available */
-    bool ReadFrom(uint8_t selector, unsigned numBytes, uint8_t *peeker, bool reversed = false) {
-      auto actual = ReadFrom(selector, numBytes);
-      if (actual != numBytes) {
-        return false;
-      }
-
-      if (numBytes == 1) {//expedite common case, reversed is moot
-        *peeker = next();
-        return true;
-      }
-
-      for (unsigned bc = numBytes; bc-- > 0;) {
-        uint8_t bite = next();
-        if (reversed) {
-          peeker[bc] = bite;
-        } else {
-          *peeker++ = bite;
-        }
-      }
-      return true;
-    }
+    bool ReadFrom(uint8_t selector, unsigned numBytes, uint8_t *peeker, bool reversed = false);
 
     /** @returns amount of read data in Wire buffer*/
     unsigned available() {
@@ -157,7 +120,7 @@ class WireWrapper {
         datum = next();
         return true;
       }
-      byte *peeker = &datum;
+      uint8_t *peeker = &datum;
       for (unsigned bc = sizeof(Scalar); bc-- > 0;) {
         uint8_t bite = next();
         if (reversed) {
@@ -179,7 +142,7 @@ template <typename Scalar> class WIredThing : WireWrapper {
 
     }
     //read
-    operator Scalar() { 
+    operator Scalar() {
       Scalar red;
       if (fetch(&red)) {
         return red;

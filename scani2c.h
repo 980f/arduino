@@ -4,7 +4,10 @@
 
 /** scan for presence in range given by 7-bit addresses */
 void scanI2C(ChainPrinter &Console, unsigned highest = 123, unsigned lowest = 16) {
+	auto x=Console.stackFeeder(true);
   Console("\nScanning I2C bus:");
+  Wire.begin();
+  Wire.setClock(100000);//use slowest rate until we know what is present.
   unsigned tested = 0;
   unsigned found = 0;
   for (byte address = lowest; address < highest; address++) {
@@ -14,7 +17,7 @@ void scanI2C(ChainPrinter &Console, unsigned highest = 123, unsigned lowest = 16
     switch (error) {
     case 0://success
       ++found;
-      Console("\n\tfound ", address);
+      Console("\tfound ", address, " 7bit:",HEXLY(address), " 8bit:",HEXLY(address<<1));
       break;
     case 1://data too long to fit in transmit buffer
       break;
@@ -23,10 +26,10 @@ void scanI2C(ChainPrinter &Console, unsigned highest = 123, unsigned lowest = 16
     case 3://received NACK on transmit of data
       break;
     case 4://other error
-      Console("\nUnkerr @ ", address);
+      Console("Unkerr @ ", address);
       break;
     }
   }
-  Console("\nFound ", found, " out of ", tested, " tested.");
-  Console("\nScanning I2C done.");
+  Console("Found ", found, " out of ", tested, " tested.");
+  Console("Scanning I2C done.");
 }
