@@ -19,6 +19,8 @@ enum WireError : uint8_t {
 class WireWrapper {
     static unsigned bus_kHz;//todo: will need to be an array coindexed with bus selection, or learn how to read it back from the TwoWire object.
     unsigned kHz;
+		//internal shared code
+    WireError writeBlock(const uint8_t *bites,unsigned qty,bool reversed);
   public://for debug
     const uint8_t base;
     TwoWire &bus;
@@ -42,6 +44,11 @@ class WireWrapper {
     /** send another byte, call Start sometime before you start calling this */
     void emit(uint8_t bite) {
       bus.write(bite);
+    }
+
+   /** send another byte, call Start sometime before you start calling this */
+    void emit(const uint8_t *bites,unsigned qty) {
+      bus.write(bites,qty);
     }
 
     /** take control of the I2C bus */
@@ -135,7 +142,7 @@ class WireWrapper {
 };
 
 
-/***/
+/** make direct mapped I2C chunk look like a simple variable */
 template <typename Scalar> class WIredThing : WireWrapper {
   public:
     WIredThing ( uint8_t addr, unsigned which = 0): WireWrapper(addr, which) {
@@ -159,7 +166,8 @@ template <typename Scalar> class WIredThing : WireWrapper {
 };
 ////////////////////////////////////////////////////////////////////////////////
 
-/** a register within a multi register I2C device.
+/** a register within a multi register I2C device made to look like a simple variable.
+ *  presently only handles devices with single byte register addresses.
   And yes, it is capitalized WEird because I consistently typoed it.*/
 template <typename Scalar> class WIred {
     enum {numBytes = sizeof(Scalar)};

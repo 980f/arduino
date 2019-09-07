@@ -13,26 +13,29 @@ void WireWrapper::Start() {
   bus.beginTransmission(base);
 }
 
+ WireError WireWrapper::writeBlock(const uint8_t *peeker, unsigned numBytes,bool reversed){
+ 	if (numBytes == 1) {//expedite common case, reversed is moot
+    emit(*peeker);
+  } else if (reversed) {
+    for (unsigned bc = numBytes; bc-- > 0;) {
+      emit(peeker[bc]);
+    }
+  } else {
+    emit(peeker, numBytes);
+  }
+  return End();
+ }
+
 /** send a block of data, with @param reversed determining byte order. default is what is natural for your processor, so you should probably never use the default! */
 WireError WireWrapper::Write(const uint8_t *peeker, unsigned numBytes, bool reversed) {
   Start();
-  if (numBytes == 1) {//expedite common case, reversed is moot
-    emit(*peeker);
-  } else {
-    for (unsigned bc = numBytes; bc-- > 0;) {
-      emit(reversed ? peeker[bc] : *peeker++);
-    }
-  }
-  return End();
+  return writeBlock(peeker,numBytes,reversed);
 }
 
 /** send a block of data to an 8 bit subsystem of your device.*/
 WireError WireWrapper::Write(uint8_t selector, const uint8_t *peeker, unsigned numBytes, bool reversed ) {
   Start(selector);
-  for (unsigned bc = numBytes; bc-- > 0;) {
-    emit(reversed ? peeker[bc] : *peeker++);
-  }
-  return End();
+  return writeBlock(peeker,numBytes,reversed);
 }
 
 /** writes a select then reads a block */
