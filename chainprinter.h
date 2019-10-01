@@ -9,6 +9,7 @@
  *          
  *  Initial design returns what the Print::print routines do, all nicely added up. This however precludes chaining to an end-of-line function.
 */
+
 struct ChainPrinter {
     Print &raw;
     ChainPrinter(Print &raw): raw(raw) {}

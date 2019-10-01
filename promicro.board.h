@@ -1,7 +1,7 @@
 #pragma once //(C)2019 Andy Heilveil, github/980F
 
 #include "bitbanger.h"
-
+#include "chainprinter.h"  //for debug stream
 //board model, includes chip type.
 //from leonardo variant/pins....h
 //#define LED_BUILTIN 13
@@ -16,51 +16,51 @@ class AT32U4 {
       unsigned_bits = 16, //AVR does not provide much of C++ library :(
 
     };
-    
+
     struct Port {
       byte pins;
       byte ddir;
       byte bits;
     };
-    
-    struct PinReference {      
-      static Port &forLetter(char letter){
-        switch(letter&7){//cheap way to do case insensitive, but only is valid for valid values.
+
+    struct PinReference {
+      static Port &forLetter(char letter) {
+        switch (letter & 7) { //cheap way to do case insensitive, but only is valid for valid values.
           default: return *reinterpret_cast<Port*>(PORTC);//all problems tossed in with least useful port to appease compiler.
           case 2: return *reinterpret_cast<Port*>(PORTB);
           case 3: return *reinterpret_cast<Port*>(PORTC);
           case 4: return *reinterpret_cast<Port*>(PORTD);
           case 5: return *reinterpret_cast<Port*>(PORTE);
-          case 6: return *reinterpret_cast<Port*>(PORTF);          
+          case 6: return *reinterpret_cast<Port*>(PORTF);
         }
       }
       Port &port;
       const unsigned shift;
-      
-      PinReference(char letter,unsigned shift,bool out):port(forLetter(letter)),shift(shift){
+
+      PinReference(char letter, unsigned shift, bool out): port(forLetter(letter)), shift(shift) {
         drive(out);//don't need to wait for setup().
       }
-      
+
       operator bool () const {
-        return (port.pins&(1<<shift))!=0;
+        return (port.pins & (1 << shift)) != 0;
       }
-      
-      bool operator =(bool setit){
-        if(setit){
-          port.bits |=(1<<shift);
+
+      bool operator =(bool setit) {
+        if (setit) {
+          port.bits |= (1 << shift);
         } else {
-          port.bits &=~(1<<shift);
+          port.bits &= ~(1 << shift);
         }
-        return setit!=0;//canonical
+        return setit != 0; //canonical
       }
 
       /** set data direction */
-      void drive(bool out){
-        if(out){
-          port.ddir |=(1<<shift);
+      void drive(bool out) {
+        if (out) {
+          port.ddir |= (1 << shift);
         } else {
-          port.ddir &=~(1<<shift);
-          port.bits |=(1<<shift);//enable pullups all around, the device isn't flexible enough to make this a choice.
+          port.ddir &= ~(1 << shift);
+          port.bits |= (1 << shift); //enable pullups all around, the device isn't flexible enough to make this a choice.
         }
       }
     };
@@ -116,7 +116,7 @@ class AT32U4 {
             void toggle()const {
               configure(1);
             }
-            
+
             /** nominal turn PWM off for this channel, actually just disconnects from timer, remember to set bit to desired state via DIO before calling this. */
             void off() const {
               configure(0);
@@ -166,15 +166,15 @@ class AT32U4 {
 };
 
 struct ProMicro: public AT32U4 {
-      //todo: get digitalpin class to function so that we can pass pin numbers.
-    const OutputPin<LED_BUILTIN_RX> led1;
-//    const OutputPin<24> led0;//nice proc-micro graphic is wrong. arduino dox are wrong.
+  //todo: get digitalpin class to function so that we can pass pin numbers.
+  const OutputPin<LED_BUILTIN_RX> led1;
+  //    const OutputPin<24> led0;//nice proc-micro graphic is wrong. arduino dox are wrong.
 
-//    PinReference 
-bool ledd5;
-    ProMicro()
-//    :ledd5('D',5,1) 
-    {
-      
-    }
+  //    PinReference
+  bool ledd5;
+  ProMicro()
+  //    :ledd5('D',5,1)
+  {
+
+  }
 };

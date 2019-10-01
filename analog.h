@@ -21,6 +21,17 @@ struct AnalogValue {
       return raw;
     }
 
+    /**0-> all ones, all ones ->0
+     * created for linearmap reversed scaling.
+     */
+    unsigned operator ~() const {
+      return 32767U-raw;
+    }
+  
+    unsigned operator /(unsigned divisor)const{
+      return raw/divisor;
+    }
+
 };
 
 /** makes analog output appear as if a simple variable. This is handy if you want to replace direct use with proxying to another guy, or to disable output but still see what the value would have been.*/
