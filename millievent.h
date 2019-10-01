@@ -1,6 +1,6 @@
 #pragma once
-
-#include "cheaptricks.h" //changed
+#include <Arduino.h>
+#include "cheaptricks.h" //for changed()
 
 /** a polled timer.
   suggested use is to call this in loop() and if it returns true then do your once per millisecond stuff.
@@ -14,23 +14,35 @@
   }
 */
 
-using TickType = unsigned long ; //return type of millis(), can I use declspec to get that?
-const TickType BadTick = ~0UL; //hacker trick for "max unsigned"
+using MilliTick = unsigned long ; //return type of millis(), can I use declspec to get that?
+const MilliTick BadTick = ~0UL;   //hacker trick for "max unsigned"
 
 class SoftMilliTimer {
-    TickType lastchecked = 0; //0: will not return true until at least one ms has expired after reset.
+    MilliTick lastchecked = 0; //0: will not return true until at least one ms has expired after reset.
   public:
     /** true only when called in a different millisecond than it was last called in. */
-    operator bool() {
+    
+        /** true only when called in a different millisecond than it was last called in. */
+    bool ticked() {
       return changed(lastchecked, millis());
     }
+    
+    operator bool() {
+      return ticked();
+    }
+    
     /** most recent sampling of millis(). You should be biased to use this instead of rereading millis().*/
-    TickType recent() const {
+    MilliTick recent() const {
       return lastchecked;
     }
 
+    /** alias for @see recent() */
+    operator MilliTick() const {
+      return recent();
+    }
+
     /** ticks since someone recorded recent(). */
-    unsigned since(TickType previous) {
+    unsigned since(MilliTick previous) {
       return unsigned(lastchecked - previous);
     }
 
@@ -41,17 +53,18 @@ class SoftMilliTimer {
 };
 
 //only one is needed:
-SoftMilliTimer MilliTicked;
+extern SoftMilliTimer MilliTicked;
 
 /** indicates an interval.
-    configure via set() check in if(MilliTicked  ){}
+    configure via set(), for efficiency check in if(MilliTicked){}
 */
 class MonoStable {
-    TickType zero = BadTick;
-    TickType done;
+  protected:
+    MilliTick zero = BadTick;//this choice ensures that both isDone and isRunning are false until an real cycle has at least begun.
+    MilliTick done; //time after zero at which the timer is done.
   public:
     /** combined create and set, if nothing to set then a default equivalent to 'never' is used.*/
-    MonoStable(TickType duration = BadTick, boolean andStart = true): done(duration) {
+    MonoStable(MilliTick duration = BadTick, bool andStart = true): done(duration) {
       if (andStart) {
         start();
       }
@@ -60,14 +73,21 @@ class MonoStable {
         @param andStart is whether to restart the timer as well, default yes.
         @returns prior duration.
     */
-    TickType set(TickType duration, boolean andStart = true) {
-      TickType old = done;
+    MilliTick set(MilliTick duration, bool andStart = true) {
+      MilliTick old = done;
       done = duration;
       if (andStart) {
         start();
       }
       return old;
     }
+
+    /** sugar for setting the duration and starting, i.e. trigger with new value.  */
+    MonoStable &operator =(MilliTick duration) {
+      set(duration);
+      return *this;
+    }
+
     /** call to indicate running starts 'now', a.k.a. retriggerable monostable. */
     void start() {
       zero = MilliTicked.recent();
@@ -79,19 +99,42 @@ class MonoStable {
 
     /** @returns whether timer has started and not expired== it has been at least 'done' since start() was called */
     bool isRunning() const {
-      TickType now = MilliTicked.recent();
+      MilliTick now = MilliTicked.recent();
       return now > zero && done > (now - zero);
-
     }
 
     /** @returns whether time has expired, will be false if never started. */
     bool isDone() const {
-      TickType now = MilliTicked.recent();
+      MilliTick now = MilliTicked.recent();
       return now > zero && done <= (now - zero);
     }
 
-    /** @returns whether time has expired, and if so restarts it. */
-    bool perCycle() {
+    /** @returns whether this is the first time called since became 'isDone', then alters object so that it will not return true again without another start.
+     *  This is what 'isDone' should have been, but we aren't going to change that.
+    */
+    bool hasFinished() {
+      if (isDone()) {
+        stop();
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    /** sugar for isDone() */
+    operator bool() const {
+      return isDone();
+    }
+
+    /** @returns set time, use set() to modify it. */
+    operator MilliTick() const {
+      return done;
+    }
+
+    /** @returns whether time has expired, and if so restarts it.
+        made virtual for BiStable
+    */
+    virtual bool perCycle() {
       if (isDone()) {
         start();
         return true;
@@ -100,12 +143,39 @@ class MonoStable {
       }
     }
 
-    operator bool() {
-      return perCycle();
+    /** @return when it will be done, which can be in the past if already done.*/
+    MilliTick due() const {
+      return done + zero;
     }
 
-    TickType due() const {
-      return done + zero;
+};
+
+/** a monostable that retriggers with alternating values */
+class BiStable : public MonoStable {
+    bool phase;
+    MilliTick biphase[2];
+  public:
+    BiStable(MilliTick obduration = BadTick, MilliTick produration = BadTick, bool andStart = true):
+      MonoStable(produration, andStart),
+      phase(0) {
+      biphase[1] = obduration;
+      biphase[0] = produration;
+    }
+
+    /** sugar for isDone() */
+    operator bool() {
+      return phase;
+    }
+
+    virtual bool perCycle() {
+      if (MonoStable::isDone()) {
+        phase = !phase;
+        done = biphase[phase];
+        start();
+        return true;
+      } else {
+        return false;
+      }
     }
 
 };

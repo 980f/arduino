@@ -1,8 +1,9 @@
 #pragma once
-/** TODO: use debug printer instead of direct access to Serial.
-    This variation of Pin wrapping (see pinclass.h) can be passed by reference, which includes being able to be put into an array.
+
+/** .
+    This variation of Pin wrapping (see pinclass.h for template version) can be passed by reference, which includes being able to be put into an array.
     It generates more code at each point of use. An aggressively optimizing compiler might eliminate that extra code,
-    but for the template version of this functionality the compiler most likley will write minimal code without being asked nicely
+    but for the template version of this functionality the compiler most likely will write minimal code without being asked nicely
 
    These objects can be static and const. The constructor will run before setup() is called, which is not formally supported but works on Leonardo and Due so
    it probably works on most processors. A failure may be subtle depending upon the processor support's choice of default values for pins.
@@ -31,58 +32,21 @@ class DigitalPin {
     const unsigned polarity;
 
     explicit DigitalPin(PinNumberType arduinoNumber, PinModeType mode, unsigned polarity = HIGH): number(arduinoNumber), polarity(polarity) {
-      if (Serial) {
-        Serial.print("digital construct ");
-        Serial.println(arduinoNumber);
-      }
       pinMode(arduinoNumber, mode);
     }
 
+    //disallowing copy construction, it interferes with using pin as a boolean, compiler wants to create a copy of the pin instead of assign the value of one pin to another.
     DigitalPin(DigitalPin &&any) = delete;
     DigitalPin(const DigitalPin &any) = delete;
 
+    /**formal 'toggled' computation, just in case some vendor defines HIGH and LOW as other than 1 and 0 */
     static constexpr bool inverse(bool active) {
       return (HIGH + LOW) - active;
     }
 
-    operator bool()const {
-      Serial.print("digital read ");
-      Serial.println(number);
-
+    /** read the pin. @returns true when pin is at configured polarity */
+    operator bool() const {
       return digitalRead(number) == polarity;
-    }
-
-    bool wtf(bool value)const {
-      Serial.print("digital wtf bool ");
-      Serial.println(value);
-      digitalWrite(number , value ? polarity : inverse(polarity));
-      return value;
-    }
-
-    bool operator =(bool value)const {
-      Serial.print("digital write bool ");
-      Serial.println(value);
-      digitalWrite(number , value ? polarity : inverse(polarity));
-      return value;
-    }
-
-    bool operator =(int nonzero)const {
-      Serial.print("digital write int ");
-      Serial.println(nonzero);
-      return operator =(nonzero != 0);
-    }
-
-    bool operator =(const DigitalPin &rhs)const {
-      Serial.print("digital from pin ");
-      Serial.println(rhs.number);
-
-      return operator =(bool(rhs));
-    }
-
-  public:   /// the following are utility functions, not essential to this class
-    bool toggle()const {
-      *this = ! *this;
-      return operator bool();//FYI you can call operator overloads as if they were normal functions.
     }
 
 };
@@ -93,11 +57,57 @@ class DigitalPin {
 */
 class DigitalInput: public DigitalPin {
   public:
-    DigitalInput(unsigned arduinoNumber, unsigned polarity = HIGH):  DigitalPin(arduinoNumber, INPUT_PULLUP, polarity) {}
+    DigitalInput(unsigned arduinoNumber, unsigned polarity = HIGH):  DigitalPin(arduinoNumber, INPUT, polarity) {}
 };
 
 class DigitalOutput: public DigitalPin {
   public:
     DigitalOutput(unsigned arduinoNumber, unsigned polarity = HIGH): DigitalPin(arduinoNumber, OUTPUT, polarity) {}
+    /** write the pin, applying configured polarity */
+    bool operator =(bool value)const {
+      digitalWrite(number , value ? polarity : inverse(polarity));
+      return value;
+    }
 
+    /** if operand is true then activate this pin, else leave it as is.
+      @returns state of the pin */
+    bool operator |=(bool value)const {
+      if (value) {
+        return operator =(int(polarity));
+      } else {
+        return operator bool();
+      }
+    }
+
+    /** if operand is false then deactivate this pin, else leave it as is.
+      @returns state of the pin */
+    bool operator &=(bool value)const {
+      if (!value) {
+        return operator =(inverse(polarity));
+      } else {
+        return operator bool();
+      }
+    }
+
+
+    /** set  pin to whether @param nonzero is not zero */
+    bool operator =(int nonzero)const {
+      return operator =(nonzero != 0);
+    }
+
+    /** set  pin to the value of @param rhs  */
+    bool operator =(const DigitalPin &rhs)const {
+      return operator =(bool(rhs)); //older compiler needed some help here, newer one doesn't mind it.
+    }
+
+    bool operator =(DigitalPin &&rhs)const {
+      return operator =(bool(rhs));
+    }
+
+
+  public:   /// the following are utility functions, not essential to this class
+    bool toggle()const {
+      *this = ! *this;
+      return operator bool();//FYI you can call operator overloads as if they were normal functions.
+    }
 };

@@ -2,7 +2,7 @@
 
 #include "chainprinter.h"
 
-class TwinConsole {
+class TwinConsole: public Print {
   public:
     ChainPrinter usb;
     ChainPrinter uart;
@@ -10,8 +10,8 @@ class TwinConsole {
       //#done unless we find we can call begin here.
     }
 
-    /** @returns keystrokes from every source, randomly interleaved, 0 if there are no strokes present. */
-    unsigned getKey() {
+    /** @returns keystrokes from every source, randomly interleaved, 0 if there are no strokes present, nulls will get ignored. */
+    byte getKey() {
       if (Serial && Serial.available()) {
         return Serial.read();
       }
@@ -22,9 +22,9 @@ class TwinConsole {
     }
 
     //sets baud rate of real uart, also enables the USB one.
-    void begin(unsigned long baudrate=500000) {
+    void begin(uint32_t uartbaud = 115200) {
       Serial.begin(500000);//number here doesn't matter.
-      Serial1.begin(baudrate);//hardware serial. up the baud to reduce overhead.
+      Serial1.begin(uartbaud);//hardware serial. up the baud to reduce overhead.
     }
 
 
@@ -37,4 +37,14 @@ class TwinConsole {
       return *this;
     }
 
+    /**satisfy Print interface*/
+    size_t write(byte value) override {
+      if (Serial) usb.raw.write(value);
+      return uart.raw.write(value);
+    }
+
 };
+
+
+//marker for codespace strings, with newline prefixed. Without this or the Arduino provided F() constr strings take up ram as well as rom.
+#define FF(farg)  F( "\n" farg)

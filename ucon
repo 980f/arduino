@@ -1,0 +1,2 @@
+## monitor lf-only oriented stream on some ttyUSB port, pass just the number as a commandline arg.
+picocom -b115200 --imap lfcrlf  --omap=crcrlf /dev/ttyUSB$1
