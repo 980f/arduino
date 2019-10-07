@@ -89,6 +89,7 @@ struct StepperMotor {
   void setCruise(Tick perstep) {
     if (changed(g.cruise, perstep)) {
 //  do we want to perturb something?
+      ticker = perstep;
     } 
   }
 
@@ -251,7 +252,7 @@ struct StepperMotor {
     return run == 0 && target == pos;
   }
 
-  bool atIndex() {
+  void atIndex() {
     freeze();
     pos = 0;
   }

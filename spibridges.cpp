@@ -150,8 +150,9 @@ void SpiDualBridgeBoard::power(bool second, bool on) {
 
 bool SpiDualPowerBit::operator =(bool on)const {
   theBoard.power(second, on);
-
+  return on;
 }
+
 SpiDualPowerBit::operator bool()const {
   return theBoard.isPowered(second);
 }

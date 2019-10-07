@@ -20,6 +20,7 @@ class EEPrinter : public Print {
     size_t write(uint8_t data) override {
 //    	dbg(ptr,':',data,' ',char(data));
       EEPROM.write(ptr++, char(data));//#without the char cast data was corrupted. Someday we will take it out and figure out why.
+      return 1;
     };
 
     int availableForWrite() override {

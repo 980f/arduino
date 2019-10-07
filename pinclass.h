@@ -78,6 +78,7 @@ template < PinNumberType arduinoNumber, unsigned polarity = HIGH, PinModeType pu
   //abused to change pullup state, ignores defined polarity
   bool operator=(bool on) const override {
     pinMode(super::number, on ? INPUT_PULLUP : INPUT_PULLDOWN);
+    return on;
   }
 
 };
@@ -117,6 +118,7 @@ struct DuplicateOutput: public BoolishRef {
     //todo: consider disabling interrupts around the pair
     theone = on;
     theother = on;
+    return on;
   }
 
   operator bool () const override {
