@@ -4,9 +4,9 @@
 
 #ifdef Serial4Debug //serial was notpresent in avr build.
 #include "easyconsole.h"
-static EasyConsole<decltype(Serial4Debug)> udbg(Serial4Debug,true /*autofeed*/);
+static EasyConsole<decltype(Serial4Debug)> udbg(Serial4Debug, true /*autofeed*/);
 #else
-static void udbg(...){}
+static void udbg(...) {}
 #endif
 
 
@@ -28,22 +28,57 @@ struct MicroTick {
       //#done
     }
   public:
-    MicroTick(): MicroTick(~0,~0) {
-      //#done
+    void invalidate() {
+      wraps = Cycler(~0);
+      ticks = RawMicros(~0);
+    }
+
+    MicroTick() {
+      invalidate();
     }
 
     /** @returns whether this ever been assigned to from anything which had ever been assigned to.
         NB: the existence of this cast operator makes the compiler emit a caution that it considered doing this->bool->int when overloading operator +
     */
     operator bool () const {
-    return wraps!=Cycler(~0) && ticks!=RawMicros(~0);
+      return wraps != Cycler(~0) && ticks != RawMicros(~0);
     }
 
+
     /** @returns the value @param increment micros from this one. */
+    MicroTick& operator +=(unsigned increment) {
+      RawMicros newticks(ticks + increment);
+      if (newticks < ticks) {//wrapped, in asm would add w/carry to wraps.
+        ++wraps;
+      }
+      ticks = newticks;
+      return *this;
+    }
+
+/** @returns the value @param increment micros from this one. */
+    MicroTick& operator -=(unsigned increment) {
+      RawMicros newticks(ticks - increment);
+      if (newticks > ticks) {//wrapped, in asm would add w/carry to wraps.
+        --wraps;
+      }
+      ticks = newticks;
+      return *this;
+    }
+
+      /** @returns the value @param increment micros from this one. */
     MicroTick operator +(unsigned increment)const {
       MicroTick future(ticks + increment, wraps);
       if (future.ticks < ticks) {//wrapped, in asm would add w/carry to wraps.
         ++future.wraps;
+      }
+      return future;
+    }
+
+       /** @returns the value @param increment micros from this one. */
+    MicroTick operator -(unsigned increment)const {
+      MicroTick future(ticks - increment, wraps);
+      if (future.ticks > ticks) {//wrapped, in asm would add w/carry to wraps.
+        --future.wraps;
       }
       return future;
     }
@@ -68,6 +103,7 @@ struct MicroTick {
     bool refresh(RawMicros clock) {
       RawMicros was = ticks;
       if (changed(ticks, clock)) {//if we don't check for exactly 2^32 microseconds then this logic fails.
+//~800us for the message      	udbg("rf:",was,',',clock);
         if (ticks < was) {//if you don't check often enough this logic will fail.
           ++wraps;
         }
@@ -129,11 +165,11 @@ class SoftMicroTimer {
     SoftMicroTimer() {
       lastchecked.ticks = micros();
       lastchecked.wraps = 0;
-      udbg("ut start:",lastchecked.ticks);
+      udbg("ut start:", lastchecked.ticks);
     };
     /** true only when called in a different tick than it was last called in. */
-    operator bool() {    	
-//    	udbg("ut bool:",lastchecked.micros);
+    operator bool() {
+      //    	udbg("ut bool:",lastchecked.micros);
       return lastchecked.refresh(micros());
     }
     /** most recent sampling of micros(). You should be biased to use this instead of rereading micros() in a local scope.*/
@@ -143,7 +179,7 @@ class SoftMicroTimer {
 
     /** force check of micros().*/
     MicroTick now() {
-//    	udbg("ut now:",lastchecked.micros);
+      //    	udbg("ut now:",lastchecked.micros);
       lastchecked.refresh(micros());
       return lastchecked;
     }
@@ -159,10 +195,11 @@ extern SoftMicroTimer MicroTicked;
 
 /** a retriggerable soft pulse
     if tested within an ISR then the foreground cannot call start() or stop() without disabling that ISR during the change.
+    todo: flying changes should adjust expires when not restarting.
 */
 class MicroStable {
-	public:
- 		using Tick = RawMicros;
+  public:
+    using Tick = RawMicros;
 
   public: //for diagnostic access
     MicroTick expires;
@@ -176,30 +213,41 @@ class MicroStable {
         @param andStart is whether to restart the timer as well, default yes.
     */
     void set(Tick duration, boolean andStart = true) {
-      this->duration = duration; //for restarts.
-      if (andStart) {
+      if (andStart) {//stretches cycle in progress
+        this->duration = duration;
         start();
+      } else {
+        if (isRunning()) {//adjust cycle, might become done.
+          expires -= this->duration;
+          expires += duration;
+        }
+        this->duration = duration;
+        //and someone in the future may call start().
       }
     }
 
-    void operator = (Tick duration){//#non standard oper=
-    	set(duration);
+    void operator = (Tick duration) { //#non standard oper=
+      set(duration);
     }
-    
+
     /** call to indicate running starts 'now', a.k.a. retriggerable monostable. */
     void start() {
       expires = MicroTicked.future(duration);
+      udbg("\tue:",expires.ticks,",",expires.wraps);
     }
 
-    /** stop it early, forgets last natural end.*/
-    void stop() {
-      expires = MicroTick();
+    /** stop it early. Will be neither running nor done.
+        @returns whether timer was running when you called this.
+    */
+    bool stop() {
+      bool wasRunning = isRunning();
+      expires.invalidate();
+      return wasRunning;
     }
 
-      /** @returns whether timer has started and not expired== it has been at least 'done' since start() was called */
+    /** @returns whether timer has started and not expired== it has been at least 'done' since start() was called */
     bool isRunning() const {
-      MicroTick now = MicroTicked.recent();
-      return expires && expires > now;
+      return expires && expires > MicroTicked.recent();
     }
 
     /** @returns whether time has expired, will be false if never started. */
@@ -207,8 +255,8 @@ class MicroStable {
       return MicroTicked.recent() >= expires;
     }
 
-  /** @returns whether this is the first time called since became 'isDone', then alters object so that it will not return true again without another start.
-     *  This is what 'isDone' should have been, but we aren't going to change that.
+    /** @returns whether this is the first time called since became 'isDone', then alters object so that it will not return true again without another start.
+          This is what 'isDone' should have been, but we aren't going to change that.
     */
     bool hasFinished() {
       if (isDone()) {
@@ -222,6 +270,7 @@ class MicroStable {
     /** @returns whether time has expired, and if so restarts it. */
     bool perCycle() {
       if (isDone()) {
+      	udbg('-');
         start();
         return true;
       } else {

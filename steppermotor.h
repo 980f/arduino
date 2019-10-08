@@ -19,14 +19,16 @@ struct StepperMotor {
   bool freeRun = false;
   /** if and which direction to step*/
   int run = 0;//1,0,-1
-	/** stopped is true while we are in low power state. */
-	bool stopped=false;
-	
+  /** stopped is true while we are in low power state. */
+  bool stopped = false;
+
   //time between steps
   MicroStable ticker;
-  //time to lower pwer so motor doesn't burn. 
+  //time to lower pwer so motor doesn't burn.
   MonoStable powersave();
   ///////////////////////////////
+  //this entity computes step width given a starting and a change per step.
+  //it does not apply it to the hardware.
   struct GasPedal {
     //configuration
     Tick start = 0;
@@ -34,26 +36,27 @@ struct StepperMotor {
     //desired speed
     Tick cruise = 0; //formerly the one and only speed, trust to be less than or equal to start.
 
-    /** velocity mode (aka freeRun) computation */
+    /** velocity mode (aka freeRun) computation, ignores steps remaining in motion */
     Tick operator()(Tick present) const {
       if (present > start) {
-        return start;
+        return start;//todo:M start is also the slowest we allow, this is probably a bad idea for some users.
       }
-      if (present >= (cruise + accel)) {
+      if (present >= (cruise + accel)) {//if can subtract without exceding desired then do so
         return present - accel;
       }
-      return cruise;
+      return cruise;//target
     }
 
     /** @return time for next step given number of steps remaining, will do the abs value locally */
     Tick operator()(Stepper::Step remaining, Tick present) const {
       if (0 == signabs(remaining)) {
-        return ~0;//kill timer
+        return ~0;//kill timer, stop motion if no steps left
       }
       //the following merits caching:
-      unsigned ramp = quanta(cruise - start, accel); //change in speed desired / number of steps to do it in
-      if (remaining < ramp) {
-        auto newrate = start - accel * ramp;
+      unsigned ramp = quanta(present - cruise, accel); //change in speed desired / number of steps to do it in
+      if (remaining < ramp) {//if can't make it to full speed before stopping
+        Tick newrate = start - accel * ramp;//max speed allowed per step
+        //todo:0 we don't want the ramp down to ramp up. need to add logic for that.
         return newrate;
       }
       return operator()(present);
@@ -70,7 +73,7 @@ struct StepperMotor {
   //configuration, class default should be non functional.
   struct Wheel {
     Stepper::Step rev = 200; //pretty much the largest at hand, although there is a 2k/rev on our supplies it moves slowly.
-    Stepper::Step width = ~0;
+    Stepper::Step width = ~0; //0 is non functional, don't try to home, ignore sensor.
     void configure(decltype(width) a, decltype(rev) p) {
       if (p) {
         rev = p;
@@ -78,6 +81,9 @@ struct StepperMotor {
       if (a) {
         width = a;
       }
+    }
+    bool isValid() const {
+      return width > 0 && width < rev;
     }
   } h;
 
@@ -87,10 +93,9 @@ struct StepperMotor {
   BoolishRef *powerControl;
 
   void setCruise(Tick perstep) {
-    if (changed(g.cruise, perstep)) {
-//  do we want to perturb something?
-      ticker = perstep;
-    } 
+    if (changed(g.cruise, perstep)) {    	
+      ticker.set(perstep,false);//adjust present cycle, do not restart the timer.
+    }
   }
 
   enum Homing { //arranged to count down to zero
@@ -133,7 +138,7 @@ struct StepperMotor {
   }
 
   /** call this when timer has ticked */
-  void operator()() {
+  bool operator()() {
     if (ticker.perCycle()) {//using perCycle instead of isDone to keep the timer going on all paths through this function.
       bool homeChanged = homeSensor && changed(edgy, *homeSensor);
       if (homeChanged) {
@@ -153,7 +158,7 @@ struct StepperMotor {
             ticker = g(run, ticker.duration);
           }
           pos += run;//steps if run !0
-          return;//#NB
+          break;//
 
         case NotHomed://set up slow move one way or the other
           freeRun = 0;
@@ -211,6 +216,9 @@ struct StepperMotor {
           }
           break;
       }
+      return true;//now would be a good time for a flying change.
+    } else {
+      return false;
     }
   }
 
@@ -259,21 +267,16 @@ struct StepperMotor {
 
   /** start homing */
   void home() {
-    homing = NotHomed;
+    homing = (homeSensor != nullptr && h.isValid()) ? NotHomed : Homed;
   }
 
   void start(bool second, Stepper::Interface iface, BoolishRef *homer, BoolishRef *powerGizmo) {
     which = second;
     pos.interface = iface;
     powerControl = powerGizmo; //no action needed on connect
-    if (changed(homeSensor, homer)) {//on connect update 'homed' state
-      if (homeSensor != nullptr) {
-        homing = NotHomed;
-      } else {
-        homing = Homed;
-      }
-    }
+    homeSensor = homer; //4dbg
+    home();
     setCruise(g.start);
-    ticker.set(g.start);//without this the logic doesn't run, the ticker powers up disabled.
+    ticker=g.start;//without this the logic doesn't run, the ticker powers up disabled.
   }
 };
