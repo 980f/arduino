@@ -2,9 +2,9 @@
 #include <Arduino.h> //added for avr build. curious how different the build is for different processors.
 #include "cheaptricks.h" //for changed()
 
-#ifdef Serial4Debug //serial was notpresent in avr build.
+#ifdef MicroDebug 
 #include "easyconsole.h"
-static EasyConsole<decltype(Serial4Debug)> udbg(Serial4Debug, true /*autofeed*/);
+static EasyConsole<decltype(MicroDebug)> udbg(MicroDebug, true /*autofeed*/);
 #else
 static void udbg(...) {}
 #endif
