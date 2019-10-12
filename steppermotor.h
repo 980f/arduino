@@ -38,35 +38,34 @@ struct StepperMotor {
 
     /** velocity mode (aka freeRun) computation, ignores steps remaining in motion */
     Tick operator()(Tick present) const {
-      if (present > start) {
-        return start;//todo:M start is also the slowest we allow, this is probably a bad idea for some users.
+      if (accel==0 || cruise > start) {
+        return cruise;
       }
-      if (present >= (cruise + accel)) {//if can subtract without exceding desired then do so
+      if (present >= (cruise + accel)) {//if can subtract without exceeding desired then do so
         return present - accel;
       }
-      return cruise;//target
+      return cruise;//can be at target now.
     }
 
     /** @return time for next step given number of steps remaining, will do the abs value locally */
     Tick operator()(Stepper::Step remaining, Tick present) const {
-      if (0 == signabs(remaining)) {
-        return ~0;//kill timer, stop motion if no steps left
+    	//if feature disabled then return requested speed
+    	if ( accel==0) {//#NB: 2nd term has necessary side effects!
+        return cruise;
       }
-      //the following merits caching:
-      unsigned ramp = quanta(present - cruise, accel); //change in speed desired / number of steps to do it in
-      if (remaining < ramp) {//if can't make it to full speed before stopping
-        Tick newrate = start - accel * ramp;//max speed allowed per step
-        //todo:0 we don't want the ramp down to ramp up. need to add logic for that.
-        return newrate;
+      if( 0 == signabs(remaining)){//this logic doesn't apply when we are expecting to be stopped
+      	return cruise>start?cruise:start; //no faster than our threshold for arbitrary activity
+      }
+      unsigned neededToSlowdown = quanta(start - present, accel); //change in speed desired to stop => number of steps to do it in
+      if (remaining <= neededToSlowdown) {//if less than or just enough steps to make it to safe speed before stopping then decel as best we can, let any defect be at slowest speed.
+        return present+accel;//maximum decel as well as accel, if other code is sane then this will ~equal (start-neededToSlowDown*accel).
       }
       return operator()(present);
     }
 
     void configure(decltype(accel) a, decltype(start) p) {
       accel = a; //#NB: a zero acceleration is allowed.
-      if (p != 0) {//# but a zero speed implies 'retain present'
-        start = p;
-      }
+      start = p;      
     }
   } g;
   /////////////////////////////////////////////////////////
