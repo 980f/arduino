@@ -12,7 +12,7 @@
             ...
             log("This", 42, 'c', 12.4, anythingforwhichthereisaprintvariant, HEXLY(0x980F));
 
-    Initial design returns what the Print::print routines do, all nicely added up. This however precludes chaining to an end-of-line function. 
+    Initial design returns what the Print::print routines do, all nicely added up. This however precludes chaining to an end-of-line function.
     OTOH since we have variable length args we can add a Newline as an argument.
 
    Arduino Print functionality is type aware, and supports an interface class Printable.
@@ -113,30 +113,29 @@ struct ChainPrinter {
         bool owner;
       public:
         ChainPrinter &printer;
-        explicit FeedStacker(ChainPrinter &printer,bool beFeeding): printer(printer)	{
+        explicit FeedStacker(ChainPrinter &printer, bool beFeeding): printer(printer)	{
           wasFeeding = printer.autofeed;
-          printer.autofeed= beFeeding;
-          owner=true;
+          printer.autofeed = beFeeding;
+          owner = true;
         }
-
         /** make a copy but keep destructor of prior from doing anything, just so parent class can have a factory for these. */
         FeedStacker(FeedStacker &&other): wasFeeding(other.wasFeeding), printer(other.printer) {
           other.owner = false;
         }
 
+        /** can't chain as we must alter the argument, see && constructor */
         FeedStacker(const FeedStacker &other) = delete;
-
         ~FeedStacker() {
-        	if(owner){
-          	printer.autofeed = wasFeeding;
-        	}
+          if (owner) {
+            printer.autofeed = wasFeeding;
+          }
         }
     };
 
     /** you must assign this to a named thing to ensure the compiler doesn't elide it.
-    suggested usage:  auto pop= printer.stackFeeder(local_preference_for_linefeeding) */
-    FeedStacker stackFeeder(bool beFeeding=false) {//default value for legacy upgrade from nofeeds
-      return FeedStacker(*this,beFeeding);
+      suggested usage:  auto pop= printer.stackFeeder(local_preference_for_linefeeding) */
+    FeedStacker stackFeeder(bool beFeeding = false) { //default value for legacy upgrade from nofeeds
+      return FeedStacker(*this, beFeeding);
     }
 
 };
@@ -147,4 +146,5 @@ struct CrLf: public Printable {
   }
 };
 
+/** we can share this */
 const CrLf CRLF;

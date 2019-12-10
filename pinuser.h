@@ -1,6 +1,4 @@
-#pragma once
-
-//(C) 2018 by Andy Heilveil, github/980F
+#pragma once  //(C) 2018 by Andy Heilveil, github/980F
 //for sharing Arduino and Maple codebases.
 
 #ifdef STMDUINO

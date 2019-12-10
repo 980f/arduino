@@ -29,7 +29,7 @@ class WireWrapper {
     /** 7 bit address (arduino convention), kHz (e.g. 100 not 100000), for due etc 0 based selection of which */
     WireWrapper( uint8_t addr, unsigned kHz = 100, unsigned which = 0): base(addr), kHz(kHz),
 #if defined(ARDUINO_SAM_DUE)
-      bus(which ? Wire1, Wire) //so far only two are supported.
+      bus(which ? Wire1: Wire) //so far only two are supported.
 #else
       bus(Wire) //only one supported at present.
 #endif

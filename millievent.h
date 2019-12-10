@@ -1,4 +1,4 @@
-#pragma once
+#pragma once //(C) 2018 by Andy Heilveil, github/980F
 #include <Arduino.h>
 #include "cheaptricks.h" //for changed()
 

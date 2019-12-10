@@ -1,4 +1,4 @@
-#pragma once
+#pragma once //(C) 2019 by Andy Heilveil, github/980F
 
 /** .
     This variation of Pin wrapping (see pinclass.h for template version) can be passed by reference, which includes being able to be put into an array.
