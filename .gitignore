@@ -1,6 +1,9 @@
 #psuedo sub module
 ezcpp/*
+ezcpp/
 
+#some editor's backups
+*~
 # Prerequisites
 *.d
 
