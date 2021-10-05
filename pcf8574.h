@@ -20,7 +20,7 @@ class PCF8574: public WIredThing<uint8_t> {
     byte lastwrote = ~0; //default is the most innocuous value
   public:
     /** there are 3 address jumpers, 8 boards allowed per bus,  */
-    PCF8574 (unsigned which = 0, unsigned whichMaster = 0): WIredThing<uint8_t>((0x20 + (which & 7)), whichMaster) {
+    PCF8574 (unsigned which = 0, unsigned whichMaster = 0,unsigned kHz=100): WIredThing<uint8_t>((0x20 + (which & 7)), whichMaster,kHz) {
       //while it is tempting to read the values into lastwrote, we want the constructor to not do anything active so that construction order is moot for when these are static, which is the common case.
     }
 

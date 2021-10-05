@@ -27,17 +27,19 @@ class WireWrapper {
     WireError lastOp;
   public:
     /** 7 bit address (arduino convention), kHz (e.g. 100 not 100000), for due etc 0 based selection of which */
-    WireWrapper( uint8_t addr, unsigned kHz = 100, unsigned which = 0): base(addr), kHz(kHz),
+    WireWrapper( uint8_t addr, unsigned which = 0, unsigned kHz = 100): base(addr),
 #if defined(ARDUINO_SAM_DUE)
       bus(which ? Wire1, Wire) //so far only two are supported.
 #else
       bus(Wire) //only one supported at present.
 #endif
+      , kHz(kHz)
     {
       //#done
     }
     /** someone needs to call begin on the bus, preferable just one entity.*/
     void begin() {
+      bus.setClock(kHz * 1000);
       bus.begin();
     }
 
@@ -149,7 +151,7 @@ class WireWrapper {
 /** make direct mapped I2C chunk look like a simple variable */
 template <typename Scalar> class WIredThing : public WireWrapper {
   public:
-    WIredThing ( uint8_t addr, unsigned which = 0): WireWrapper(addr, which) {
+    WIredThing ( uint8_t addr, unsigned which = 0, unsigned kHz = 100): WireWrapper(addr, which, kHz) {
 
     }
     //read
