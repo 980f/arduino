@@ -48,8 +48,9 @@ class PCF8574: public WIredThing<uint8_t> {
       return operator = (( (lastwrote & ~mask) | (value & mask)));
     }
 
+    /** @returns last thing set by operator =*/
     uint8_t cachedBits()const {
-      return lastwrote;
+      return lastwrote & ~inputs;
     }
 
     // not efficient enough (yet) hiding to work on other problems

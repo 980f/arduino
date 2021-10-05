@@ -11,7 +11,7 @@ enum WireError : uint8_t {
   None = 0,
   BufferOverflow,
   NackedAddress,
-  NeackedData,
+  NackedData,
   Other
 };
 
@@ -19,8 +19,8 @@ enum WireError : uint8_t {
 class WireWrapper {
     static unsigned bus_kHz;//todo: will need to be an array coindexed with bus selection, or learn how to read it back from the TwoWire object.
     unsigned kHz;
-		//internal shared code
-    WireError writeBlock(const uint8_t *bites,unsigned qty,bool reversed);
+    //internal shared code
+    WireError writeBlock(const uint8_t *bites, unsigned qty, bool reversed);
   public://for debug
     const uint8_t base;
     TwoWire &bus;
@@ -46,9 +46,9 @@ class WireWrapper {
       bus.write(bite);
     }
 
-   /** send another byte, call Start sometime before you start calling this */
-    void emit(const uint8_t *bites,unsigned qty) {
-      bus.write(bites,qty);
+    /** send another byte, call Start sometime before you start calling this */
+    void emit(const uint8_t *bites, unsigned qty) {
+      bus.write(bites, qty);
     }
 
     /** take control of the I2C bus */
@@ -100,6 +100,10 @@ class WireWrapper {
     }
 
   public: //now for conveniences
+    bool seemsOk() {
+      return lastOp == WireError::None;
+    }
+
     /** modify a byte at an address */
     uint8_t update(uint8_t addr, uint8_t ones, uint8_t zeroes) {
       uint8_t was;
@@ -143,7 +147,7 @@ class WireWrapper {
 
 
 /** make direct mapped I2C chunk look like a simple variable */
-template <typename Scalar> class WIredThing : WireWrapper {
+template <typename Scalar> class WIredThing : public WireWrapper {
   public:
     WIredThing ( uint8_t addr, unsigned which = 0): WireWrapper(addr, which) {
 
@@ -167,7 +171,7 @@ template <typename Scalar> class WIredThing : WireWrapper {
 ////////////////////////////////////////////////////////////////////////////////
 
 /** a register within a multi register I2C device made to look like a simple variable.
- *  presently only handles devices with single byte register addresses.
+    presently only handles devices with single byte register addresses.
   And yes, it is capitalized WEird because I consistently typoed it.*/
 template <typename Scalar> class WIred {
     enum {numBytes = sizeof(Scalar)};

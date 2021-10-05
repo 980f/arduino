@@ -97,7 +97,7 @@ class MonoStable {
       zero = BadTick;
     }
 
-    /** @returns whether timer has started and not expired== it has been at least 'done' since start() was called */
+    /** @returns whether timer has started and not expired== it has been less than 'done' since start() was called */
     bool isRunning() const {
       MilliTick now = MilliTicked.recent();
       return now > zero && done > (now - zero);
