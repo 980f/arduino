@@ -57,7 +57,7 @@ class DigitalPin {
 */
 class DigitalInput: public DigitalPin {
   public:
-    DigitalInput(unsigned arduinoNumber, unsigned polarity = HIGH):  DigitalPin(arduinoNumber, INPUT, polarity) {}
+    DigitalInput(unsigned arduinoNumber, unsigned polarity = HIGH):  DigitalPin(arduinoNumber, INPUT_PULLUP, polarity) {}
 };
 
 class DigitalOutput: public DigitalPin {
