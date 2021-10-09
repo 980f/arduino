@@ -21,16 +21,16 @@ class SoftMilliTimer {
     MilliTick lastchecked = 0; //0: will not return true until at least one ms has expired after reset.
   public:
     /** true only when called in a different millisecond than it was last called in. */
-    
-        /** true only when called in a different millisecond than it was last called in. */
+
+    /** true only when called in a different millisecond than it was last called in. */
     bool ticked() {
       return changed(lastchecked, millis());
     }
-    
+
     operator bool() {
       return ticked();
     }
-    
+
     /** most recent sampling of millis(). You should be biased to use this instead of rereading millis().*/
     MilliTick recent() const {
       return lastchecked;
@@ -110,7 +110,7 @@ class MonoStable {
     }
 
     /** @returns whether this is the first time called since became 'isDone', then alters object so that it will not return true again without another start.
-     *  This is what 'isDone' should have been, but we aren't going to change that.
+        This is what 'isDone' should have been, but we aren't going to change that.
     */
     bool hasFinished() {
       if (isDone()) {
@@ -146,6 +146,11 @@ class MonoStable {
     /** @return when it will be done, which can be in the past if already done.*/
     MilliTick due() const {
       return done + zero;
+    }
+
+    //time since start if not stopped. Can exceed programmed time if you haven't called hasfinished()
+    MilliTick elapsed() const {
+      return zero == BadTick ? -1 : MilliTicked.recent() - zero;
     }
 
 };
