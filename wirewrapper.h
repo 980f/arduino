@@ -183,9 +183,10 @@ template <typename Scalar> class WIred {
     bool bigendian;//todo: move this onto ww if we see that no devices have per-register endianness (I've seen this with some non-I2C devices)
 
   public:
-    /** each time we read or write we update this value, handy for sequential bit flipping, but prevents consting the class instances. */
+    /** each time we read or write we update this value, handy for sequential bit flipping, but prevents consting the class instances. 
+    If you write to it then the modify() function will probably not do what you expect */
     Scalar cached;
-    WireError lastOp;
+    WireError lastOp; //each register has its own status separate from the device as a whole.
   public:
     /** @param ww is the device address container. @param selector is one of 256 subsystems within the device. @param bigendian controls the order in which the bytes of a block are moved to and from the device. */
     WIred( WireWrapper &ww, uint8_t selector, bool bigendian = false): ww(ww), selector(selector), bigendian(bigendian) {}
