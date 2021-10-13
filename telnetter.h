@@ -33,7 +33,6 @@ struct Credentials {//todo: use allocation constants from wifi.h
 };
 
 
-using MAC = uint8_t[WL_MAC_ADDR_LENGTH];
 
 struct TelnetActor {
   virtual void onInput(uint8_t *bytes, unsigned length, unsigned ci) {
@@ -150,16 +149,26 @@ struct Telnetter {
   bool tryConnect() {
     if (cred) {
       WiFi.mode(WIFI_STA);
+#ifdef UseESP32
+      WiFi.softAPsetHostname(actor ? actor->hostname() : "Voldemort");//' Voldemort' he who shall not be named
+#else
       WiFi.hostname(actor ? actor->hostname() : "Voldemort");//' Voldemort' he who shall not be named
+#endif
       WiFi.begin(cred->ssid, cred->password);
 
       dbg("\nDevice Mac ");
+
+#if 1 //def UseESP32
+      String mac = WiFi.softAPmacAddress();
+      dbg(mac);
+#else
       MAC mac;
       WiFi.macAddress(mac);
       for (unsigned mi = 0; mi < WL_MAC_ADDR_LENGTH; mi++) {
         Char c(mac[mi]);
         dbg(':', c.hexNibble(1), c.hexNibble(0));
       }
+#endif
       dbg("\nConnecting to AP ", cred->ssid);
       if (Verbose) {
         dbg(" using password ", cred->password);

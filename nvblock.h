@@ -12,7 +12,7 @@ struct Nvblock {
   byte * const thing;
 
   unsigned next()const {
-     return nvbase + allocated;
+    return nvbase + allocated;
   }
 
   Nvblock(unsigned nvbase, unsigned allocated, byte *thing):
@@ -21,19 +21,21 @@ struct Nvblock {
     thing(thing) {
     //#done.
   }
-  
-#if 0  //need to upgrade compiler so that it can implement template constructor args. This gives quirky error with 4.8.2
-  template<typename Concrete> 
-  Nvblock(Concrete &noVtable, unsigned nvbase): Nvblock(nvbase, sizeof(Concrete), reinterpret_cast<byte *>(&noVtable) {
-    //#done.
-  }
-#else
+
+  Nvblock(Nvblock &&moveit) = default;
+  Nvblock(const Nvblock &moveit) = default;
+
+  //  //the following gives 'nameoffirstargument' is not a type.
+  //  template<typename Concrete>
+  //  Nvblock(Concrete &noVtable, unsigned nvbase): Nvblock(nvbase, sizeof(Concrete), reinterpret_cast<byte *>(&noVtable) {
+  //    //#done.
+  //  }
+
   //lean on move semantics to make this nearly as good as a true constructor
-  template<typename Concrete> static const Nvblock &For(Concrete &noVtable, unsigned nvbase){
-    Nvblock factory(nvbase, sizeof(Concrete), reinterpret_cast<byte *>(&noVtable));
-    return factory;
-  }  
-#endif
+  template<typename Concrete> static const Nvblock For(Concrete &noVtable, unsigned nvbase) {
+    return Nvblock(nvbase, sizeof(Concrete), reinterpret_cast<byte *>(&noVtable));
+  }
+
 
   unsigned save()const {
     for (unsigned si = 0; si < allocated; ++ si) {
