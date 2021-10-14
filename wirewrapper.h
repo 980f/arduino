@@ -17,6 +17,7 @@ enum WireError : uint8_t {
 
 /** remembers your base address and which bus you are using, and keeps the last error handy. */
 class WireWrapper {
+
     static unsigned bus_kHz;//todo: will need to be an array coindexed with bus selection, or learn how to read it back from the TwoWire object.
     unsigned kHz;
     //internal shared code
@@ -25,9 +26,10 @@ class WireWrapper {
     const uint8_t base;
     TwoWire &bus;
     WireError lastOp;
+    enum { StandardRate=100, FastMode=400, FastModePlus=3400}; //FM+ not yet testable, need an MCU that supports it.
   public:
     /** 7 bit address (arduino convention), kHz (e.g. 100 not 100000), for due etc 0 based selection of which */
-    WireWrapper( uint8_t addr, unsigned which = 0, unsigned kHz = 100): base(addr),
+    WireWrapper( uint8_t addr, unsigned which = 0, unsigned kHz = StandardRate): base(addr),
 #if defined(ARDUINO_SAM_DUE)
       bus(which ? Wire1, Wire) //so far only two are supported.
 #else
@@ -148,7 +150,8 @@ class WireWrapper {
 };
 
 
-/** make direct mapped I2C chunk look like a simple variable */
+/** make direct mapped I2C chunk look like a simple variable.
+    Known base for PCF8574 and PCF8575  */
 template <typename Scalar> class WIredThing : public WireWrapper {
   public:
     WIredThing ( uint8_t addr, unsigned which = 0, unsigned kHz = 100): WireWrapper(addr, which, kHz) {
@@ -178,14 +181,15 @@ template <typename Scalar> class WIredThing : public WireWrapper {
 template <typename Scalar> class WIred {
     enum {numBytes = sizeof(Scalar)};
     WireWrapper &ww;
-    uint8_t selector;
+    const uint8_t selector;
     /** I2C might have different endianess than platform. The default arg below should be a platform derived value */
     bool bigendian;//todo: move this onto ww if we see that no devices have per-register endianness (I've seen this with some non-I2C devices)
 
   public:
-    /** each time we read or write we update this value, handy for sequential bit flipping, but prevents consting the class instances. */
+    /** each time we read or write we update this value, handy for sequential bit flipping, but prevents consting the class instances. 
+    If you write to it then the modify() function will probably not do what you expect */
     Scalar cached;
-    WireError lastOp;
+    WireError lastOp; //each register has its own status separate from the device as a whole.
   public:
     /** @param ww is the device address container. @param selector is one of 256 subsystems within the device. @param bigendian controls the order in which the bytes of a block are moved to and from the device. */
     WIred( WireWrapper &ww, uint8_t selector, bool bigendian = false): ww(ww), selector(selector), bigendian(bigendian) {}
