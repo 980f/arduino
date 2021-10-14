@@ -18,53 +18,50 @@
   
 */
 class MCP23017 {
-    TwoWire &my2c;
+    WireWrapper &my2c; //not deriving so that we can share the master with other devices on the bus. Duplicate master structures might be ok, but let us not depende upon that until we have more experience.
     const byte myaddress; // 7 bit address
-    WIred<u8> iocon;
+
+    /** we are only supporting 16 bit mode at present. When we do 8 bit mode we will need two instances of a subclass */
 		WIred<u16> gpio;
-    
-    //added for the sake of the bit class.
-    unsigned lastwrote = ~0U; //default is the most innocuous value
+		//WIred has a cache like the 8574/5 did.    
   public:
     /** there are 3 address jumpers, 8 boards allowed per bus */
-    MCP23017 (unsigned which = 0, TwoWire &master = Wire): my2c(master), myaddress(0x20 + (which & 7)) {
-      //while it is tempting to read the values into lastwrote, we want the constructor to not do anything active so that construction order is moot for when these are static, which is the common case.
+    MCP23017 (unsigned which = 0, WireWrapper &master): my2c(master,WireWrapper::FastMode), myaddress(0x20 + (which & 7)) ,gpio(my2c,14,true){
+			//#nada
+    }
+    
+    void begin(){
+    /** iocon is 7 control bits, but most are related to interrupts and we aren't implementing them yet */
+	    WIred<u8> iocon(my2c, 5);
+	    iocon=0; //todo: add operands to manipulate bits as we add support for the features.    
     }
 
     /** configure pins to be managed as input-only  */
     void setInput(unsigned mask,unsigned pullups) {
-      //todo: write to iodir register
-      //todo: write to pullup register
+      //write to iodir register
+      WIred<u16>cfg(my2c,0,true);
+      cfg=mask;
+      //write to pullup register
+      WIred<u16>cfg2(my2c,1,true);
+      cfg2=pullups;  		
     }
     
     /** interrupt config will come later */
 
     /** @returns whether device seems to be present */
-    bool detect() {
-      my2c.beginTransmission(myaddress);
-      auto error = my2c.endTransmission();
-      return !error;
+    bool isPresent() {
+      return my2c.isPresent();
     }
 
-    /** sends 2 bytes of data, @param data given is OR'd herein with the input mask. */
-    byte send(unsigned data) {
-      data |= inputs;
-      lastwrote = data; //record even if we fail to send.
-      my2c.beginTransmission(myaddress);
-      my2c.write(reinterpret_cast<byte*>(&data), 2);
-      return my2c.endTransmission();
-    }
-
-    /** fetch the low or both bytes. If only one byte is fetched the high byte returned is ALL ONES. */
-    unsigned fetch(bool both = true) {
-      unsigned value = ~0U;
-      byte *punt = reinterpret_cast<byte *>(&value);
-
-      for (unsigned bytesread = my2c.requestFrom(myaddress, both ? 2 : 1); bytesread-- > 0;) {
-        *punt++ = my2c.read();
-      }
-      return value;
-    }
+		/** send to gpio. @returns argument, not the actual state of the pins */
+		u16 operator =(u16 allbits){
+			gpio=allbits;
+			return allbits;
+		}
+		
+		operator u16() {
+		  return gpio;
+		}
 
 
     friend class MCP23017::Bit;
@@ -79,12 +76,14 @@ class MCP23017 {
           //don't do anything, so that we can sanely static construct.
         }
 
-        operator bool() {
-          return false&&((group.fetch() >> which) & 1) == 1; //compiler will generat an extract bit instruction for cortex parts.
+        operator bool() {//todo: test
+          return ((group.fetch() >> which) & 1) == 1; //compiler will generat an extract bit instruction for cortex parts.
         }
 
-        void operator =(bool bit) {
-          //todo:implement sending. group.send(bit ? (group.lastwrote | 1 << bit) : (group.lastwrote & ~(1 << bit))); //no need to use assign ops here, the group tracks the word written.
+/** @returns argument, not the actual pin*/
+        bool operator =(bool bit) {
+          group.send(bit ? (group.lastwrote | 1 << bit) : (group.lastwrote & ~(1 << bit))); //no need to use assign ops here, the group tracks the word written.
+          return bit;
         }
     }
 
