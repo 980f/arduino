@@ -9,13 +9,13 @@ ChainPrinter edbg(Serial, true); //true adds linefeeds to each invocation.
 
 class EdgyInput {
     bool last; //last stable value
-    const DigitalInput pin;
+    const DigitalInput &pin;
     const unsigned filter;
   public: //for debug
     unsigned debouncer;
     unsigned changes = 0;
   public:
-    EdgyInput(unsigned which, unsigned filter = 0): pin(which), filter(filter) {
+    EdgyInput(const DigitalInput &which, unsigned filter = 0): pin(which), filter(filter) {
       //do nothing until setup
     }
 
