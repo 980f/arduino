@@ -28,6 +28,13 @@ struct Flickery {
     }
   }
 
+  /** allow flicker to be replaced with a boolean */
+  operator bool () const {
+    return ison;
+  }
+
+  //operator = could either be a flicker enable or just a temporary override, so we don't have one at all.
+  
   virtual void be(bool on) {
     ison = on;
   }
