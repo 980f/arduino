@@ -11,7 +11,7 @@ struct Flickery {
   //these are used as MilliTicks, but since we want flicker we can use a shorter int to save on ram.
   unsigned maxtime, mintime , offtime;
 
-  Flickery(unsigned maxtime, unsigned mintime = 50, unsigned offtime = 50): ison(true), mintime(mintime), maxtime(maxtime) {
+  Flickery(unsigned maxtime, unsigned mintime = 50, unsigned offtime = 50): ison(true), mintime(mintime), maxtime(maxtime), offtime(offtime) {
     //#nada so that we can statically construct
   }
 
