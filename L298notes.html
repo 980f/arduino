@@ -9,8 +9,10 @@
     <p>L298 cheat sheet</p>
     <p>Dual H-Bridge on usual Arduino adaptor.<br>
       <br>
-      Seeed studio V1.1 connections:<br>
-    </p>
+      Seeed studio V1.1 connections using 'FourBanger from 980f's motordrivers.h:<br>
+      xp/xn/en 8/11/9<br>
+      yp/yn/en 12/13/10<br>
+      Note DuplicateOutput class </p>
     <p>Motor voltage must be at least 2.5V greater than logic voltage, 7.5 for 5V logic.<br>
       Maximum motor voltage is 46 V.<br>
       Maximum load per channel is 2A DC, perhaps 2.5 A if pulses leave enough off time, 3A for 100uS pulses.<br>
@@ -25,5 +27,8 @@
     <p>Enable is active high, pull that sucker down with a resistor else the load might move during processor reset and download.<br>
       The other 2 controls are "one way", "the other", and if both "don't move". When disabled expect the motor to slow down and stop due to pushing some current through the part, but preferably through external diodes.</p>
     <p>Multiwatt15 package is used, mounted on a heat sink.</p>
+    <p>Freestanding WB291111:<br>
+      I do not use the pullups so that I can access 5V VCC from the jumpers for them.<br>
+      I soldered the connection for CS1 to its ground, jumpered CS2 to CS1 and then used the CS2 ground for the GND to pair with the 5V accessed via U1 jumper. Pullups are not a particularly good choice for this device, pulldowns would have made more sense when attached to a logic source as that is the inactive level for all signals. The pullups should only be used when controlling the board from simple contacts or open-collector drivers.</p>
   </body>
 </html>
