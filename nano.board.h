@@ -1,13 +1,14 @@
-#pragma once //(C)2019 Andy Heilveil, github/980F
+#pragma once //(C)2021 Andy Heilveil, github/980F
+
+/**
+This was copied from promicro before it was realize that the only differences are pinouts, not any of the core functionality.
+There will be a base class of AVR16 and then some simple extensions which represent which components are present on each board.
+*/
 
 #include "bitbanger.h"
 #include "chainprinter.h"  //for debug stream
 //board model, includes chip type.
-//from leonardo variant/pins....h
-//#define LED_BUILTIN 13
-//#define LED_BUILTIN_RX 17
-//#define LED_BUILTIN_TX 30
-//a0<->18  a1<->19 ... for 12 a ins.
+
 //  TIMER1A,    /* 9 */
 //  TIMER1B,    /* 10 */
 class AVR328P {
@@ -41,6 +42,7 @@ class AVR328P {
         drive(out);//don't need to wait for setup().
       }
 
+			/** @returns the actual pin value, which might not be what you output */
       operator bool () const {
         return (port.pins & (1 << shift)) != 0;
       }
@@ -64,6 +66,7 @@ class AVR328P {
         }
       }
     };
+/// so far same as 32u4 ...
 
     class T1Control {
       public://here through resolution() are part of picking the precalar. Most systems have 16MHz as the input to this but that is configurable via the PLL stuff (not yet encoded).
@@ -172,7 +175,7 @@ struct NanoAVR: public AVR328P {
 
   //    PinReference
   bool ledd5;
-  ProMicro()
+  NanoAVR()
   //    :ledd5('D',5,1)
   {
 
