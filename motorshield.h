@@ -5,7 +5,10 @@
 #include "pinclass.h"
 
 /** there are four half-H's as two pairs due to shared enable.
-  This class is for one pair of half-H's */
+  This class is for one pair of half-H's.
+
+  It doesn't allow 100% of the options allowed by the hardware, only one brake mode is exposed, the other is replaced with diddling the enable pin.
+*/
 struct L298Bridge {
   const DigitalOutput onehalf;
   const DigitalOutput otherhalf;
@@ -17,10 +20,18 @@ struct L298Bridge {
   {
   }
 
+  enum Code {
+    Off = 0,
+    Forward,
+    Backward,
+    Hold
+  };
+
+
   /** 1 goes one way, 2 goes the other way, 0 disables, 3 puts on the breaks.*/
-  void operator =(unsigned code) {
-    onehalf = code & 1;
-    otherhalf = code & 2;
+  void operator =(Code code) {
+    onehalf = !!(code & 1);
+    otherhalf = !!(code & 2);
     enable = code != 0;
   }
 
@@ -28,11 +39,11 @@ struct L298Bridge {
 
 
   /** @returns nominal direction, ignoring whether it is enabled so that enable can be used for power level control via PWM'ing it */
-  operator unsigned () const {
+  operator Code () const {
     if (onehalf) {
-      return otherhalf ? 3 : 1;
+      return otherhalf ? Hold : Forward;
     } else {
-      return otherhalf ? 2 : 0;
+      return otherhalf ? Backward : Off;
     }
   }
 
@@ -45,4 +56,15 @@ struct L298Bridge {
 struct SeeedStudioMotorShield {
   const L298Bridge one{8, 11, 9};
   const L298Bridge two{12, 13, 10};
+
+  /** operate both in tandem */
+  void operator =(unsigned code) {
+    one = code;
+    two = code;
+  }
+
+  /** @returns nominal direction, ignoring whether it is enabled so that enable can be used for power level control via PWM'ing it */
+  L298Bridge::Code state() const {
+    return one.operator Code();
+  }
 };
