@@ -110,10 +110,10 @@ template <PinNumberType arduinoNumber, unsigned polarity = HIGH> struct OutputPi
 };
 
 /** to drive a pair of pins in tandem, for when you need more drive or there is some other reason they should always match*/
-template <unsigned p1, unsigned p2>
+template <unsigned p1, unsigned p2, bool activehigh=true>
 struct DuplicateOutput: public BoolishRef {
-  const OutputPin<p1> theone;
-  const OutputPin<p2> theother;
+  const OutputPin<p1,activehigh> theone;
+  const OutputPin<p2,activehigh> theother;
   bool operator=(bool on) const override {
     //todo: consider disabling interrupts around the pair
     theone = on;
@@ -150,5 +150,6 @@ struct ComplementaryOutput : public BoolishRef {
   }
 
 };
+
 
 #pragma clang diagnostic pop
