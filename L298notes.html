@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>L298 Arduino notes</title>
+    <meta name="author" content="Andy Heilveil (github/980f)">
+  </head>
+  <body>
+    <p>L298 cheat sheet</p>
+    <p>Dual H-Bridge on usual Arduino adaptor.<br>
+      <br>
+      Seeed studio V1.1 connections:<br>
+    </p>
+    <p>Motor voltage must be at least 2.5V greater than logic voltage, 7.5 for 5V logic.<br>
+      Maximum motor voltage is 46 V.<br>
+      Maximum load per channel is 2A DC, perhaps 2.5 A if pulses leave enough off time, 3A for 100uS pulses.<br>
+      You may successfully tie the two together for double the capacity.</p>
+    <p>External clamp diodes are suggested for any inductive load, such as all motors.</p>
+    <p>It can pull 70ma from the logic supply when an output is on, typically 50.<br>
+      It still takes 5..10ma when drivers are off.</p>
+    <p>Logic thresholds are 1.5V and 2.3V regardless of supply voltage, at -10/100 uA load.<br>
+      Nearly 2V and possible 5V are lost in the H-bridge! For a 12V load consider using a 15V supply.<br>
+      The sense resistor will be fed 2V.</p>
+    <p>Don't expect more than 25kHz performance, although you might be able to push to 40kHz with some loads.</p>
+    <p>Enable is active high, pull that sucker down with a resistor else the load might move during processor reset and download.<br>
+      The other 2 controls are "one way", "the other", and if both "don't move". When disabled expect the motor to slow down and stop due to pushing some current through the part, but preferably through external diodes.</p>
+    <p>Multiwatt15 package is used, mounted on a heat sink.</p>
+  </body>
+</html>
