@@ -20,23 +20,30 @@ struct L298Bridge {
   {
   }
 
+  /** enumerized bit patterns */
   enum Code {
     Off = 0,
-    Forward,
-    Backward,
-    Hold
+    Forward = 1,
+    Backward = 2,
+    Hold = 3
   };
 
-
-  /** 1 goes one way, 2 goes the other way, 0 disables, 3 puts on the breaks.*/
-  void operator =(Code code) {
+  /** 1 goes one way, 2 goes the other way, 0 disables, 3 puts on the brakes.*/
+  void operator =(Code code) const {
     onehalf = !!(code & 1);
     otherhalf = !!(code & 2);
     enable = code != 0;
   }
 
-  //for using soft pwm to control power directly assign to enable member.
+  void reverse(bool toggleit = true) {
+    if (toggleit) {
+      //todo: guard against interrupts here. One way is to use a 2-bit field but plain arduino doesn't admit that can be done.
+      onehalf.toggle();
+      otherhalf.toggle();
+    }
+  }
 
+  //for using soft pwm to control power directly assign to enable member.
 
   /** @returns nominal direction, ignoring whether it is enabled so that enable can be used for power level control via PWM'ing it */
   operator Code () const {
@@ -58,7 +65,7 @@ struct SeeedStudioMotorShield {
   const L298Bridge two{12, 13, 10};
 
   /** operate both in tandem */
-  void operator =(unsigned code) {
+  void operator =(L298Bridge::Code code) const {
     one = code;
     two = code;
   }
