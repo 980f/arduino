@@ -28,6 +28,10 @@ struct L298Bridge {
     Hold = 3
   };
 
+  static Code reverseof(Code code) {
+    return Code(code ^ Hold);
+  }
+
   /** 1 goes one way, 2 goes the other way, 0 disables, 3 puts on the brakes.*/
   void operator =(Code code) const {
     onehalf = !!(code & 1);
@@ -35,7 +39,7 @@ struct L298Bridge {
     enable = code != 0;
   }
 
-  void reverse(bool toggleit = true) {
+  void reverse(bool toggleit = true) const {
     if (toggleit) {
       //todo: guard against interrupts here. One way is to use a 2-bit field but plain arduino doesn't admit that can be done.
       onehalf.toggle();
@@ -73,5 +77,11 @@ struct SeeedStudioMotorShield {
   /** @returns nominal direction, ignoring whether it is enabled so that enable can be used for power level control via PWM'ing it */
   L298Bridge::Code state() const {
     return one.operator Code();
+  }
+
+  void reverse(bool toggleit = true) const {
+    //todo: guard against interrupts here. One way is to use a 2-bit field but plain arduino doesn't admit that can be done.
+    one.reverse(toggleit);
+    two.reverse(toggleit);
   }
 };
