@@ -2,14 +2,14 @@
 #pragma once
 
 #include "chainprinter.h"
-ChainPrinter dbg(debug);
+ChainPrinter dbg(debug); //expects a Stream named debug.  todo: less generic name for this, perhaps a #define with an #ifdef here to disable dbg messages
 
-#include "char.h"  //until chainprinter prints hex.
+#include "char.h"  //until chainprinter prints hex. todo: it does, fix the code here.
 
 //max number of simultaneous clients allowed, note: their incoming stuff is mixed together. using 3 as the 8266 supports at most 4 sockets.
 #define MAX_SRV_CLIENTS 3
 
-struct Credentials {//todo: use allocation constants from wifi.h
+struct Credentials {//todo: use allocation constants from wifi.h for ssid and password max lengths
   char ssid[32];
   char password[64];
 
@@ -21,11 +21,12 @@ struct Credentials {//todo: use allocation constants from wifi.h
     return strzload(password, sizeof(password), strzload(ssid, sizeof(ssid), offset));
   }
 
-  //safe set of ssid, clips and ensures a trailing nul
+  /** safe set of ssid, clips and ensures a trailing nul */
   void setID(const char *s) {
     strzcpy(ssid, sizeof(ssid), s);
   }
-  //safe set of password, clips and ensures a trailing nul
+
+  /**safe set of password, clips and ensures a trailing nul */
   void setPWD(const char *s) {
     strzcpy(password, sizeof(password), s);
   }
@@ -35,14 +36,19 @@ struct Credentials {//todo: use allocation constants from wifi.h
 
 
 struct TelnetActor {
-  virtual void onInput(uint8_t *bytes, unsigned length, unsigned ci) {
+  /**  @param bytes and length are a buffer that you cna't trust to be valid after you return.
+       @param sender is the index of a connection */
+  virtual void onInput(uint8_t *bytes, unsigned length, unsigned sender) {
     ;//do nothing
   }
 
-  virtual void onConnect(WiFiClient &aclient, unsigned ci) {
+  /**  @param aclient is the esp8266 provided object, that you can use e.g. to send a connection response message.
+       @param sender is the index of a connection */
+  virtual void onConnect(WiFiClient &aclient, unsigned sender) {
     ;//do nothing
   }
 
+  /** @returns a pointer to the TelnetActor's hostname, you must return one stays valid after the return (not an auto variable) */
   virtual const char *hostname() {
     return nullptr;
   }
@@ -50,14 +56,15 @@ struct TelnetActor {
 };
 
 
-//will make into its own module real soon now.
+//todo: put into a cpp file
+/** a server that rebroadcasts whatever it receives either from a wifi client or the local serial port */
 struct Telnetter {
   bool amTrying = false;
   bool amConnected = false;
   bool beTrying = false;
 
   uint16_t teleport;//retained for diagnostics
-  MonoStable testRate;
+  MonoStable testRate; //rate limiter for wifi access port connection checks
 
   const Credentials *cred = nullptr;
 
@@ -220,3 +227,4 @@ struct Telnetter {
   }
 
 } ;
+
