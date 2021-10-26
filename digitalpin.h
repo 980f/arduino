@@ -73,7 +73,7 @@ class DigitalOutput: public DigitalPin {
       @returns state of the pin */
     bool operator |=(bool value)const {
       if (value) {
-        return operator =(int(polarity));
+        return operator =(polarity);
       } else {
         return operator bool();
       }
@@ -91,7 +91,7 @@ class DigitalOutput: public DigitalPin {
 
 
     /** set  pin to whether @param nonzero is not zero */
-    bool operator =(int nonzero)const {
+    bool operator =(unsigned nonzero)const {
       return operator =(nonzero != 0);
     }
 
