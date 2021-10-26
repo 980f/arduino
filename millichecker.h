@@ -2,6 +2,13 @@
 
 #include "millievent.h"
 
+/** 
+utility to see iif youare missing milliseconds in your loop().
+call check() often, and then show when it has been a while.
+
+todo: pass stream to print upon rather than hardcoding Serial.
+
+ */
 class MilliChecker {
   static const unsigned numhist = 100;
   unsigned millihist[numhist + 1]; //trusting zero init.
