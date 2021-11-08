@@ -5,7 +5,7 @@
     <title>L298 Arduino notes</title>
     <meta name="author" content="Andy Heilveil (github/980f)">
   </head>
-  <body>
+  <body>WEMOS V1.0.0
     <p>L298 cheat sheet</p>
     <p>Dual H-Bridge on usual Arduino adaptor.<br>
       <br>
@@ -31,6 +31,75 @@
     <p>It is essential to not use the pullups when you are using 3.3V logic to drive the board.</p>
     <p>I do not use the pullups so that I can access 5V VCC from the jumpers for them.<br>
       I soldered the connection for CS1 to its ground, jumpered CS2 to CS1 and then used the CS2 ground for the GND to pair with the 5V accessed via U1 jumper. Pullups are not a particularly good choice for this device, pulldowns would have made more sense when attached to a logic source as that is the inactive level for all signals. The pullups should only be used when controlling the board from simple contacts or open-collector drivers.</p>
+    <hr>L293 boards use a more flexible component, which has enough extra control lines that the interface is SPI-ish, via an HC595 shift register with output register.<br>
+    The controls are shifted out a pin with a clock, then a clock is pulsed for the output register. There are 4 half-H direction controls, and two enables each enable going to a pair of half-H's.<br>
+    <br>
+    For bidirectional DC motor use one provides a direction and its complement to the pair of half-H's that share an enable.<br>
+    When driving 4 independent coils you will most likely not manipulate the enables other than as a system shutdown state.<br>
+    <br>
+    The Adafruit 1.x, DK boards have two L293D's:<br>
+    <table border="1">
+      <tbody>
+        <tr>
+          <td>Pattern</td>
+          <td>msb</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td>lsb</td>
+          <td>SPI<br>
+            controls</td>
+          <td>&nbsp;<br>
+            clock<br>
+            &nbsp;</td>
+          <td>data</td>
+          <td>load</td>
+          <td>en</td>
+          <td>Enables</td>
+          <td>M1 en</td>
+          <td>M2 en</td>
+          <td>M3 en</td>
+          <td>M4 en</td>
+        </tr>
+        <tr>
+          <td>DK V1.2</td>
+          <td>4B</td>
+          <td>3B</td>
+          <td>4A</td>
+          <td>2B</td>
+          <td>1B</td>
+          <td>1A</td>
+          <td>2A</td>
+          <td>3A</td>
+          <td><br>
+          </td>
+          <td>D4</td>
+          <td>D8</td>
+          <td>D12</td>
+          <td>D7 </td>
+          <td>11,3,6,5 =&gt;</td>
+          <td>PWM2A<br>
+            D?</td>
+          <td>PWM2B<br>
+            D?</td>
+          <td>PWM0B<br>
+            D?</td>
+          <td>PWM0A<br>
+            D?</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>Shown as msb first shift order.<br>
+      PWM1A and 1B are routed to servo connectors, D9, D10.</p>
     <hr>
     <p><br>
       Use a DRV8871 or DRV8833 board when ever possible instead of L29x boards, they waste a lot less power and don't lose nearly as much voltage (typically).</p>
@@ -42,6 +111,7 @@
           <td>L293 (4 half-H)</td>
           <td>DRV8871 (single)</td>
           <td>DRV8833 (dual)</td>
+          <td>TB6612 (dual)</td>
         </tr>
         <tr>
           <td>amps</td>
@@ -50,11 +120,14 @@
             The -D has protection diodes</td>
           <td>3.5</td>
           <td>1.5 each</td>
+          <td>1.2 (3.2 peak!)</td>
         </tr>
         <tr>
           <td>overhead</td>
           <td>2 .. 5 V </td>
           <td>1.8</td>
+          <td><br>
+          </td>
           <td><br>
           </td>
           <td><br>
@@ -68,6 +141,7 @@
           </td>
           <td>.36/.32</td>
           <td>.25/.20</td>
+          <td>0.5 Ohm net</td>
         </tr>
         <tr>
           <td>clamp</td>
@@ -75,8 +149,9 @@
           <td><br>
           </td>
           <td>0.8V</td>
-          <td><br>
+          <td>(yes)<br>
           </td>
+          <td>1.0</td>
         </tr>
         <tr>
           <td>logic low</td>
@@ -84,6 +159,7 @@
           <td>1.5</td>
           <td>0.5</td>
           <td>0.7</td>
+          <td>0.3*Vlogic</td>
         </tr>
         <tr>
           <td>logic high</td>
@@ -91,6 +167,7 @@
           <td>2.3</td>
           <td>1.5</td>
           <td>2.0</td>
+          <td>0.7*Vlogic</td>
         </tr>
         <tr>
           <td>logic max</td>
@@ -98,6 +175,7 @@
           <td>7</td>
           <td>5.5 (7)</td>
           <td>5.75</td>
+          <td>5.5</td>
         </tr>
         <tr>
           <td>min VM</td>
@@ -106,6 +184,7 @@
           <td>V+ of logic</td>
           <td>6.5</td>
           <td>2.7</td>
+          <td>2.5</td>
         </tr>
         <tr>
           <td>max VM</td>
@@ -113,6 +192,9 @@
           <td>36</td>
           <td>45</td>
           <td>10.8</td>
+          <td>13.5 <br>
+            (wemos claims 15,<br>
+            adafruit suggests 12)</td>
         </tr>
         <tr>
           <td>idle</td>
@@ -120,10 +202,14 @@
           <td>~8 mA </td>
           <td>10 uA</td>
           <td>2.5 uA</td>
+          <td><br>
+          </td>
         </tr>
         <tr>
           <td>active</td>
           <td>high</td>
+          <td><br>
+          </td>
           <td><br>
           </td>
           <td><br>
@@ -135,7 +221,7 @@
           <td>Notes</td>
           <td>has current sense point<br>
             but no associated logic</td>
-          <td>clamps overshoot at VM+1.3<br>
+          <td>-D clamps overshoot at VM+1.3<br>
             -1.3&nbsp; (roughly two Si diodes)<br>
             <br>
             requires complementary controls <br>
@@ -151,6 +237,8 @@
             has undervoltage shutdown<br>
             has current limiter<br>
             has fault indicator output</td>
+          <td><br>
+          </td>
         </tr>
         <tr>
           <td><br>
@@ -158,8 +246,181 @@
           <td colspan="4">The bipolar devices voltage loss is somewhat current dependent but has a higher minimum than <br>
             the FET devices whose loss is very current dependent, very little at low current.<br>
           </td>
+          <td><br>
+          </td>
         </tr>
       </tbody>
     </table>
+    <br>
+    <br>
+    <hr><br>
+    TB6612 <br>
+    <br>
+    <br>
+    Adafruit V2, over I2C. <br>
+    Uses PCA9685 PWM device as is on servo shield.<br>
+    There are two TB6612's, M1&amp;2 on one, M3&amp;4 on the other, similar to original/DK shield.<br>
+    <br>
+    <table style="width: 100%" border="1">
+      <tbody>
+        <tr>
+          <td><br>
+          </td>
+          <td>fwd</td>
+          <td>rev</td>
+          <td>en</td>
+        </tr>
+        <tr>
+          <td>M1</td>
+          <td>pwm10</td>
+          <td>pwm9</td>
+          <td>pwm8</td>
+        </tr>
+        <tr>
+          <td>M2</td>
+          <td>pwm11</td>
+          <td>pwm12</td>
+          <td>pwm13</td>
+        </tr>
+        <tr>
+          <td>M3</td>
+          <td>pwm4</td>
+          <td>pwm3</td>
+          <td>pwm2</td>
+        </tr>
+        <tr>
+          <td>M4</td>
+          <td>pwm5</td>
+          <td>pwm6</td>
+          <td>pwm7</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <br>
+    <br>
+    <br>
+    WEMOS V1.0.0 <br>
+    Interfaced via a microcontroller that is on I2C.<br>
+    <br>
+    default address is 30, used directly by Wire library.<br>
+    channel select field is 0 for A, 1 for B, 2 for both.<br>
+    Motor status is typical value, use 4 for 'standby'. 0 is hard brake, 3 gentler.<br>
+    multibyte numerical values are little endian.<br>
+    ex code does read after write with 50 us wait between write and read phases.<br>
+    The execution response is ignored by all example programs.<br>
+    <br>
+    <table border="1">
+      <tbody>
+        <tr>
+          <td>operation</td>
+          <td>First</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td>read</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+        </tr>
+        <tr>
+          <td>GET_SLAVE_STATUS</td>
+          <td>1</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td>2</td>
+          <td>product_id (2)</td>
+          <td>version</td>
+        </tr>
+        <tr>
+          <td>RESET_SLAVE</td>
+          <td>2</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td>1</td>
+          <td>execution response</td>
+          <td><br>
+          </td>
+        </tr>
+        <tr>
+          <td>&nbsp;CHANGE_I2C_ADDRESS</td>
+          <td>3</td>
+          <td>new I2C address</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td>1</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+        </tr>
+        <tr>
+          <td>&nbsp;CHANGE_STATUS</td>
+          <td>4</td>
+          <td>channel select</td>
+          <td>MOTOR_STATUS</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td>1</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+        </tr>
+        <tr>
+          <td>CHANGE_FREQ</td>
+          <td>5</td>
+          <td>channel select</td>
+          <td>Hz up to 80,000</td>
+          <td>mid byte</td>
+          <td>msbyte</td>
+          <td>1</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+        </tr>
+        <tr>
+          <td>CHANGE_DUTY</td>
+          <td>6</td>
+          <td>channel select</td>
+          <td>10,000 = 100%</td>
+          <td>ms byte</td>
+          <td><br>
+          </td>
+          <td>1</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <br>
   </body>
 </html>
