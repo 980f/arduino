@@ -1,0 +1,17 @@
+#980F new preferences
+
+#I have a wide monitor, I want things side-by-side, not over-under
+editor.split.widescreen=true
+
+#some popups get lost, with a wide screen make them a pane in the main view
+editor.dock=true
+
+#sometimes you want each key to be sent as it is stroked
+serial.unbuffered=true
+
+
+#code used to always wipe the serial monitor content on close, often I want to keep it for a while
+serial.onclose.forget=false
+
+#and in yoursketch/yoursketch.prefs you can have a board selected, for sketches that only work with some processors.
+
