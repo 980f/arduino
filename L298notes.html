@@ -33,6 +33,133 @@
       I soldered the connection for CS1 to its ground, jumpered CS2 to CS1 and then used the CS2 ground for the GND to pair with the 5V accessed via U1 jumper. Pullups are not a particularly good choice for this device, pulldowns would have made more sense when attached to a logic source as that is the inactive level for all signals. The pullups should only be used when controlling the board from simple contacts or open-collector drivers.</p>
     <hr>
     <p><br>
-      Use a DRV8871 or DRV8833 board when ever possible instead of L29x boards, they waste a lot less power and don't lose nearly as much voltage.</p>
+      Use a DRV8871 or DRV8833 board when ever possible instead of L29x boards, they waste a lot less power and don't lose nearly as much voltage (typically).</p>
+    <table border="1">
+      <tbody>
+        <tr>
+          <td>H-bridges</td>
+          <td>L298 (dual full)</td>
+          <td>L293 (4 half-H)</td>
+          <td>DRV8871 (single)</td>
+          <td>DRV8833 (dual)</td>
+        </tr>
+        <tr>
+          <td>amps</td>
+          <td>2</td>
+          <td>1.0, -D 600ma<br>
+            The -D has protection diodes</td>
+          <td>3.5</td>
+          <td>1.5 each</td>
+        </tr>
+        <tr>
+          <td>overhead</td>
+          <td>2 .. 5 V </td>
+          <td>1.8</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+        </tr>
+        <tr>
+          <td>resistance</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td>.36/.32</td>
+          <td>.25/.20</td>
+        </tr>
+        <tr>
+          <td>clamp</td>
+          <td>none</td>
+          <td><br>
+          </td>
+          <td>0.8V</td>
+          <td><br>
+          </td>
+        </tr>
+        <tr>
+          <td>logic low</td>
+          <td>&lt;1.5V</td>
+          <td>1.5</td>
+          <td>0.5</td>
+          <td>0.7</td>
+        </tr>
+        <tr>
+          <td>logic high</td>
+          <td>&gt;2.3V</td>
+          <td>2.3</td>
+          <td>1.5</td>
+          <td>2.0</td>
+        </tr>
+        <tr>
+          <td>logic max</td>
+          <td>7 (no pin)</td>
+          <td>7</td>
+          <td>5.5 (7)</td>
+          <td>5.75</td>
+        </tr>
+        <tr>
+          <td>min VM</td>
+          <td>V+ of logic + 2.5<br>
+            and at least 7</td>
+          <td>V+ of logic</td>
+          <td>6.5</td>
+          <td>2.7</td>
+        </tr>
+        <tr>
+          <td>max VM</td>
+          <td>46</td>
+          <td>36</td>
+          <td>45</td>
+          <td>10.8</td>
+        </tr>
+        <tr>
+          <td>idle</td>
+          <td>5 .. 10 ma </td>
+          <td>~8 mA </td>
+          <td>10 uA</td>
+          <td>2.5 uA</td>
+        </tr>
+        <tr>
+          <td>active</td>
+          <td>high</td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+          <td><br>
+          </td>
+        </tr>
+        <tr>
+          <td>Notes</td>
+          <td>has current sense point<br>
+            but no associated logic</td>
+          <td>clamps overshoot at VM+1.3<br>
+            -1.3&nbsp; (roughly two Si diodes)<br>
+            <br>
+            requires complementary controls <br>
+            compared to others</td>
+          <td>has pulldowns on controls<br>
+            has thermal shutdown<br>
+            has overcurrent shutdown<br>
+            has undervoltage shutdown<br>
+            has current limiter</td>
+          <td>has pulldowns on controls<br>
+            has thermal shutdown<br>
+            has overcurrent shutdown<br>
+            has undervoltage shutdown<br>
+            has current limiter<br>
+            has fault indicator output</td>
+        </tr>
+        <tr>
+          <td><br>
+          </td>
+          <td colspan="4">The bipolar devices voltage loss is somewhat current dependent but has a higher minimum than <br>
+            the FET devices whose loss is very current dependent, very little at low current.<br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </body>
 </html>
