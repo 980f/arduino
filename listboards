@@ -1,6 +1,41 @@
 #!/bin/bash 
 ## list all board #define symbols installed
 pushd ~/.arduino15
-grep board= `find . -name boards.txt` | cut -f2 -d= | sort -u
+grep board= `find . -name boards.txt` | cut -f2 -d= | sort -u 
+## but the arduino install directory also has a boards.text, for avr it was <install_dir>/hardware/arduino/avr/boards.txt
+## so cd <install_dir> by some unknown magic and again:
+#grep board= `find . -name boards.txt` | cut -f2 -d= | sort -u
+
+#manually run and results inlined below: //avr at 1.8.16 or so:
+echo AVR_ADK
+echo AVR_BT
+echo AVR_CIRCUITPLAY
+echo AVR_DUEMILANOVE
+echo AVR_ESPLORA
+echo AVR_ETHERNET
+echo AVR_FIO
+echo AVR_GEMMA
+echo AVR_INDUSTRIAL101
+echo AVR_LEONARDO
+echo AVR_LEONARDO_ETH
+echo AVR_LILYPAD
+echo AVR_LILYPAD_USB
+echo AVR_LININO_ONE
+echo AVR_MEGA
+echo AVR_MEGA2560
+echo AVR_MICRO
+echo AVR_MINI
+echo AVR_NANO
+echo AVR_NG
+echo AVR_PRO
+echo AVR_ROBOT_CONTROL
+echo AVR_ROBOT_MOTOR
+echo AVR_UNO
+echo AVR_UNO_WIFI_DEV_ED
+echo AVR_YUN
+echo AVR_YUNMINI
+
 popd
+
+exit
 
