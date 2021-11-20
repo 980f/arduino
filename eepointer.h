@@ -63,10 +63,5 @@ class EEPointer {
     }
 };
 
-/** extend eep address manager into a formatted eewriter. Compared to a EEPointer this guy has a vtable and the state storage of Print. Altogether that is about 6 bytes of ram, and maybe 30 of extra code.   */
-struct EEPrinter : public EEPointer, public Print {
-  EEPrinter(unsigned addr=~0): EEPointer(addr) {}
-  size_t write(byte value) override {
-    return EEPointer::write(value);
-  }
-};
+//see eeprinter.h to replace what was once here
+
