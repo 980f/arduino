@@ -6,25 +6,26 @@
   suggested use is to call this in loop() and if it returns true then do your once per millisecond stuff.
   void loop(){
     ...
-    if(MilliTicked){
+    if(MilliTicked.ticked()){
       //can use MilliTicked.recent() where you might have used millis(), for performance and coherence.
-      //don't print from here unless you want to skip milliseconds, or call anything with delay() in it.
+      //don't print from here or call anything with delay() in it unless you want to skip milliseconds,
     }
     ...
   }
 */
 
-using MilliTick = unsigned long ; //return type of millis(), can I use declspec to get that?
+using MilliTick = decltype(millis());//unsigned long; 32 bits, 49 days
 const MilliTick BadTick = ~0UL;   //hacker trick for "max unsigned"
 
+
 class SoftMilliTimer {
-    MilliTick lastchecked = 0; //0: will not return true until at least one ms has expired after reset.
+    MilliTick lastChecked = 0; //0: will not return true until at least one ms has expired after reset.
   public:
     /** true only when called in a different millisecond than it was last called in. */
 
     /** true only when called in a different millisecond than it was last called in. */
     bool ticked() {
-      return changed(lastchecked, millis());
+      return changed(lastChecked, millis());
     }
 
     operator bool() {
@@ -33,7 +34,15 @@ class SoftMilliTimer {
 
     /** most recent sampling of millis(). You should be biased to use this instead of rereading millis().*/
     MilliTick recent() const {
-      return lastchecked;
+      return lastChecked;
+    }
+
+    /** @returns the time in the future that will be @param duration after 'now' */
+    MilliTick operator[](MilliTick duration) {
+      if (duration == BadTick) {
+        return duration;
+      }
+      return duration + lastChecked;
     }
 
     /** alias for @see recent() */
@@ -43,20 +52,62 @@ class SoftMilliTimer {
 
     /** ticks since someone recorded recent(). */
     unsigned since(MilliTick previous) {
-      return unsigned(lastchecked - previous);
+      return unsigned(lastChecked - previous);
     }
 
     /** if called often enough to not miss any ticks then this will be true once every @param howoften calls.*/
     bool every(unsigned howoften) const {
-      return (lastchecked % howoften) == 0;
+      return (lastChecked % howoften) == 0;
     }
+
+    /** test and clear on a timer value */
+    bool timerDone(MilliTick &timer) const {
+      if (timer && timer <= lastChecked) {
+        timer = 0;
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    MilliTick remaining(MilliTick timer) const {
+      return timer > lastChecked ? timer - lastChecked : 0;
+    }
+
 };
 
 //only one is needed:
 extern SoftMilliTimer MilliTicked;
 
-/** indicates an interval.
-    configure via set(), for efficiency check in if(MilliTicked){}
+
+/** simplest version of timing a single future event.
+  MonoStable is meant for recurring events. */
+class OneShot {
+    MilliTick timer = 0;
+  public:
+    void operator =(MilliTick duration) {
+      timer = MilliTicked[duration];
+    }
+
+    /** @returns true once after use of operator=(), when time is up */
+    operator bool() {
+      return MilliTicked.timerDone(timer);
+    }
+
+    /** @returns amount of time left, is slightly misnamed */
+    MilliTick due() const {
+      return MilliTicked.remaining(timer);
+    }
+
+    /** @returns whether timer is running, IE operator bool() will eventually return true (perhaps in the very far distant future) */
+    bool isRunning()const {
+      return timer!=0;
+    }
+
+};
+
+/** implements an interval.
+    configure via set(), for efficiency check in your loop()'s "if(MilliTicked){}" section (you have one already, right? ;))
 */
 class MonoStable {
   protected:

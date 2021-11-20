@@ -165,11 +165,9 @@ class SoftMicroTimer {
     SoftMicroTimer() {
       lastchecked.ticks = micros();
       lastchecked.wraps = 0;
-      udbg("ut start:", lastchecked.ticks);
     };
     /** true only when called in a different tick than it was last called in. */
     operator bool() {
-      //    	udbg("ut bool:",lastchecked.micros);
       return lastchecked.refresh(micros());
     }
     /** most recent sampling of micros(). You should be biased to use this instead of rereading micros() in a local scope.*/
@@ -179,12 +177,28 @@ class SoftMicroTimer {
 
     /** force check of micros().*/
     MicroTick now() {
-      //    	udbg("ut now:",lastchecked.micros);
       lastchecked.refresh(micros());
       return lastchecked;
     }
 
-    /** using a short type for the increment as we only need precision for short intervals, use millievent if this doesn't have enough range. */
+
+    bool timerDone(MicroTick &timer) const {
+      if (timer && timer <= lastChecked) {
+        timer.invalidate();
+        return true;
+      } else {
+        return false;
+      }
+    }
+    
+    /** @returns time interval until timer will report 'done', 0 if it will never report 'done'*/
+    MicroTick remaining(const MicroTick &timer) const {
+      return timer && (timer > lastChecked) ? (timer - lastChecked) : 0;
+    }
+
+
+
+    /** using a shorter than MicroTick type for the increment as we only need precision for short intervals, use millievent if this doesn't have enough range. */
     MicroTick future(unsigned adder) const {
       return lastchecked + adder;
     };
@@ -192,6 +206,34 @@ class SoftMicroTimer {
 
 //only one is needed:
 extern SoftMicroTimer MicroTicked;
+
+
+/** simplest version of timing a single future event.
+  MicroStable is meant for recurring events. */
+class MicroShot {
+    MicroTick timer = 0;
+  public:
+    void operator =(MicroTick duration) {
+      timer = MicroTicked.future(duration);
+    }
+
+    /** @returns true once after use of operator=(), when time is/has been up. invalidates timer when returning true */
+    operator bool() {
+      return MicroTicked.timerDone(timer);
+    }
+
+    /** @returns amount of time left, is slightly misnamed, 0 for 'will never be done' but also for 'is done but you haven't yet checked'  */
+    MicroTick due() const {
+      return MicroTicked.remaining(timer);
+    }
+
+    /** @returns whether timer is running, IE operator bool() will eventually return true (perhaps in the very far distant future) */
+    bool isRunning()const {
+      return bool(timer);//Note: bool of the time value is NOT the same as bool of this wrapper class of it.
+    }
+
+};
+
 
 /** a retriggerable soft pulse
     if tested within an ISR then the foreground cannot call start() or stop() without disabling that ISR during the change.
@@ -230,7 +272,7 @@ class MicroStable {
       set(duration);
     }
 
-    /** call to indicate running starts 'now', a.k.a. retriggerable monostable. */
+    /** call this to start it running 'now' restarting/extending time if already running, a.k.a. retriggerable monostable. */
     void start() {
       expires = MicroTicked.future(duration);
       udbg("\tue:",expires.ticks,",",expires.wraps);
