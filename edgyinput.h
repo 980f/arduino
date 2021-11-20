@@ -11,63 +11,45 @@ ChainPrinter edbg(Serial, true); //true adds linefeeds to each invocation.
 #endif
 
 
+
+// will extract to own file soon:
+/** a debouncer that you push samples at, It filters for number of samples */
+template <typename Scalar>
 class EdgyInput {
-    bool last; //last stable value
-    const DigitalInput &pin;
-    const unsigned filter;
-  public: //for debug
-    unsigned debouncer;
-    unsigned changes = 0;
+    Scalar stableValue;
+    unsigned inarow;
   public:
-    EdgyInput(const DigitalInput &which, unsigned filter = 0): pin(which), filter(filter) {
-      //do nothing until setup
+    unsigned threshold;
+
+    void configure(unsigned filter) {
+      threshold = filter;
     }
 
-    void begin() {
-      changes = 0;
-      debouncer = 0;
-      last = raw();
+    void init(Scalar reading) {
+      stableValue = reading;
+      inarow = 0;
     }
 
-    /** @returns last stable state */
-    operator bool () {
-      return last;
+    operator Scalar() const {
+      return stableValue;
     }
 
-    /** @returns the pin. This is a step towards extracting a base class not tied to digital pins */
-    bool raw() {
-      return bool(pin);
-    }
-
-    /** @returns whether it has become stable in a new state since the last time this was called */
-    bool changed() {
-      if (filter > 0) {
-        return take(changes) > 0;
-      } else {
-        return ::changed(last, raw());
+    /** @returns whether it just became stable */
+    bool operator ()(Scalar reading) {
+      if (stableValue == reading) {
+        inarow = 0;
+        return false;
       }
-    }
-
-    /** must be called periodically, @returns whether it has changed. */
-    bool onTick() {
-      if (last != raw()) {
-        edbg("changing from:", last);
-        if (debouncer++ >= filter) {
-          last = !last;//it has changed
-          ++changes;
-          edbg( "changed to:", last);
-          return true;
-        } else {
-          edbg(debouncer, "<", filter);
-        }
-      } else {
-        if (debouncer) {
-          edbg("glitched ", !last, " for ", debouncer);
-        }
-        debouncer = 0;
-        //        edbg("Stable: ",last);
+      //else it is different
+      if (++inarow >= threshold) {
+        init(reading);
+        return true;
       }
       return false;
+    }
+
+    bool isSteady()const {
+      return inarow == 0;
     }
 
 };
