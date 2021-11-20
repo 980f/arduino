@@ -24,14 +24,21 @@
 
 */
 
-#include "pinuser.h"
+#ifndef STMDUINO //maple lib forces an enum where plain Arduino just had #defines
+using WiringPinMode = uint8_t;
+#endif
+
 
 class DigitalPin {
   public:
-    const unsigned number;
-    const unsigned polarity;
+    using Datum = decltype(digitalRead(0));
+    using Selector = uint8_t;
+    using Mode = WiringPinMode;
 
-    explicit DigitalPin(PinNumberType arduinoNumber, PinModeType mode, unsigned polarity = HIGH): number(arduinoNumber), polarity(polarity) {
+    const Selector number;
+    const Datum polarity;
+
+    explicit DigitalPin(Selector arduinoNumber, Mode mode, Datum polarity = HIGH): number(arduinoNumber), polarity(polarity) {
       pinMode(arduinoNumber, mode);
     }
 
@@ -73,7 +80,7 @@ class DigitalOutput: public DigitalPin {
       @returns state of the pin */
     bool operator |=(bool value)const {
       if (value) {
-        return operator =(polarity);
+        return operator =(unsigned(polarity));
       } else {
         return operator bool();
       }
@@ -110,4 +117,30 @@ class DigitalOutput: public DigitalPin {
       *this = ! *this;
       return operator bool();//FYI you can call operator overloads as if they were normal functions.
     }
+};
+
+
+//for runtime configurable pins
+class ConfigurablePin {
+  public:
+    DigitalPin::Selector number;
+    DigitalPin::Datum polarity;
+
+  public:
+    void configure(DigitalPin::Selector arduinoNumber, DigitalPin::Mode mode, DigitalPin::Datum polarity = HIGH)  {
+      this->number = arduinoNumber;
+      this->polarity = polarity;
+      pinMode(arduinoNumber, mode);
+    }
+    /** write the pin, applying configured polarity */
+    bool operator =(bool value)const {
+      digitalWrite(number , value ? polarity : DigitalPin::inverse(polarity));
+      return value;
+    }
+
+    /** read the pin. @returns true when pin is at configured polarity */
+    operator bool() const {
+      return digitalRead(number) == polarity;
+    }
+
 };
