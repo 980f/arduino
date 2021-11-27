@@ -17,7 +17,7 @@ void scanI2C(ChainPrinter &Console, unsigned highest = 123, unsigned lowest = 16
     switch (error) {
     case 0://success
       ++found;
-      Console("\tfound ", address, " 7bit:",HEXLY(address), " 8bit:",HEXLY(address<<1));
+      Console("\tfound ", address, " 7bit:0x",HEXLY(address), " 8bit:0x",HEXLY(address<<1));
       break;
     case 1://data too long to fit in transmit buffer
       break;
