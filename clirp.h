@@ -4,14 +4,14 @@
 
 /**
   Command Line Interpreter, Reverse Polish input
-  
+
   You push bytes at it, then query it for values
 
   If you have a 2-arg function
   then the prior arg is pushed
 */
 
-template<typename Unsigned>
+template<typename Unsigned = unsigned>
 class CLIRP {
 
     UnsignedRecognizer<Unsigned> numberparser;
@@ -45,21 +45,21 @@ class CLIRP {
       return true;//we did NOT handle it, you look at it.
     }
 
-		/** @returns whether there is a second non-zero argument. Use 1-based labeling and have labels precede values when doing array assignments. */
+    /** @returns whether there is a second non-zero argument. Use 1-based labeling and have labels precede values when doing array assignments. */
     bool twoargs() const {
       return bool(pushed);
     }
 
-		/** Call the @param fn with the arguments present and @returns what that function returned.
-			NB: the argument order is the reverse of the RPN entry order. We can debate whether this is a good choice, but it matches early usage of this class.
-		*/
+    /** Call the @param fn with the arguments present and @returns what that function returned.
+    	NB: the argument order is the reverse of the RPN entry order. We can debate whether this is a good choice, but it matches early usage of this class.
+    */
     template <typename Ret, typename U1, typename U2> Ret operator()(Ret (*fn)(U1, U2)) {
-      return (*fn)(arg,pushed);
+      return (*fn)(arg, pushed);
     }
 
-		/** Call the @param fn with the most recent argument, erasing any prior one and @returns what that function returned.
-			NB: the argument order is the reverse of the RPN entry order. We can debate whether this is a good choice, but it matches early usage of this class.
-		*/
+    /** Call the @param fn with the most recent argument, erasing any prior one and @returns what that function returned.
+    	NB: the argument order is the reverse of the RPN entry order. We can debate whether this is a good choice, but it matches early usage of this class.
+    */
     template <typename Ret, typename U1> Ret operator()(Ret (*fn)(U1)) {
       pushed = 0; //forget unused arg.
       return (*fn)(arg);
