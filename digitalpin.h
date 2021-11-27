@@ -64,12 +64,12 @@ class DigitalPin {
 */
 class DigitalInput: public DigitalPin {
   public:
-    DigitalInput(unsigned arduinoNumber, unsigned polarity = HIGH):  DigitalPin(arduinoNumber, INPUT_PULLUP, polarity) {}
+    DigitalInput(unsigned arduinoNumber, Datum polarity = HIGH):  DigitalPin(arduinoNumber, INPUT_PULLUP, polarity) {}
 };
 
 class DigitalOutput: public DigitalPin {
   public:
-    DigitalOutput(unsigned arduinoNumber, unsigned polarity = HIGH): DigitalPin(arduinoNumber, OUTPUT, polarity) {}
+    DigitalOutput(unsigned arduinoNumber, Datum polarity = HIGH): DigitalPin(arduinoNumber, OUTPUT, polarity) {}
     /** write the pin, applying configured polarity */
     bool operator =(bool value)const {
       digitalWrite(number , value ? polarity : inverse(polarity));
