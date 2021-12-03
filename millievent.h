@@ -2,6 +2,8 @@
 #include <Arduino.h>
 #include "cheaptricks.h" //for changed()
 
+//there is a #if on MillitickLegacy true provides isDone and hasFinished functions as they were prior to nov2021. Else only the functionality of hasFinished is around under both names.
+
 /** a polled timer.
   suggested use is to call this in loop() and if it returns true then do your once per millisecond stuff.
   void loop(){
@@ -62,14 +64,15 @@ class SoftMilliTimer {
 
     /** test and clear on a timer value */
     bool timerDone(MilliTick &timer) const {
-      if (timer && timer <= lastChecked) {
-        timer = 0;
+      if (timer <= lastChecked) {
+        timer = BadTick;
         return true;
       } else {
         return false;
       }
     }
 
+    /** @returns the time until the @param value will be exceeded. Zero is returned for both timer not active and a pathological case of millis never tested and timer never set for some future time */
     MilliTick remaining(MilliTick timer) const {
       return timer > lastChecked ? timer - lastChecked : 0;
     }
@@ -83,7 +86,7 @@ extern SoftMilliTimer MilliTicked;
 /** simplest version of timing a single future event.
   MonoStable is meant for recurring events. */
 class OneShot {
-    MilliTick timer = 0;
+    MilliTick timer = BadTick;
   public:
     void operator =(MilliTick duration) {
       timer = MilliTicked[duration];
@@ -101,21 +104,20 @@ class OneShot {
 
     /** @returns whether timer is running, IE operator bool() will eventually return true (perhaps in the very far distant future) */
     bool isRunning()const {
-      return timer!=0;
+      return timer != BadTick;
     }
 
 };
 
-/** implements an interval.
+/** implements a repeatable, stretchable interval.
     configure via set(), for efficiency check in your loop()'s "if(MilliTicked){}" section (you have one already, right? ;))
 */
-class MonoStable {
+class MonoStable : public OneShot {
   protected:
-    MilliTick zero = BadTick;//this choice ensures that both isDone and isRunning are false until an real cycle has at least begun.
-    MilliTick done; //time after zero at which the timer is done.
+    MilliTick interval;
   public:
     /** combined create and set, if nothing to set then a default equivalent to 'never' is used.*/
-    MonoStable(MilliTick duration = BadTick, bool andStart = true): done(duration) {
+    MonoStable(MilliTick duration = BadTick, bool andStart = true): interval(duration) {
       if (andStart) {
         start();
       }
@@ -125,8 +127,8 @@ class MonoStable {
         @returns prior duration.
     */
     MilliTick set(MilliTick duration, bool andStart = true) {
-      MilliTick old = done;
-      done = duration;
+      MilliTick old = interval;
+      interval = duration;
       if (andStart) {
         start();
       }
@@ -141,52 +143,42 @@ class MonoStable {
 
     /** call to indicate running starts 'now', a.k.a. retriggerable monostable. */
     void start() {
-      zero = MilliTicked.recent();
+      OneShot(*this) = interval;
     }
 
     void stop() {
-      zero = BadTick;
+      OneShot(*this) = BadTick;
     }
 
-    /** @returns whether timer has started and not expired== it has been less than 'done' since start() was called */
-    bool isRunning() const {
-      MilliTick now = MilliTicked.recent();
-      return now > zero && done > (now - zero);
-    }
-
-    /** @returns whether time has expired, will be false if never started. */
+    /** @returns whether time has expired since the last start, even if hasFinished was called multiple times before this was, will be false if never started.
+      @deprecated it was a bad idea and hasFinished was created for what this method's name implies*/
     bool isDone() const {
-      MilliTick now = MilliTicked.recent();
-      return now > zero && done <= (now - zero);
+#if MillitickLegacy   //then isDOne is a bit different and we have a hasFinished() method for what it should have been.
+      return due() == 0;
+    }
+
+    operator bool() {
+      return isDone();
     }
 
     /** @returns whether this is the first time called since became 'isDone', then alters object so that it will not return true again without another start.
         This is what 'isDone' should have been, but we aren't going to change that.
     */
     bool hasFinished() {
-      if (isDone()) {
-        stop();
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-    /** sugar for isDone() */
-    operator bool() const {
-      return isDone();
+#endif
+      return bool(*this);
     }
 
     /** @returns set time, use set() to modify it. */
     operator MilliTick() const {
-      return done;
+      return interval;
     }
 
     /** @returns whether time has expired, and if so restarts it.
         made virtual for BiStable
     */
     virtual bool perCycle() {
-      if (isDone()) {
+      if (bool(*this)) {
         start();
         return true;
       } else {
@@ -194,41 +186,41 @@ class MonoStable {
       }
     }
 
-    /** @return when it will be done, which can be in the past if already done.*/
-    MilliTick due() const {
-      return done + zero;
-    }
-
     //time since start if not stopped. Can exceed programmed time if you haven't called hasfinished()
     MilliTick elapsed() const {
-      return zero == BadTick ? -1 : MilliTicked.recent() - zero;
+      return interval - due();
     }
+
+
+
 
 };
 
-/** a monostable that retriggers with alternating values */
-class BiStable : public MonoStable {
+/** a timer that retriggers with alternating values */
+class BiStable : public OneShot {
     bool phase;
     MilliTick biphase[2];
   public:
     BiStable(MilliTick obduration = BadTick, MilliTick produration = BadTick, bool andStart = true):
-      MonoStable(produration, andStart),
       phase(0) {
       biphase[1] = obduration;
       biphase[0] = produration;
+      if (andStart) {
+        *this = biphase[phase];
+      }
     }
 
-    /** sugar for isDone() */
+    /** @returns true while in the active phase */
     operator bool() {
       return phase;
     }
 
+    /** @returns true once per cycle */
     virtual bool perCycle() {
-      if (MonoStable::isDone()) {
-        phase = !phase;
-        done = biphase[phase];
-        start();
-        return true;
+      if (*this) {//if phase is complete
+        phase = !phase; //toggle it
+        *this = biphase[phase];//starts next phase time
+        return phase;//only report start of one of the phases.
       } else {
         return false;
       }
