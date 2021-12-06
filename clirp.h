@@ -7,18 +7,30 @@
 
   You push bytes at it, then query it for values
 
-  If you have a 2-arg function
-  then the prior arg is pushed
+  if(clirp.doKey(key_from_serial)){
+    switch(key){
+    case someletter:
+      auto result=cli(pointer_to_myfunction); //calls function of one or two arguuments. also zeroes out the stored arguments.
+      //auto is the return type of 'myfunction'
+    break;
+    }
+  }
+
+  todo: upgrade to floating point recognizer via 'template if' on class to use.
+  todo: template arg to use ~0 instead of 0 for 'empty' numbers
+  todo: template arg for max number of arguments and use an array rather than two named variables. Needs fancy template varargs stuff presently beyond the author's abilities, also need to check AVR compiler versions for feature support
 */
-
-template<typename Unsigned = unsigned>
+template<typename Unsigned = unsigned, bool useNaV = false>
 class CLIRP {
-
     UnsignedRecognizer<Unsigned> numberparser;
-    //for 2 parameter commands, pushed gets value from param.
   public:
-    COR<Unsigned> arg = 0;
-    COR<Unsigned> pushed = 0;
+    enum {
+      Empty = useNaV ? ~0 : 0
+    };
+
+    COR<Unsigned> arg = Empty;
+    //for 2 parameter commands, pushed gets value from earlier param.
+    COR<Unsigned> pushed = Empty;
   public:
     /** command processor. pass it each char as they arrive.
       @returns false if char was used internally, true if you should inspect it*/
@@ -39,7 +51,7 @@ class CLIRP {
         case '\t'://ignore tabs, makes param files easier to read.
           return false;
         case ','://push a parameter for 2 parameter commands.
-          pushed = arg;//pushing now clears accumulator  123,X => 123,0X
+          pushed = arg;//note: pushing clears accumulator  123,X => 123,0X  (early versions gave you 123,123X which was never useful)
           return false;
       }
       return true;//we did NOT handle it, you look at it.
@@ -47,7 +59,7 @@ class CLIRP {
 
     /** @returns whether there is a second non-zero argument. Use 1-based labeling and have labels precede values when doing array assignments. */
     bool twoargs() const {
-      return bool(pushed);
+      return pushed != Empty;
     }
 
     /** Call the @param fn with the arguments present and @returns what that function returned.
