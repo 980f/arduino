@@ -20,14 +20,16 @@
 #include "Adafruit_CircuitPlayground.h"
 
 namespace CPE {
+//allocated here for convenience of setup() hacking
+Adafruit_CPlay_NeoPixel strand(10, CPLAY_NEOPIXELPIN);
 
 void setup() {
-  pinMode(CPLAY_NEOPIXELPIN, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
+  strand.begin();
 }
 
+/** makes the CPE neopixel strand work like the single one in the QTPY */
 class NeoPixel {
-
-    Adafruit_CPlay_NeoPixel strand;
     bool wason = false;
 
   public:
@@ -52,12 +54,9 @@ class NeoPixel {
 
     Color whenOn {0, 255, 255};
     /** this constructor does setup operations. The libraryand has been inspected to confirm that it can be run before setup()*/
-    NeoPixel() {
-      strand = Adafruit_CPlay_NeoPixel(10, CPLAY_NEOPIXELPIN);
-      strand.begin();
-    }
 
     bool operator =(bool onish) {
+      digitalWrite(LED_BUILTIN, onish);
       if (changed(wason, onish)) {
         dbg("Pixel: ", wason ? "ON" : "off");
         if (wason) {
@@ -74,7 +73,7 @@ class NeoPixel {
     }
 
     void refresh() {
-      strand.fill(0, whenOn, 0);
+      strand.fill(0, whenOn, 10);
       strand.show();
       dbg("Sending Color: ", HEXLY(whenOn));
     }
@@ -82,7 +81,6 @@ class NeoPixel {
     void sendColor(Color packed) {
       whenOn = packed;
       refresh();
-      //      dbg("Setting Color: ", HEXLY(packed));
     }
 
 
