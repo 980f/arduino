@@ -2,7 +2,8 @@
 		L298 based dual H-bridge as independent drives (or paired driver)
 */
 
-#include "pinclass.h"
+#include "digitalpin.h"
+using PinNumberType = DigitalPin::Selector;// bridge to old code
 
 /** there are four half-H's as two pairs due to shared enable.
   This class is for one pair of half-H's.

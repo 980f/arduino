@@ -11,6 +11,8 @@ class EdgyPin : public EdgyInput<bool> {
       configure(filter);
     }
 
+    //FYI: operator bool in base class returns last steady state 
+    
     /** @returns whether this just changed */
     bool onTick() {
       return (*this)(pin);
