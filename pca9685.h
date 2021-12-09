@@ -17,17 +17,18 @@ class PCA9685 {
   public:
     /** device i2C address, 7-bit, @param which is which i2c bus, 0 for the default, 1 for the 2nd available on some of the bigger processors. */
     PCA9685( uint8_t addr = 0x40, unsigned which = 0);
+    /** if shadow is not null then it is sent the same commands as this one. */
     PCA9685 *shadow = nullptr;
     /** set some defaults, starts operating at a nominal refresh rate to mimic adafruit library.
       argument is for output configuration byte for mode2 register, RTFM for now. Default value is that of powerup.
       1<<4 polarity when on by OE, typically only set when adding an NFet or Darlington between the device and the load.
-      1<<3 high is output each channel as its set of 4 is completed, else update all when STOP happens. The latter makes the most sense.
+      1<<3 high is output each channel as its set of 4 registers is completed, else update all when STOP happens. The latter makes the most sense.
       1<<2 high for totem pole drive (e.g. servo)
       1<<1 high for tri-state when off by OE
       1<<0 LOW to drive output low when off by OE
       some choices:
       servo direct drive:  4  (0b100)
-      Typical LED low side drive, open when idle:
+      Typical LED low side drive, open when idle: 2 (0b0010)
 
       default hz is Adafruit choice.
     */
@@ -39,7 +40,7 @@ class PCA9685 {
     /** stop emissions. @returns 0 to make it have same signature as wake().  */
     unsigned sleep();
 
-    /** compute the prescalar value for pwm base rate in Hz. Not static as someday we will support ext clock input at which time we will have a member for the freq.
+    /** compute the prescalar value for pwm base rate given in Hz. Not static as someday we will support ext clock input at which time we will have a member for the freq.
         For default oscillator we could support centiHz without overflowing the internal calculation.
     */
     uint8_t fromHz(unsigned hz);
@@ -70,7 +71,7 @@ class PCA9685 {
     /** modify just the off */
     void setWidth(uint8_t which, uint16_t endvalue);
 
-    /** modify just the off */
+    /** modify just the starting delay (I think) */
     void setPhase(uint8_t which, uint16_t endvalue);
 
 
