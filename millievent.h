@@ -17,7 +17,7 @@
 */
 
 using MilliTick = decltype(millis());//unsigned long; 32 bits, 49 days
-const MilliTick BadTick = ~0UL;   //hacker trick for "max unsigned"
+const MilliTick BadTick = ~0;   //hacker trick for "max unsigned"
 
 
 class SoftMilliTimer {

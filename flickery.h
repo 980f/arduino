@@ -22,7 +22,7 @@ struct Flickery {
 
   /** must be called just once per millisecond (or other timebase) tick */
   void onTick() {
-    if (duration.hasFinished()) {
+    if (duration) {
       be(!ison);//just toggle, less code and random is random.
       duration = ison ? random(mintime, maxtime) : offtime;
     }

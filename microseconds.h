@@ -3,7 +3,7 @@
 #include "Arduino.h"
 
 /** POSIX versions uses time_t classes which 980F/safely wraps, we mimic that here.
-  Note: we use double but AVR uses 32bit for that. */
+  Note: safely library uses double but AVR uses 32bit integer. */
 struct Microseconds {
   unsigned long micros;
   
