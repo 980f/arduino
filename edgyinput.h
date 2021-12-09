@@ -1,19 +1,12 @@
-
-#include "digitalpin.h"
-#include "cheaptricks.h" //::changed
-
-
-#ifdef debug_edgy
+#pragma once
+#if debug_edgy
 #include "chainprinter.h"
 ChainPrinter edbg(Serial, true); //true adds linefeeds to each invocation.
 #else
 #define edbg(...)
 #endif
 
-
-
-// will extract to own file soon:
-/** a debouncer that you push samples at, It filters for number of samples */
+/** a debouncer that you push samples at, It filters for number of samples n a row that do not match last stable value */
 template <typename Scalar>
 class EdgyInput {
     Scalar stableValue;
@@ -48,8 +41,14 @@ class EdgyInput {
       return false;
     }
 
+    /** @returns that the related input is still the last value that it was stable at, that it is not transitioning */
     bool isSteady()const {
       return inarow == 0;
+    }
+
+    /** expose inner count for debug */
+    unsigned bouncing() const {
+      return inarow;
     }
 
 };
