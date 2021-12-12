@@ -9,3 +9,5 @@ ln -sf ../shared/lardls
 #a handy link, I got tired of typing ../shared when trying to autocomplete making a library link
 ln -sf ../shared lib
 
+#some of the above scripts append to .gitignore, which produces an ignorable warning if it doesn't exist so:
+if [ ! -e .gitignore ]; then touch .gitignore ; fi
