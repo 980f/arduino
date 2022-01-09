@@ -3,8 +3,12 @@
 /* some compiler implementations are missing numeric_limits , we create a minimal set here adding instances at need
 */
 
+#ifdef min
+#include "minmax.h" //platform has a macro that interferes with std library, replace macro with real code.
+#endif
+
 namespace std {
-  template<typename Intish> struct numeric_limits<Intish> {
+  template<typename Intish> struct numeric_limits {
     static constexpr unsigned digits = sizeof(Intish) * 8;
     static constexpr bool is_signed = Intish(-1) < 0;//gcc trick
     static constexpr bool is_integer = true;
