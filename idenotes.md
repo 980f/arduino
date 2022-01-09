@@ -43,3 +43,13 @@ For Adafruit SAMD development they are:
 For the USB product info you can stick your own id info in:
   - USB_MANUFACTURER=\"Adafruit\"
   - USB_PRODUCT=\"QT Py M0\" 
+  
+  
+## #include paths
+The paths for include files are all over the place. platform.txt has macros for most of them.
+
+Arduino.h  for adafruit samd is found in 
+/home/andyh/.arduino15/packages/adafruit/hardware/samd/1.7.5/cores/arduino/Arduino.h
+Wire.h:
+/home/andyh/.arduino15/packages/adafruit/hardware/samd/1.7.5/libraries/Wire/Wire.h
+
