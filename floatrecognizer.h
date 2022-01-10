@@ -8,17 +8,18 @@
 	You can peek at the value, but shouldn't except for debugging this module itself.
   Leading zeroes are effectively ignored, they do not trigger octal interpretation. */
 
-#include <cmath>
+#include "minimath.h" //subset of cmath, all we need is pow10(int)
 
 struct FloatRecognizer {
   int beforedp = 0;
   unsigned afterdp = 0;
   /** ~0 is an impossble number of trailing digits so we can use it for 'no dp seen'
        0 will be 'dp seen, but no digits entered'
+       
        ~digitsafter is true if dp has been seen
        !~digitsafter is true when no dp has been seen (integer number)
   */
-  unsigned digitsafter = ~0;
+  unsigned digitsafter = ~0;//ezcpp Index would hide all the gnarliness with this guy.
 
   void clear() {
     *this = {}; //magic to set fields to the initial values in declaration.
@@ -26,36 +27,39 @@ struct FloatRecognizer {
 
   /** inspect incoming character, @returns whether it is part of the number and if so had added it to local number.*/
   bool operator()(char key) {
-    if (Char(key).appliedDigit(~digitsafter ? afterdp : beforedp)) {
-      if (~digitsafter) {
+    if (~digitsafter) {//if we have seen a dp
+      if (Char(key).appliedDigit(afterdp )) {
         ++digitsafter;
+        return true;
       }
-      return true;
+    } else {
+      if (Char(key).appliedDigit(beforedp)) {
+        return true;
+      }
     }
     switch (key) {
       case '-'://negative sign
-        if (beforedp || afterdp || !~digitsafter) {
+        if (beforedp || afterdp || ~digitsafter) {
           return false;
         }
         beforedp = - beforedp;
         return true;
       case '.':
-        if (~digitsafter) { //not already seen one
+        if (~digitsafter) { //already seen one
           return false;
         }
-        ++digitsafter;
+        ++digitsafter;//fyi: ~0+1 = 0
         return true;
-
       case '~'://breakpoint trigger
-        beforedp = ~0; //to help debug some stuff, delete if it gets bothersome.
-        return true;
+        beforedp = ~0; //to help debug some stuff, delete this line if it gets bothersome.
+        return false;
       case 8: case 0x7F: //bs or del
-        if (~digitsafter) { //no d.p.
+        if (!~digitsafter) { //no d.p.
           beforedp /= 10;
-        } else if (digitsafter) { //some digits after dp
-          afterdp /= 10;
-          --digitsafter;
-        } else if (!digitsafter) { //dp but no digits
+        } else {
+          if (digitsafter) { //some digits after dp
+            afterdp /= 10;
+          }
           --digitsafter;
         }
         return true;
