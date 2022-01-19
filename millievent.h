@@ -24,8 +24,6 @@ class SoftMilliTimer {
     MilliTick lastChecked = 0; //0: will not return true until at least one ms has expired after reset.
   public:
     /** true only when called in a different millisecond than it was last called in. */
-
-    /** true only when called in a different millisecond than it was last called in. */
     bool ticked() {
       return changed(lastChecked, millis());
     }
@@ -114,6 +112,7 @@ class OneShot {
 */
 class MonoStable : public OneShot {
   protected:
+  /** this class differs from OneShot in that it remembers how long it should be activew such that the point of restarting it doesn't need to know */
     MilliTick interval;
   public:
     /** combined create and set, if nothing to set then a default equivalent to 'never' is used.*/
@@ -153,7 +152,7 @@ class MonoStable : public OneShot {
     /** @returns whether time has expired since the last start, even if hasFinished was called multiple times before this was, will be false if never started.
       @deprecated it was a bad idea and hasFinished was created for what this method's name implies*/
     bool isDone() const {
-#if MillitickLegacy   //then isDOne is a bit different and we have a hasFinished() method for what it should have been.
+#if MillitickLegacy   //then isDone is a bit different and we have a hasFinished() method for what it should have been.
       return due() == 0;
     }
 
@@ -162,7 +161,7 @@ class MonoStable : public OneShot {
     }
 
     /** @returns whether this is the first time called since became 'isDone', then alters object so that it will not return true again without another start.
-        This is what 'isDone' should have been, but we aren't going to change that.
+        This is what 'isDone' should have been, but we aren't going to change that if MillitickLegacy is true.
     */
     bool hasFinished() {
 #endif
@@ -191,12 +190,9 @@ class MonoStable : public OneShot {
       return interval - due();
     }
 
-
-
-
 };
 
-/** a timer that retriggers with alternating values */
+/** a timer that retriggers with alternating values, the core of a software PWM */
 class BiStable : public OneShot {
     bool phase;
     MilliTick biphase[2];
