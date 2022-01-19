@@ -49,7 +49,8 @@ template<typename Intish> struct Based: public Printable {
 #define BITLY(varname) Basely<decltype(varname),2>(varname)
 
 
-/** for printing chunks of ram. */
+/** for printing chunks of ram.
+While you can invoke it via passing a Print to its printTo method, you can also pass the object to a ChainPrinter to get some framing around it in one line of code. */
 struct BlockDumper : public Printable {
   uint8_t *base;
   unsigned length;
@@ -72,6 +73,7 @@ struct BlockDumper : public Printable {
 
 
 struct ChainPrinter {
+    bool stifled=true;
     Print &raw;
     bool autofeed;
     explicit ChainPrinter(Print &raw, bool autofeed = false): raw(raw), autofeed(autofeed) {}
@@ -91,6 +93,7 @@ struct ChainPrinter {
   public:
     /** by overloading operator () we can make invocations look like common logging functions calls. Name your chainprinter dbg or log.*/
     template<typename ... Args>  unsigned operator()(const Args ... args) {
+      if(stifled) return 0;
       if (sizeof... (args)) {//this check keeps us from having to implement a no-args PrintItem.
         return PrintItem(args ...) + (autofeed ? endl() : 0);
       } else {
@@ -104,6 +107,7 @@ struct ChainPrinter {
     }
 
     unsigned endl() {
+      if(stifled) return 0;
       return raw.println();
     }
 
