@@ -4,7 +4,7 @@
 
 /** scan for presence in range given by 7-bit addresses */
 void scanI2C(ChainPrinter &Console, unsigned highest = 123, unsigned lowest = 16) {
-	auto x=Console.stackFeeder(true);
+  auto x=Console.stackFeeder(true);
   Console("\nScanning I2C bus:");
   Wire.begin();
   Wire.setClock(100000);//use slowest rate until we know what is present.
