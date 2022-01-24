@@ -1,6 +1,6 @@
 #pragma once
 
-#include "char.h"
+#include "char.h"  //and to your build add: char.cpp and index.h and cstr.h and textkey.h 
 /** recognize a sequence of digits. if asked for the value provide it, but clear it. You can peek at the value, but shouldn't except for debugging this module itself.
   leading zeroes are effectively ignored, they do not trigger octal interpretation. */
 
@@ -9,7 +9,7 @@ template<typename Unsigned=unsigned>
 struct UnsignedRecognizer {
   Unsigned accumulator = 0;
 
-  /** inspect incoming character, @returns whether it is part of the number and if so had added it to local number.*/
+  /** inspect incoming character, @returns whether it is part of the number and if so has added it to local number.*/
   bool operator()(char key) {
     if (Char(key).appliedDigit(accumulator)) {
     	return true;

@@ -1,6 +1,4 @@
-//
-// Copyright 2021 by Andy Heilveil, github/980f, on 12/19/21.
-//
+/* Copyright 2021 by Andy Heilveil, github/980f, on 12/19/21. */
 
 #pragma once
 

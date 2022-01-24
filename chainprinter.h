@@ -17,7 +17,7 @@
    Arduino Print functionality is type aware, and supports an interface class Printable.
     we use that to output numbers in different bases by using this class to pass the number and base as a single argument to the ChainPrinter.
 
-  ChainPrinter has state to enable generating an end of line after the last argument. 
+  ChainPrinter has state to enable generating an end of line after the last argument.
   A FeedStacker is an RAII object that lets you temporarily change the automatic linefeed state for a block of your code.
 
   There is a shared object named CRLF that you may put in your argument list instead of '\n' or "\r\n". It emits whatever Arduino is configured to emit for a line ending.
@@ -25,8 +25,8 @@
   The stifled member of ChainPrinter was tacked on to suppress attempt to talk to SerialUSB before it is ready, without making an app wait for it.
   If you wait for it you may wait forever, most usages end up requiring a live PC connection to allow the Arduino program to loop.
   You may choose to use it as an enable for a debug stream, where enabling it is stifled=!Serial rather than just 'false.
-  
-  
+
+
 */
 template<typename Intish, int base> struct Basely: public Printable {
   Intish value;

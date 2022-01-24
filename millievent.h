@@ -2,22 +2,24 @@
 #include <Arduino.h>     //for compilation outside arduino ide
 #include "cheaptricks.h" //for changed()
 
-//there is a #if on MillitickLegacy true provides isDone and hasFinished functions as they were prior to nov2021. Else only the functionality of hasFinished is around under both names.
 
-/** a polled timer.
+/** SoftMilliTimer
+
   suggested use is to call this in loop() and if it returns true then do your once per millisecond stuff.
   void loop(){
     ...
-    if(MilliTicked.ticked()){
-      //can use MilliTicked.recent() where you might have used millis(), for performance and coherence.
+    if(MilliTicker.ticked()){
+      //can use MilliTicker.recent() where you might have used millis(), for performance and coherence.
       //don't print from here or call anything with delay() in it unless you want to skip milliseconds,
     }
     ...
   }
+
+
 */
 
 using MilliTick = decltype(millis());//unsigned long; 32 bits, 49 days
-const MilliTick BadTick = ~0;   //hacker trick for "max unsigned"
+const MilliTick BadTick = ~0;   //~0 is hacker trick for "max unsigned" a.k.a. all ones.
 
 
 class SoftMilliTimer {
@@ -60,9 +62,9 @@ class SoftMilliTimer {
       return (lastChecked % howoften) == 0;
     }
 
-    /** test and clear on a timer value */
+    /** test and 'clear' on a timer value */
     bool timerDone(MilliTick &timer) const {
-      if (timer <= lastChecked) {
+      if (timer >= lastChecked) {
         timer = BadTick;
         return true;
       } else {
@@ -72,32 +74,32 @@ class SoftMilliTimer {
 
     /** @returns the time until the @param value will be exceeded. Zero is returned for both timer not active and a pathological case of millis never tested and timer never set for some future time */
     MilliTick remaining(MilliTick timer) const {
-      return timer > lastChecked ? timer - lastChecked : 0;
+      return (timer == BadTick || timer <= lastChecked) ? 0 : timer - lastChecked;
     }
 
 };
 
 //only one is needed:
-extern SoftMilliTimer MilliTicked;
+extern SoftMilliTimer MilliTicker;//name changed ~Jan20,2022 to force all users to review code due to significant changes and bug fixes.
 
-
+//////////////////////////////////////////////////////////////////////////////////////////////////
 /** simplest version of timing a single future event.
   MonoStable is meant for recurring events. */
 class OneShot {
     MilliTick timer = BadTick;
   public:
     void operator =(MilliTick duration) {
-      timer = MilliTicked[duration];
+      timer = MilliTicker[duration];
     }
 
     /** @returns true once after use of operator=(), when time is up */
     operator bool() {
-      return MilliTicked.timerDone(timer);
+      return MilliTicker.timerDone(timer);
     }
 
     /** @returns amount of time left, is slightly misnamed */
     MilliTick due() const {
-      return MilliTicked.remaining(timer);
+      return MilliTicker.remaining(timer);
     }
 
     /** @returns whether timer is running, IE operator bool() will eventually return true (perhaps in the very far distant future) */
@@ -112,7 +114,7 @@ class OneShot {
 */
 class MonoStable : public OneShot {
   protected:
-  /** this class differs from OneShot in that it remembers how long it should be activew such that the point of restarting it doesn't need to know */
+    /** this class differs from OneShot in that it remembers how long it should be activew such that the point of restarting it doesn't need to know */
     MilliTick interval;
   public:
     /** combined create and set, if nothing to set then a default equivalent to 'never' is used.*/
@@ -145,26 +147,23 @@ class MonoStable : public OneShot {
       OneShot(*this) = interval;
     }
 
+    /** if @param please is true then if not running start else retain original expiration time. If please is false then stop now. */
+    void beRunning(bool please) {
+      if (please) {
+        if (!isRunning()) {
+          OneShot(*this) = interval;
+        }
+      } else {
+        stop();
+      }
+    }
+
     void stop() {
       OneShot(*this) = BadTick;
     }
 
-    /** @returns whether time has expired since the last start, even if hasFinished was called multiple times before this was, will be false if never started.
-      @deprecated it was a bad idea and hasFinished was created for what this method's name implies*/
+    /** @returns whether time has expired since the last start */
     bool isDone() const {
-#if MillitickLegacy   //then isDone is a bit different and we have a hasFinished() method for what it should have been.
-      return due() == 0;
-    }
-
-    operator bool() {
-      return isDone();
-    }
-
-    /** @returns whether this is the first time called since became 'isDone', then alters object so that it will not return true again without another start.
-        This is what 'isDone' should have been, but we aren't going to change that if MillitickLegacy is true.
-    */
-    bool hasFinished() {
-#endif
       return bool(*this);
     }
 
@@ -173,10 +172,8 @@ class MonoStable : public OneShot {
       return interval;
     }
 
-    /** @returns whether time has expired, and if so restarts it.
-        made virtual for BiStable
-    */
-    virtual bool perCycle() {
+    /** @returns whether time has expired, and if so restarts it.  */
+    bool perCycle() {
       if (bool(*this)) {
         start();
         return true;
@@ -185,7 +182,7 @@ class MonoStable : public OneShot {
       }
     }
 
-    //time since start if not stopped. Can exceed programmed time if you haven't called hasfinished()
+    /*time since start if not stopped. Can exceed programmed time if you haven't called isDone() */
     MilliTick elapsed() const {
       return interval - due();
     }

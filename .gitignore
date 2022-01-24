@@ -1,21 +1,18 @@
-#psuedo sub module
-ezcpp/*
-ezcpp/
 
-#some editor's backups
 *~
-# Prerequisites
-*.d
-
+*.app
 # Compiled Object files
-*.slo
+*.d
+*.exe
+# Executables
+ezcpp/
+ezcpp/*
+L298notes.html.bak
 *.lo
 *.o
 *.obj
-
-
-# Executables
-*.exe
 *.out
-*.app
-L298notes.html.bak
+# Prerequisites
+#psuedo sub module
+*.slo
+#some editor's backups
