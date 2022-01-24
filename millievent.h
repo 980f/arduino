@@ -1,5 +1,5 @@
 #pragma once //(C) 2018 by Andy Heilveil, github/980F
-#include <Arduino.h>
+#include <Arduino.h>     //for compilation outside arduino ide
 #include "cheaptricks.h" //for changed()
 
 //there is a #if on MillitickLegacy true provides isDone and hasFinished functions as they were prior to nov2021. Else only the functionality of hasFinished is around under both names.

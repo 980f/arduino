@@ -1,14 +1,13 @@
-//(C) Copyright 2018, Andrew Heilveil, github/980F.
+//(C) Copyright 2018,2022 Andrew Heilveil, github/980F.
 #pragma once
 
 //F() is misfiring, increasing strings instead of halving them, at least when used with ChainPrinter
 #undef F
 #define F(arg) arg
 
-#include "cheaptricks.h"  //take()
 /** somewhat simple printer extension.
     This wraps a Print object to allow printing a series of fields in one call:
-    usage;  ChainPrinter log(somePrinter);
+    usage:  ChainPrinter log(somePrinter);
             ...
             log("This", 42, 'c', 12.4, anythingforwhichthereisaprintvariant, HEXLY(0x980F));
 
@@ -17,6 +16,17 @@
 
    Arduino Print functionality is type aware, and supports an interface class Printable.
     we use that to output numbers in different bases by using this class to pass the number and base as a single argument to the ChainPrinter.
+
+  ChainPrinter has state to enable generating an end of line after the last argument. 
+  A FeedStacker is an RAII object that lets you temporarily change the automatic linefeed state for a block of your code.
+
+  There is a shared object named CRLF that you may put in your argument list instead of '\n' or "\r\n". It emits whatever Arduino is configured to emit for a line ending.
+
+  The stifled member of ChainPrinter was tacked on to suppress attempt to talk to SerialUSB before it is ready, without making an app wait for it.
+  If you wait for it you may wait forever, most usages end up requiring a live PC connection to allow the Arduino program to loop.
+  You may choose to use it as an enable for a debug stream, where enabling it is stifled=!Serial rather than just 'false.
+  
+  
 */
 template<typename Intish, int base> struct Basely: public Printable {
   Intish value;
@@ -50,7 +60,7 @@ template<typename Intish> struct Based: public Printable {
 
 
 /** for printing chunks of ram.
-While you can invoke it via passing a Print to its printTo method, you can also pass the object to a ChainPrinter to get some framing around it in one line of code. */
+  While you can invoke it via passing a Print to its printTo method, you can also pass the object to a ChainPrinter to get some framing around it in one line of code. */
 struct BlockDumper : public Printable {
   uint8_t *base;
   unsigned length;
@@ -73,7 +83,7 @@ struct BlockDumper : public Printable {
 
 
 struct ChainPrinter {
-    bool stifled=true;
+    bool stifled = true;
     Print &raw;
     bool autofeed;
     explicit ChainPrinter(Print &raw, bool autofeed = false): raw(raw), autofeed(autofeed) {}
@@ -93,7 +103,7 @@ struct ChainPrinter {
   public:
     /** by overloading operator () we can make invocations look like common logging functions calls. Name your chainprinter dbg or log.*/
     template<typename ... Args>  unsigned operator()(const Args ... args) {
-      if(stifled) return 0;
+      if (stifled) return 0;
       if (sizeof... (args)) {//this check keeps us from having to implement a no-args PrintItem.
         return PrintItem(args ...) + (autofeed ? endl() : 0);
       } else {
@@ -107,7 +117,7 @@ struct ChainPrinter {
     }
 
     unsigned endl() {
-      if(stifled) return 0;
+      if (stifled) return 0;
       return raw.println();
     }
 
