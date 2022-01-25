@@ -59,8 +59,14 @@ class CLIRP {
 
     /** @returns whether there is a second non-zero argument. Use 1-based labeling and have labels precede values when doing array assignments. */
     bool twoargs() const {
-      return pushed != Empty;
+      return bool(pushed);
     }
+
+    /** @returns 2 if pushed arg is not Empty, ELSE 1 if single arg is not Empty, ELSE 0*/
+    unsigned argc() const {
+      return bool(pushed) ? 2 : bool(arg) ? 1 : 0;//if pushed reply 2 regardless of whether arg appears to have a value.
+    }
+
 
     /** Call the @param fn with the arguments present and @returns what that function returned.
     	NB: the argument order is the reverse of the RPN entry order. We can debate whether this is a good choice, but it matches early usage of this class.

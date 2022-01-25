@@ -19,11 +19,11 @@
 */
 
 using MilliTick = decltype(millis());//unsigned long; 32 bits, 49 days
-const MilliTick BadTick = ~0;   //~0 is hacker trick for "max unsigned" a.k.a. all ones.
+const MilliTick BadTick = ~0;   //~0 is a neat way to get "max unsigned" a.k.a. all ones.
 
 
 class SoftMilliTimer {
-    MilliTick lastChecked = 0; //0: will not return true until at least one ms has expired after reset.
+    MilliTick lastChecked = 0; //0: ticked() will not return true until at least one ms has expired after reset.
   public:
     /** true only when called in a different millisecond than it was last called in. */
     bool ticked() {
@@ -64,7 +64,7 @@ class SoftMilliTimer {
 
     /** test and 'clear' on a timer value */
     bool timerDone(MilliTick &timer) const {
-      if (timer >= lastChecked) {
+      if (timer != BadTick && timer <= lastChecked) {
         timer = BadTick;
         return true;
       } else {
@@ -147,8 +147,9 @@ class MonoStable : public OneShot {
       OneShot(*this) = interval;
     }
 
-    /** if @param please is true then if not running start else retain original expiration time. If please is false then stop now. */
-    void beRunning(bool please) {
+    /** if @param please is true then if not running start else retain original expiration time. If please is false then stop now.
+    @returns whether it is running, which should be equal to the input parameter unless interval has been set to BadTick, which it is on construction. */
+    bool beRunning(bool please) {
       if (please) {
         if (!isRunning()) {
           OneShot(*this) = interval;
@@ -156,6 +157,7 @@ class MonoStable : public OneShot {
       } else {
         stop();
       }
+      return isRunning();
     }
 
     void stop() {
