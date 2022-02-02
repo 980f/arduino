@@ -1,11 +1,14 @@
 #pragma once  // //(C) 2017,2018,2019 Andy Heilveil, github/980f
 
-#include "Arduino.h"
+#include <Arduino.h>
 
 /** POSIX versions uses time_t classes which 980F/safely wraps, we mimic that here.
   Note: safely library uses double but AVR uses 32bit integer. */
+  
+using MicroTicks=decltype(micros());
+  
 struct Microseconds {
-  unsigned long micros;
+MicroTicks micros;
   
   operator unsigned long()const {
     return micros;
@@ -16,7 +19,7 @@ struct Microseconds {
   }
 
 
-  Microseconds& operator = (unsigned long ticks) {
+  Microseconds& operator = (MicroTicks ticks) {
     micros = ticks;
     return *this;
   }
