@@ -4,6 +4,9 @@
 
 /** PCA9685 interface, using Arduino Wire library for i2c access.
     The Strangest thing is the 'shadow' feature, where one is slaved to another. This can be used for a hot spare, split load without redoing software when redistributing the load, or with a little thought differential output or even just physically independent status light driver.
+todo: conditional compile for the shadow
+todo: pairwise load doubling (double logical channel number and set it and odd sibling to same values.
+    
 */
 class PCA9685 {
     /** which I2C bus and device*/
@@ -12,12 +15,14 @@ class PCA9685 {
     WIred<uint8_t> Mode1;   //maydo: create this locally, not called urgently.
     WIred<uint8_t> Prescale;//maydo: create this locally, not called urgently.
     //addresses and channels are dynamically generated, they consume too much ram to force all users to allocate them. Construction on demand (on stack) is cheap.
-    //redundant/parallel device. For late in the game load splitting.
-
+    
   public:
     /** device i2C address, 7-bit, @param which is which i2c bus, 0 for the default, 1 for the 2nd available on some of the bigger processors. */
     PCA9685( uint8_t addr = 0x40, unsigned which = 0);
-    /** if shadow is not null then it is sent the same commands as this one. */
+
+    /** if shadow is not null then it is sent the same commands as this one.
+      The shadow is a redundant/parallel device. For late in the game load splitting or as hot spare.
+    */
     PCA9685 *shadow = nullptr;
     /** set some defaults, starts operating at a nominal refresh rate to mimic adafruit library.
       argument is for output configuration byte for mode2 register, RTFM for now. Default value is that of powerup.

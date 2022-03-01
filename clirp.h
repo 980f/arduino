@@ -17,7 +17,7 @@
   }
 
   todo: upgrade to floating point recognizer via 'template if' on class to use.
-  todo: template arg to use ~0 instead of 0 for 'empty' numbers
+  useNaV: template arg to use ~0 instead of 0 for 'empty' numbers (NaV is Not a Value, similar to NaN not a number)
   todo: template arg for max number of arguments and use an array rather than two named variables. Needs fancy template varargs stuff presently beyond the author's abilities, also need to check AVR compiler versions for feature support
 */
 template<typename Unsigned = unsigned, bool useNaV = false>
@@ -27,7 +27,7 @@ class CLIRP {
     enum {
       Empty = useNaV ? ~0 : 0
     };
-
+		//COR is "Clear on Read", accessing the value naively returns present value but sets storage to Empty.
     COR<Unsigned> arg = Empty;
     //for 2 parameter commands, pushed gets value from earlier param.
     COR<Unsigned> pushed = Empty;
@@ -56,7 +56,10 @@ class CLIRP {
       }
       return true;//we did NOT handle it, you look at it.
     }
-
+		/**  may deprecate doKey if this doesn't interfere with other operator() usages. */
+		bool operator()(byte key) {
+			return doKey(key);
+		}
     /** @returns whether there is a second non-zero argument. Use 1-based labeling and have labels precede values when doing array assignments. */
     bool twoargs() const {
       return bool(pushed);
@@ -76,7 +79,6 @@ class CLIRP {
     }
 
     /** Call the @param fn with the most recent argument, erasing any prior one and @returns what that function returned.
-    	NB: the argument order is the reverse of the RPN entry order. We can debate whether this is a good choice, but it matches early usage of this class.
     */
     template <typename Ret, typename U1> Ret operator()(Ret (*fn)(U1)) {
       pushed = 0; //forget unused arg.

@@ -2,8 +2,8 @@
 #include "pca9685.h"
 #include <Arduino.h> //to get hardware options.
 
-#include "twinconsole.h"
-extern TwinConsole Console;
+//#include "twinconsole.h"
+//extern TwinConsole Console;
 
 enum ControlBits : uint8_t {
   Restarter = 1 << 7,  //on read indicates restart advisable, write 1 to clear the flag

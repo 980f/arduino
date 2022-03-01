@@ -86,7 +86,7 @@ struct ChainPrinter {
     bool stifled = true;
     Print &raw;
     bool autofeed;
-    explicit ChainPrinter(Print &raw, bool autofeed = false): raw(raw), autofeed(autofeed) {}
+    explicit ChainPrinter(Print &raw, bool autofeed = true): raw(raw), autofeed(autofeed) {}
   private:
     /** this is how you process the nth item of a varargs template group.
         It can generate a surprising amount of code, a function for every combination of argument types, AND all right hand subsets thereof.

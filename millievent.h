@@ -19,7 +19,7 @@
 */
 
 using MilliTick = decltype(millis());//unsigned long; 32 bits, 49 days
-const MilliTick BadTick = ~0;   //~0 is a neat way to get "max unsigned" a.k.a. all ones.
+const MilliTick BadTick = ~0;   //~0 is a neat way to get "max unsigned" a.k.a. all ones without knowing the exact type.
 
 
 class SoftMilliTimer {
@@ -92,6 +92,10 @@ class OneShot {
       timer = MilliTicker[duration];
     }
 
+    void stop() {
+      timer = BadTick;
+    }
+
     /** @returns true once after use of operator=(), when time is up */
     operator bool() {
       return MilliTicker.timerDone(timer);
@@ -103,8 +107,12 @@ class OneShot {
     }
 
     /** @returns whether timer is running, IE operator bool() will eventually return true (perhaps in the very far distant future) */
-    bool isRunning()const {
+    bool isRunning() const {
       return timer != BadTick;
+    }
+
+    MilliTick expiry() const {
+      return timer;
     }
 
 };
@@ -158,10 +166,6 @@ class MonoStable : public OneShot {
         stop();
       }
       return isRunning();
-    }
-
-    void stop() {
-      OneShot(*this) = BadTick;
     }
 
     /** @returns whether time has expired since the last start */
