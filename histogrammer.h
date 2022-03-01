@@ -5,15 +5,16 @@
     call show to dump the data.
 */
 
-template <unsigned qty> class HistoGrammer {
-    unsigned hist[qty + 1]; //+1 for 'outofrange'
-    enum { numhist = qty + 1};
-    bool onebased = false;
+class HistogrammerBase {
+    const unsigned numhist;
+    const bool onebased;
+    unsigned * const hist;
   public:
+    HistogrammerBase (const unsigned numhist, unsigned *hist, bool onebased = false): numhist(numhist), hist(hist), onebased(onebased) {}
     unsigned checks = 0; //user convenience
     unsigned check(unsigned value) {
       ++checks;
-      ++hist[min(value, qty)];
+      ++hist[min(value, numhist)];
       return value;
     }
 
@@ -22,7 +23,6 @@ template <unsigned qty> class HistoGrammer {
       bool skipZeroes = true; //not just leading, always skips leading zeroes
       //todo: when we implement an oor channel  bool oors=false;
       unsigned modulus = 1000;
-
     };
 
     bool show(Print &dbg, const ShowOptions &opts) {
@@ -51,12 +51,19 @@ template <unsigned qty> class HistoGrammer {
       return nonzeroes != 0;
     }
 
-    bool operator ()(unsigned value, Print &dbg, const ShowOptions &forShow) {
+    bool operator ()(unsigned value, Print &dbg, const ShowOptions &opts) {
       check(value);
-      if (!(checks % forShow.modulus)) {
-        return show(dbg, forShow);
+      if (!(checks % opts.modulus)) {
+        return show(dbg, opts);
       }
       return false;
     }
 
-} ;
+};
+
+template <unsigned qty> struct Histogrammer: public HistogrammerBase {
+  enum { numhist = qty + 1};
+  unsigned hist[numhist]; //+1 for 'outofrange'
+
+  Histogrammer(): HistogrammerBase(numhist, hist) {}
+};
