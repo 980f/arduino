@@ -82,6 +82,36 @@ struct BlockDumper : public Printable {
 #define BLOCK(...) BlockDumper( __VA_ARGS__ )
 
 
+/** RAII set a value, restore on exit, nesting */
+template <typename Scalar> class ValueStacker {
+    Scalar *flag;
+    Scalar was;
+  public:
+    explicit ValueStacker(Scalar&theFlag, Scalar setit): flag(&theFlag)  {
+      was = flag;
+      if (flag) { //shouldn't ever be null, but a programmer can cast a nullptr into a null reference so let us guard against that.
+        *flag = setit;
+      }
+    }
+
+    /** make a copy but keep destructor of prior from doing anything, just so parent class can have a factory for these. */
+    ValueStacker(ValueStacker &&other): flag(other.flag), was(other.was) {
+      other.flag = nullptr;
+    }
+
+    /** can't chain as we must alter the argument, see && constructor */
+    ValueStacker(const ValueStacker &other) = delete;
+
+    ~ValueStacker() {
+      if (flag) {
+        *flag = was;
+      }
+    }
+};
+
+using FlagStacker=ValueStacker<bool>;
+
+
 struct ChainPrinter {
     bool stifled = true;
     Print &raw;
@@ -121,37 +151,17 @@ struct ChainPrinter {
       return raw.println();
     }
 
-    /** constructing one of these temporarily turns off auto linefeed, destruction restores the autofeed status. Nesting works. */
-    class FeedStacker {
-        bool wasFeeding;
-        bool owner;
-      public:
-        ChainPrinter &printer;
-        explicit FeedStacker(ChainPrinter &printer, bool beFeeding): printer(printer)	{
-          wasFeeding = printer.autofeed;
-          printer.autofeed = beFeeding;
-          owner = true;
-        }
-        /** make a copy but keep destructor of prior from doing anything, just so parent class can have a factory for these. */
-        FeedStacker(FeedStacker &&other): wasFeeding(other.wasFeeding), printer(other.printer) {
-          other.owner = false;
-        }
-
-        /** can't chain as we must alter the argument, see && constructor */
-        FeedStacker(const FeedStacker &other) = delete;
-        ~FeedStacker() {
-          if (owner) {
-            printer.autofeed = wasFeeding;
-          }
-        }
-    };
-
     /** you must assign this to a named thing to ensure the compiler doesn't elide it.
       suggested usage:  auto pop= printer.stackFeeder(local_preference_for_linefeeding) */
-    FeedStacker stackFeeder(bool beFeeding = false) { //default value for legacy upgrade from nofeeds
-      return FeedStacker(*this, beFeeding);
+    FlagStacker stackFeeder(bool beFeeding = false) { //default value for legacy upgrade from nofeeds
+      return FlagStacker(this->autofeed, beFeeding);
     }
 
+    /** you must assign this to a named thing to ensure the compiler doesn't elide it.
+          suggested usage:  auto pop= printer.stackStifled(local_preference_for_debugspew) */
+    FlagStacker stackStifled(bool beStifled = false) {
+      return FlagStacker(this->stifled, beStifled);
+    }
 };
 
 struct CrLf: public Printable {
