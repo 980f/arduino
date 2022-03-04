@@ -22,7 +22,8 @@ class HistogrammerBase {
       bool andClear = true;
       bool skipZeroes = true; //not just leading, always skips leading zeroes
       //todo: when we implement an oor channel  bool oors=false;
-      unsigned modulus = 1000;
+      unsigned modulus = 1000; //how often to dump results
+      ShowOptions(bool andClear,bool skipZeroes,unsigned modulus):andClear(andClear),skipZeroes(skipZeroes),modulus(modulus){}
     };
 
     bool show(Print &dbg, const ShowOptions &opts) {
@@ -53,7 +54,7 @@ class HistogrammerBase {
 
     bool operator ()(unsigned value, Print &dbg, const ShowOptions &opts) {
       check(value);
-      if (!(checks % opts.modulus)) {
+      if (opts.modulus && !(checks % opts.modulus)) {
         return show(dbg, opts);
       }
       return false;

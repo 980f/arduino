@@ -3,6 +3,22 @@
 #include "cheaptricks.h" //for changed()
 
 
+//need user defines management in arduino! Until then change the following to 1 or 0
+#if 0
+#warning "timer debug enabled, will spew"
+#include "chainprinter.h"
+static ChainPrinter medbg(Serial, true);
+#else
+#warning "no timer debug"
+#define medbg(...)
+#endif
+
+#ifdef medbg   //if it is a defined symbol then we have no logging. to make this work you MUST use auto pop=logging();
+#warning "medbg defined non zero"
+#else
+#warning "medbg not defined "
+#endif
+
 /** SoftMilliTimer
 
   suggested use is to call this in loop() and if it returns true then do your once per millisecond stuff.
@@ -65,6 +81,7 @@ class SoftMilliTimer {
     /** test and 'clear' on a timer value */
     bool timerDone(MilliTick &timer) const {
       if (timer != BadTick && timer <= lastChecked) {
+        medbg("MT:timer:", timer, " Done@", lastChecked);
         timer = BadTick;
         return true;
       } else {
@@ -77,6 +94,16 @@ class SoftMilliTimer {
       return (timer == BadTick || timer <= lastChecked) ? 0 : timer - lastChecked;
     }
 
+#ifdef medbg   //if it is a defined symbol then we have no logging. to make this work you MUST use auto pop=logging();
+    static bool logging(bool enabled) {
+      return false;
+    };
+#else
+    static FlagStacker logging(bool enabled) {
+      return medbg.stackStifled(!enabled);
+    }
+#endif
+
 };
 
 //only one is needed:
@@ -86,18 +113,23 @@ extern SoftMilliTimer MilliTicker;//name changed ~Jan20,2022 to force all users 
 /** simplest version of timing a single future event.
   MonoStable is meant for recurring events. */
 class OneShot {
+  protected://for debug access
     MilliTick timer = BadTick;
   public:
     void operator =(MilliTick duration) {
+      medbg("OS:op=", duration);
       timer = MilliTicker[duration];
+      medbg("OS:==", timer);
     }
 
     void stop() {
+      medbg("OS:stop@", timer);
       timer = BadTick;
     }
 
     /** @returns true once after use of operator=(), when time is up */
     operator bool() {
+      medbg("OS:bool@", timer);
       return MilliTicker.timerDone(timer);
     }
 
@@ -138,6 +170,7 @@ class MonoStable : public OneShot {
     MilliTick set(MilliTick duration, bool andStart = true) {
       MilliTick old = interval;
       interval = duration;
+      medbg("MS:set:", interval);
       if (andStart) {
         start();
       }
@@ -146,17 +179,20 @@ class MonoStable : public OneShot {
 
     /** sugar for setting the duration and starting, i.e. trigger with new value.  */
     MonoStable &operator =(MilliTick duration) {
+      medbg("MS:op=", duration);
       set(duration);
       return *this;
     }
 
     /** call to indicate running starts 'now', a.k.a. retriggerable monostable. */
     void start() {
+      medbg("MS:start@", interval, " was@", timer);
       OneShot(*this) = interval;
+      medbg("MS:started:", timer);
     }
 
     /** if @param please is true then if not running start else retain original expiration time. If please is false then stop now.
-    @returns whether it is running, which should be equal to the input parameter unless interval has been set to BadTick, which it is on construction. */
+      @returns whether it is running, which should be equal to the input parameter unless interval has been set to BadTick, which it is on construction. */
     bool beRunning(bool please) {
       if (please) {
         if (!isRunning()) {
@@ -192,6 +228,12 @@ class MonoStable : public OneShot {
     MilliTick elapsed() const {
       return interval - due();
     }
+
+#ifndef medbg
+    static void logmsg(const char *msg) {
+      medbg("ME::", msg);
+    }
+#endif
 
 };
 
