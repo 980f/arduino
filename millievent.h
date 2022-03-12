@@ -4,19 +4,12 @@
 
 
 //need user defines management in arduino! Until then change the following to 1 or 0
-#if 0
-#warning "timer debug enabled, will spew"
+#if 1
+#warning "millievent timer debug enabled, will spew"
 #include "chainprinter.h"
 static ChainPrinter medbg(Serial, true);
 #else
-#warning "no timer debug"
 #define medbg(...)
-#endif
-
-#ifdef medbg   //if it is a defined symbol then we have no logging. to make this work you MUST use auto pop=logging();
-#warning "medbg defined non zero"
-#else
-#warning "medbg not defined "
 #endif
 
 /** SoftMilliTimer
@@ -117,9 +110,8 @@ class OneShot {
     MilliTick timer = BadTick;
   public:
     void operator =(MilliTick duration) {
-      medbg("OS:op=", duration);
       timer = MilliTicker[duration];
-      medbg("OS:==", timer);
+      medbg("OS:op=", duration, " due at:", timer);
     }
 
     void stop() {
@@ -128,9 +120,19 @@ class OneShot {
     }
 
     /** @returns true once after use of operator=(), when time is up */
-    operator bool() {
+    bool isDone() {
       medbg("OS:bool@", timer);
       return MilliTicker.timerDone(timer);
+    }
+
+    /** @returns @see isDone() */
+    operator bool() {
+      return isDone();
+    }
+
+    /** @returns whether this timer is enabled/ not expired. Unlike isDone() it does not indicate a transition  */
+    bool isRunning() const {
+      return timer != BadTick;
     }
 
     /** @returns amount of time left, is slightly misnamed */
@@ -138,13 +140,41 @@ class OneShot {
       return MilliTicker.remaining(timer);
     }
 
-    /** @returns whether timer is running, IE operator bool() will eventually return true (perhaps in the very far distant future) */
-    bool isRunning() const {
-      return timer != BadTick;
-    }
-
+    /** @returns the absolute time that the timer will expire at, ~0 if not running. */
     MilliTick expiry() const {
       return timer;
+    }
+
+    /** constructing one of these stops the timer, destruction resumes where it left off, which is not going to be the original expiration time.*/
+    class Holder {
+        OneShot&oneshot;
+        MilliTick held;
+      public:
+        Holder(OneShot&oneshot): oneshot(oneshot) {
+          held = oneshot.due();
+        }
+
+        ~Holder() {
+          oneshot = held;
+        }
+
+
+        /** if @param dumpit is true (default) then erase the remaining time such that after this object is destroyed the oneshot stays stopped */
+        void discard(bool dumpit = true) {
+          if (dumpit) {
+            held = BadTick;
+          }
+        }
+
+
+        Holder(Holder &&factoried): Holder(factoried.oneshot) {
+          factoried.discard(true);
+        }
+
+    };
+
+    Holder hold() {
+      return Holder(*this);
     }
 
 };
@@ -187,8 +217,9 @@ class MonoStable : public OneShot {
     /** call to indicate running starts 'now', a.k.a. retriggerable monostable. */
     void start() {
       medbg("MS:start@", interval, " was@", timer);
-      OneShot(*this) = interval;
-      medbg("MS:started:", timer);
+      //gave up trying to get to base class op= when we also have an op=
+      timer = MilliTicker[interval];
+      medbg("MS:timer==", timer);
     }
 
     /** if @param please is true then if not running start else retain original expiration time. If please is false then stop now.
@@ -196,17 +227,12 @@ class MonoStable : public OneShot {
     bool beRunning(bool please) {
       if (please) {
         if (!isRunning()) {
-          OneShot(*this) = interval;
+          start();
         }
       } else {
         stop();
       }
       return isRunning();
-    }
-
-    /** @returns whether time has expired since the last start */
-    bool isDone() const {
-      return bool(*this);
     }
 
     /** @returns set time, use set() to modify it. */
@@ -228,12 +254,6 @@ class MonoStable : public OneShot {
     MilliTick elapsed() const {
       return interval - due();
     }
-
-#ifndef medbg
-    static void logmsg(const char *msg) {
-      medbg("ME::", msg);
-    }
-#endif
 
 };
 
