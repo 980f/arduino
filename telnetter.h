@@ -2,22 +2,29 @@
 #pragma once
 
 
-//max number of simultaneous clients allowed, note: their incoming stuff is mixed together. using 3 as the 8266 supports at most 4 sockets.
+//max number of simultaneous clients allowed, note: their incoming stuff is mixed together. using 3 as the ESP8266 supports at most 4 sockets.
 #define MAX_SRV_CLIENTS 3
 
-struct Credentials {//todo: use allocation constants from wifi.h for ssid and password max lengths
-  char ssid[32];
-  char password[64];
+#include <WiFi.h>
+#ifndef WL_SSID_MAX_LENGTH
+#warning "WiFi.h did not define SSID and WPA max lengths"
+#define WL_SSID_MAX_LENGTH 32
+#define WL_WPA_KEY_MAX_LENGTH 63
+#endif
+
+struct Credentials {
+  char ssid[WL_SSID_MAX_LENGTH];
+  char password[WL_WPA_KEY_MAX_LENGTH];
 
   unsigned save(unsigned offset = 0); 
 
   unsigned load(unsigned offset = 0);
 
   /** safe set of ssid, clips and ensures a trailing nul */
-  void setID(const char *s);
+  Credentials& setID(const char *s);
 
   /**safe set of password, clips and ensures a trailing nul */
-  void setPWD(const char *s);
+  Credentials& setPWD(const char *s);
 
 };
 
@@ -44,12 +51,13 @@ struct TelnetActor {
 };
 
 
-//todo: put into a cpp file
+#include "millievent.h"
 /** a server that rebroadcasts whatever it receives either from a wifi client or the local serial port */
 struct Telnetter {
   bool amTrying = false;
   bool amConnected = false;
   bool beTrying = false;
+  static bool Verbose;  //extra spew
 
   uint16_t teleport;//retained for diagnostics
   MonoStable testRate; //rate limiter for wifi access port connection checks
@@ -89,4 +97,3 @@ struct Telnetter {
   bool findSlot();
 
 } ;
-

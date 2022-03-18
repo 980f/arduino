@@ -1,5 +1,10 @@
 #pragma once //(C)2019 Andy Heilveil, github/980F
 
+
+/** Tee's output to two destinations (Serial and Serial1), merges input from them as if from a single source. 
+todo: make chainprinter's 'stifled' and autofeed stacker accessible. They were added after this class was written.
+*/
+
 #include "chainprinter.h"
 #ifdef HAVE_HWSERIAL1
 class TwinConsole: public Print {

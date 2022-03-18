@@ -3,6 +3,7 @@
     One cannot use this with an object of a class with virtual functions as it stores the vtable, which will change each time the program compiles.
     static Instances are normally const as they can be so should be.
 */
+#include <EEPROM.h>
 struct Nvblock {
   //address in eeprom
   const unsigned nvbase;
