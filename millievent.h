@@ -3,8 +3,8 @@
 #include "cheaptricks.h" //for changed()
 
 
-//need user defines management in arduino! Until then change the following to 1 or 0
-#if 1
+//need user defines management in arduino! Until then change the following to 1 or 0, leave at 0 when pushing to git.
+#if 0  
 #warning "millievent timer debug enabled, will spew"
 #include "chainprinter.h"
 static ChainPrinter medbg(Serial, true);
