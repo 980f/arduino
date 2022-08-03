@@ -1,0 +1,69 @@
+#generate an Arduino library from a sketch build using Andy's lib sharing setup
+#execute with CWD the sketch's folder  first arg the library name
+#bottom of this file describes what preparation you must do
+#todo: cli args for libber and libver
+libber=`basename $PWD`
+libver="1.0.0"
+
+echo Making arduino library zip for $libber
+
+libdir=../libraries/$libber
+
+#make a folder in ../libraries for all the source proper
+mkdir -p $libdir/src
+#copy .h and .cpp files to src, do NOT copy links as links, resolve them so that we have ordinary files in $libdir/src
+cp -L *.h $libdir/src
+cp -L *.cpp $libdir/src
+
+#copy .ino to examples. It shows people what they need to use this module
+#note: extra directory layer required by examples scanner of IDE, each examples entry is expected to be a sketch folder
+mkdir -p $libdir/examples/$libber
+cp -L *.ino $libdir/examples/$libber/
+
+# any markdown files are presumably usage documentation
+mkdir -p $libdir/extras
+cp -L *.md $libdir/extras
+
+#build library.properties in libdir
+echo >$libdir/library.properties "name="$libber
+echo >>$libdir/library.properties "version="$libver
+echo >>$libdir/library.properties "author="$USERNAME
+echo >>$libdir/library.properties "maintainer=$USER@gmail.com"
+#the 'sentence' must exist or library fails installation check
+echo >>$libdir/library.properties "sentence=$libber - a module to do something"
+echo >>$libdir/library.properties "paragraph=A fuller description should go here"
+echo >>$libdir/library.properties "category=Other"
+echo >>$libdir/library.properties "url=github.com/"$USER
+echo >>$libdir/library.properties "architectures=*"
+
+#build a minimal keywords.txt in libdir
+echo >$libdir/keywords.txt "$libber	KEYWORD1"
+#todo: replace spaces with tabs in above file until we figure out how to echo tabs.
+
+
+#gotta zip to deploy, this is done in its own script copied here in case you lose that file:
+#need path from zip to be relative and named for the library
+pushd ../libraries
+zipname="../$libber-$libver.zip"
+zip -r  $zipname $libber/
+#.properties $libber/*.txt $libber/src $libber/examples $libber/extras
+echo library zip is `realpath $zipname`
+popd
+
+# the rest of this file is documentation
+# you must put all of the shared code in its own source files, the ino should be the minimal setup() and loop() that you can live with.
+# put your top level code into yourclass.setup() and yourclass.loop() for easy discovery.
+# it is ok for your setup() and loop() to have some arguments, ones that will be described in your example.ino
+
+#zip file layout: first folder is the libary name
+#zip should execute from libraries and stored paths should be relative to libraries.
+
+#instead of a zipfile one can make a git repo and git clone it to a directory named for the lib. When prompted for a zipfile give the path to the git clone root.
+#
+# instruction to give to users:
+# place zip on your system where you can find it.
+# start arduino with either no sketch or the sketch to which you wish to add the module
+# from menu: Sketch/Include Library/Add .ZIP library
+# then you can browse <your sketchbook>/libraries/thislibrary/examples for a sample sketch to pull from 
+# or if you haven't started a sketch (you have the date-named one) File/Examples/<lib name>/<lib name>
+
