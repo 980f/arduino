@@ -1,0 +1,24 @@
+arduino library management
+
+For folders:
+arduino-install/libraries,
+$HOME/.arduino15/packages/esp32/hardware/esp32/2.0.2/libraries,
+sketchbook/libraries
+
+look for "library.properties"
+within each such folder's /src count the header files, if none then not a library.
+for each library.properties file check for 'sentence'
+
+libs are scanned 16 times!
+
+--
+
+Include library brings in all header files in no particular order, even if some are just used internally by the cpp files.
+To drop those we would have to discover whether there is a filter point not documented.
+
+
+
+Examples list:
+arduino-install/examples,
+
+
