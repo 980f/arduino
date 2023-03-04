@@ -138,15 +138,31 @@ Arduino.h
 2- Macros of some constants like HIGH, LOW, INPUT, OUTPUT, ..etc.
 3- Macro functions for bitwise operations and some other general operations like: min(), rand(), ..etc.
 4- Declaration of pin and port mapping arrays(check our micro-blog about mapping arrays in Arduino) in flash memory to make a map between Arduino pin number and the physical number. I.e. mapping pin 13 to the according port and pin in the MCU registers. The value of these arrays can be found here: _hardware\arduino\avr\variants\standard\pins_arduino.h_
-main.cpp	Here where the basic structure of Arduino program is declared. Here is the actual program:
-int main(void)
-{
-init();
-initVariant();
-setup();
-for (;;) {
-loop(); }
-return 0; }
+main.cpp	Here is where the basic structure of Arduino program is declared. Here is the actual program:
+int main(void) {
+	init();
+	initVariant();
+	setup();
+	for (;;) {
+		loop(); 
+	}
+	return 0; 
+}
+
+
+## Zip library 
+libname
+|_ library.properties
+|_ keywords.txt
+|_ src
+		|_ yourmodule.h
+		|_ yourmodule.cpp
+		|_ other .h and .cpp or .c as needed.
+|_ examples
+		|_ sketchname
+				|_ anexample.ino
+|_ extras
+		|_ any other files such as usage notes.
 
 
 Document Resources:
