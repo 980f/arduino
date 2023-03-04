@@ -2,7 +2,7 @@
 
 #include "millievent.h"
 
-#include "histogrammer.h" 
+#include "histogrammer.h"
 /**
   created to see if you are missing milliseconds in your loop().
   call check() often, and then show when it has been a while.
@@ -27,24 +27,19 @@
 
 
 
-template <unsigned qty> 
+template <unsigned qty>
 class MilliChecker: public Histogrammer<qty> {
     MilliTick millilast = 0;
   public:
-    unsigned checks = 0; //for application to decide when to show
-
     /** call often enough to sample every millisecond value */
-    void check();
+    void check() {
+      unsigned delta = MilliTicker.since(millilast);
 
-  unsigned delta = MilliTicker.since(millilast);
+      mydbg("MC:", delta, "/", millilast);
+      Histogrammer<qty>::check(delta);
+      millilast = MilliTicker.recent();
+    }
 
-  mydbg("MC:", delta, "/", millilast);
-  Histogrammer<qty>(delta);
-  millilast = MilliTicker.recent();
-  ++checks;
-}
-
-    
     //inherits unmodified show() and operator()
 
 };

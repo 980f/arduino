@@ -4,6 +4,7 @@
 /** recognize a sequence of digits. if asked for the value provide it, but clear it. You can peek at the value, but shouldn't except for debugging this module itself.
   leading zeroes are effectively ignored, they do not trigger octal interpretation. */
 
+#include "cheaptricks.h" //take();
 
 template<typename Unsigned=unsigned>
 struct UnsignedRecognizer {

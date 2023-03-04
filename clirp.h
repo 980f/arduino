@@ -1,6 +1,7 @@
 #pragma once  //(C) 2018,2019,2021 Andy Heilveil, github/980f
 
 #include "unsignedrecognizer.h"  //recognize numbers but doesn't deal with +/-
+#include "cheaptricks.h"  //ClearOnRead<> COR.
 
 /**
   Command Line Interpreter, Reverse Polish input
