@@ -3,7 +3,7 @@
 #pragma ide diagnostic ignored "cppcoreguidelines-c-copy-assignment-signature"
 #pragma ide diagnostic ignored "google-explicit-constructor"
 #pragma once
-#include <Arduino.h> //some IDE's need this
+//#include <Arduino.h> //some IDE's need this
 #include "pinuser.h" //maple and some other guys deviated a bit on pin declaration syntax, this guy deals with that.
 //#include "bitbanger.h" //BoolishRef
 #include "boolish.h" // so that OutputPin may be passed to a generic bit flipping service

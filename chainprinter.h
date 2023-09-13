@@ -1,6 +1,6 @@
 //(C) Copyright 2018,2022 Andrew Heilveil, github/980F.
 #pragma once
-
+#include <Arduino.h>
 //F() is misfiring, increasing strings instead of halving them, at least when used with ChainPrinter
 #undef F
 #define F(arg) arg
