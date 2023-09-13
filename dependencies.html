@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>dependencies</title>
+    <meta name="author" content="Andy Heilveil (github/980f)">
+  </head>
+  <body> 980F's library dependencies<br>
+    <br>
+    When you include the file heading each section you must add links for the files listed below it to your sketch. The script arduous manages that for you. Someday I will make this content part of a script that can be invoked, recursively invoking the link generation.<br>
+    <br>
+    sui.h
+    <ul>
+      <li>dbgserial.h</li>
+      <li>dbgserial.cpp</li>
+      <li>clirp.h</li>
+    </ul>
+    dbgserial.h
+    <ul>
+      <li>chainprinter.h</li>
+    </ul>
+    <p>chainprinter.h</p>
+    <ul>
+      <li> valuestacker.h</li>
+    </ul>
+    <p>clirp.h</p>
+    <ul>
+      <li>unsignedrecognizer.h</li>
+      <li>ezcpp/cheaptricks.h</li>
+    </ul>
+    <p>unsignedrecognizer.h</p>
+    <ul>
+      <li>ezcpp/char.h</li>
+    </ul>
+    <p>char.h</p>
+    <ul>
+      <li>ezcpp/char.cpp</li>
+      <li>ezcpp/index.h</li>
+      <li>ezcpp/cstr.h</li>
+      <li>ezcpp/textkey.h</li>
+    </ul>
+    <p>cheaptricks.h</p>
+    <ul>
+      <li>ezcpp/eztypes.h</li>
+    </ul>
+    <p><br>
+    </p>
+    <p><br>
+    </p>
+    <hr>Cheaptricks is deprecated, its internals have been put into a more refined set of files so as to remove the dependency on stinky old eztypes.h<br>
+    <br>
+    <p>Script I'd like to write outline:</p>
+    <p>initial list is command args<br>
+      For each item in list, <br>
+      &nbsp;&nbsp;&nbsp; invoke arduous on item<br>
+      &nbsp;&nbsp;&nbsp; if item in map then mapped object is list to recurse upon<br>
+      end for.<br>
+    </p>
+    <ul>
+    </ul>
+  </body>
+</html>
