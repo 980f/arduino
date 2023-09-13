@@ -42,13 +42,12 @@ public:
     return tos ? tos->guts() : nullptr;
   }
 
-  /**
-   * tos is a pointer, you can call tos->notEmpty even if tos is a nullptr */
+  /** tos is a pointer, this method is crafted so that you can call tos->notEmpty even if tos is a nullptr */
   bool notEmpty() const {
     return this != nullptr;
   }
 
-  /**
+ 
   /** this will only work for certain classes and certain compilers:
    * the thing stacked, must be declared class MyStackedThing:public Stacked<MyStackedThing>[, other bases] {..}  any other base class MUST follow the Stacked<> one for this to work.
    * This is necessary due to insisting that we operate with RTTI disabled, which is common if you are disabling exeptions which disablement is the reason this module exists.
@@ -58,10 +57,11 @@ public:
   }
 
   /** the visitor is given a pointer to what is a base class of the class being stacked.
-   * Visitor returns true if walk is to continue, false to stop it (useful for pealing off part of the top such as only the stack from the try to the throw) */
+   * Visitor is expected to return true if walk is to continue, false to stop it (useful for pealing off part of the top such as only the stack from the try to the throw) */
   template<typename Visitor>
   static void walk(Visitor &&visitor) {
     for (Stacked *item = Stacked<Element>::tos; item && visitor(item->guts()); item = item->stacked) {
+    	//# intentionally empty loop body.
     }
   }
 
@@ -71,7 +71,8 @@ public:
   }
 
   /** remove stack elements without notifying anyone. Stops the unwind when it finds @param mark, leaving mark as top of stack.
-   * if mark is not in stack then tos is unchanged. */
+   * if mark is not in stack then tos is unchanged.
+   * if mark is nullptr then the whole stack is quietly discarded */
   static void unwind(Stacked<Element> *mark) {
     if (mark == nullptr) {
       tos = nullptr;
