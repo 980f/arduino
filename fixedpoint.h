@@ -1,4 +1,10 @@
-/* Copyright 2021 by Andy Heilveil, github/980f, on 12/19/21. */
+/* Copyright 2021 by Andy Heilveil, github/980f, on 12/19/21.
+This was created to clean up the horrendous mess that was ST's vl53l0x series laser based range sensors.
+
+They had macros for doing the following in C code, and I found errors all over the place due to careless use of them.
+Most commonly they truncated multi-integer math, making the fractional part useless.
+
+*/
 
 #pragma once
 
@@ -58,21 +64,29 @@ template<typename IntishOver> IntishOver kilo(IntishOver num) {
 //  return value << shift;
 //}
 
-/** alters @param value to be no greater than @param max */
-template<typename Intish> constexpr void lessen(Intish &value, Intish max) {
+/** alters @param value to be no greater than @param max 
+  @returns whether value was altered.
+*/
+template<typename Intish> constexpr bool lessen(Intish &value, Intish max) {
   if (value > max) {
     value = max;
+    return true;
   }
+  return false;
 }
 
-/** alters @param value to be no greater than @param max */
-template<typename Intish> constexpr void ensure(Intish &value, Intish min) {
+/** alters @param value to be no greater than @param max 
+  @returns whether value was altered.
+*/
+template<typename Intish> constexpr bool ensure(Intish &value, Intish min) {
   if (value < min) {
     value = min;
+    return true;
   }
+  return false;
 }
 
-/** ceil(num/denom) */
+/** ceil(num/denom), number of bins needed in a histogram where num is the range and denom the quantum */
 template<typename IntishOver, typename IntishUnder> IntishOver binsRequired(IntishOver num, IntishUnder denom) {
   return (num + denom - 1) / denom;
 }
@@ -92,16 +106,14 @@ template<unsigned whole, unsigned fract> struct FixPoint {
   enum {
     mask = Mask<fract-1, 0, size>::places,   //to extract fraction bits from lsbs
     unity = Bitter<RawType>(fract), //equals 1.0F
-    half = Bitter<RawType>(fract - 1)  // 0.5
-    
+    half = Bitter<RawType>(fract - 1)  // 0.5    
   };
-
 
   //for rounding to integer:
   using WholeType = typename Unsigned<whole>::type;
 
   ////////////////
-  RawType raw;
+  RawType raw;//the official type to which we are mapping www.fff conceptual values.
 
   operator RawType() const {
     return raw;
@@ -140,17 +152,24 @@ template<unsigned whole, unsigned fract> struct FixPoint {
     }
   }
 
-
+/** java like zero init of anything not explicitly init. */
   FixPoint() : raw(0) {
   }
 
+/** This is a debatable choice. It is used for copying bit patterns around, rather than operator=(int to be scaled to fixed) */
   template<typename Intish> explicit FixPoint(Intish stuff) {
     raw = stuff;
   }
 
-  /** two ints init item to ratio, with boosted of numerator by @param boostit power of two which defaults to fract, which treats num  as an integer value */
+/** This is a debatable choice. It is used for copying bit patterns around, rather than operator=(int to be scaled to fixed) */
+ FixPoint &operator=(RawType pattern) {
+    raw = pattern;
+    return *this;
+  }
+
+  /** two ints init item to ratio, with boosting of numerator by @param boostit power of two which defaults to fract, which treats num as an integer value */
   template<typename IntishUp, typename IntishDown> constexpr FixPoint(IntishUp num, IntishDown denom, unsigned boostit = fract) {
-    raw = num;//expand to 32 bits asap.
+    raw = num;//expand to internal bitwidth asap.
     boosted(boostit);
     if (denom != IntishDown(1)) {//do not round if denom is 1, which would only make a difference if boostit != fract
       divideby(denom);
@@ -158,45 +177,42 @@ template<unsigned whole, unsigned fract> struct FixPoint {
   }
 
   constexpr FixPoint(float eff) {
-    if (eff < 0) { //need to see if this ever occurs or if all entities are strictily positive or checked by app.
+    if (eff < 0) { //need to see if this ever occurs or if all entities are strictly positive or checked by app.
       raw = 0;
     } else if (eff == 0.0) {//frequent enough to special case
       raw = 0;
     } else {
-      raw = RawType(eff * unity);//todo:e pick bits rather than actually multiply
+      raw = RawType(eff * unity);//todo: pick bits rather than actually multiply
     }
   }
 
-  /** doubles preferentially converted to uint32's instead of floats!*/
+  /** without this explicit cast operator doubles preferentially converted to uint32's instead of floats!*/
   constexpr FixPoint(double eff) {
     raw = eff > 0 ? RawType(eff * unity) : 0;
   }
+  
+  FixPoint &operator=(float eff) {
+    raw = FixPoint(eff).raw;//borrow constructor
+    return *this;
+  }
+
   ///////////////////////////////////////
   /** this is logically dangerous but matches legacy use. Logically one would expect to assign to the whole part, ie shift up by fract. */
   template<unsigned other_whole, unsigned other_fract> FixPoint &operator=(FixPoint<other_whole, other_fract> other) {
     raw = static_cast<FixPoint>(other);//use constructor to do conversion as the vast majority were inline. Defining the targets as the appropriate type will let us drop macros that use the constructor.
     return *this;
   }
-
-  FixPoint &operator=(RawType pattern) {
-    raw = pattern;
-    return *this;
-  }
-
-  FixPoint &operator=(float eff) {
-    raw = FixPoint(eff).raw;//borrow constructor
-    return *this;
-  }
-
-
+ 
   //////////////////////////////////////
 
-  /** @returns nearest integer to nominal value */
+  /** @returns nearest integer to nominal value
+    Failure in ST's code to do this rounding was common, often the adding of 'half' was omitted making the fract part somewhat a waste of time.
+  */
   WholeType rounded() const {
     return (raw + half) >> fract;
   }
 
-  /** @returns the raw value of this shrink by 2^ @param  bits, roundeding */
+  /** @returns the raw value of this shrunk by 2^ @param  bits, rounding */
   RawType shrink(unsigned bits) const {
     return roundedScale(raw, bits);
   }
@@ -241,6 +257,7 @@ template<unsigned whole, unsigned fract> struct FixPoint {
     return ((raw * 1000) + half) >> fract;
   }
 
+/** todo: apply <=> once we are sure all processors have their compiler upgraded to c++20 */
   bool operator<(const FixPoint &rhs) const {
     return raw < rhs.raw;
   }

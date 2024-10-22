@@ -11,7 +11,7 @@
   if(clirp.doKey(key_from_serial)){
     switch(key){
     case someletter:
-      auto result=cli(pointer_to_myfunction); //calls function of one or two arguuments. also zeroes out the stored arguments.
+      auto result=cli(pointer_to_myfunction); //calls function of one or two arguments. also zeroes out the stored arguments.
       //auto is the return type of 'myfunction'
     break;
     }
@@ -28,7 +28,7 @@ class CLIRP {
     enum {
       Empty = useNaV ? ~0 : 0
     };
-		//COR is "Clear on Read", accessing the value naively returns present value but sets storage to Empty.
+    //COR is "Clear on Read", accessing the value naively returns present value but sets storage to Empty.
     COR<Unsigned> arg = Empty;
     //for 2 parameter commands, pushed gets value from earlier param.
     COR<Unsigned> pushed = Empty;
@@ -52,28 +52,33 @@ class CLIRP {
         case '\t'://ignore tabs, makes param files easier to read.
           return false;
         case ','://push a parameter for 2 parameter commands.
-          pushed = arg;//note: pushing clears accumulator  123,X => 123,0X  (early versions gave you 123,123X which was never useful)
+          pushed = arg;//note: pushing clears accumulator  123,? acts the same as 123,0?  (early versions gave you 123,123? which was never useful)
           return false;
       }
-      return true;//we did NOT handle it, you look at it.
+      return true;//we did NOT handle it, YOU should look at it.
     }
-		/**  may deprecate doKey if this doesn't interfere with other operator() usages. */
-		bool operator()(byte key) {
-			return doKey(key);
-		}
+    
+    /**  may deprecate doKey if this doesn't interfere with other operator() usages. */
+    bool operator()(byte key) {
+      return doKey(key);
+    }
+    
     /** @returns whether there is a second non-zero argument. Use 1-based labeling and have labels precede values when doing array assignments. */
     bool twoargs() const {
       return bool(pushed);
     }
 
-    /** @returns 2 if pushed arg is not Empty, ELSE 1 if single arg is not Empty, ELSE 0*/
+    /** @returns 2 if pushed arg is not Empty, ELSE 1 if single arg is not Empty, ELSE 0.
+      caveat: Early versions wrongly ignored useNAV in the tests for empty values.
+    */
     unsigned argc() const {
-      return bool(pushed) ? 2 : bool(arg) ? 1 : 0;//if pushed reply 2 regardless of whether arg appears to have a value.
+      return (pushed != Empty) ? 2 : (arg != Empty) ? 1 : 0;//if pushed reply 2 regardless of whether arg appears to have a value.
     }
 
 
     /** Call the @param fn with the arguments present and @returns what that function returned.
-    	NB: the argument order is the reverse of the RPN entry order. We can debate whether this is a good choice, but it matches early usage of this class.
+      NB: the argument order is the reverse of the RPN entry order. We can debate whether this is a good choice, but it matches early usage of this class.
+      E.G.: if an array is being accessed as index,valueX for array[index]=value, the fn is passed (value,index)
     */
     template <typename Ret, typename U1, typename U2> Ret operator()(Ret (*fn)(U1, U2)) {
       return (*fn)(arg, pushed);
@@ -82,7 +87,7 @@ class CLIRP {
     /** Call the @param fn with the most recent argument, erasing any prior one and @returns what that function returned.
     */
     template <typename Ret, typename U1> Ret operator()(Ret (*fn)(U1)) {
-      pushed = 0; //forget unused arg.
+      pushed = Empty; //forget unused arg.
       return (*fn)(arg);
     }
 

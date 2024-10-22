@@ -5,37 +5,72 @@
     <title>L298 Arduino notes</title>
     <meta name="author" content="Andy Heilveil (github/980f)">
   </head>
-  <body>WEMOS V1.0.0
-    <p>L298 cheat sheet</p>
+  <body>
+    Specs on H bridge drivers and boards that contain them.<br>
+    <br>
+    <hr width="100%" size="2">
+    <h3>L298<br>
+    </h3>
     <p>Dual H-Bridge on usual Arduino adaptor.<br>
       <br>
-      Seeedstudio V1.1 connections using 'FourBanger from 980f's motordrivers.h:<br>
+      Seeedstudio V1.1 connections using 'FourBanger from 980f's
+      motordrivers.h:<br>
       xp/xn/en 8/11/9<br>
       yp/yn/en 12/13/10<br>
-      Note DuplicateOutput classfor helping to run the enables or the bridges in parallel.</p>
-    <p>Motor voltage must be at least 2.5V greater than logic voltage, 7.5 for 5V logic, but also 7V minimum.<br>
+      Note DuplicateOutput class for helping to run the enables or the
+      bridges in parallel.</p>
+    <p>Motor voltage must be at least 2.5V greater than logic voltage,
+      7.5 for 5V logic, but also 7V minimum.<br>
       Maximum motor voltage is 46 V.<br>
-      Maximum load per channel is 2A DC, perhaps 2.5 A if pulses leave enough off time, 3A for 100uS pulses.<br>
+      Maximum load per channel is 2A DC, perhaps 2.5 A if pulses leave
+      enough off time, 3A for 100uS pulses.<br>
       You may successfully tie the two together for double the capacity.</p>
-    <p>External clamp diodes are suggested for any inductive load, such as all motors.</p>
-    <p>It can pull 70ma from the logic supply when an output is on, typically 50.<br>
+    <p>External clamp diodes are suggested for any inductive load, such
+      as all motors.</p>
+    <p>It can pull 70ma from the logic supply when an output is on,
+      typically 50.<br>
       It still takes 5..10ma when drivers are off.</p>
-    <p>Logic thresholds are 1.5V and 2.3V regardless of supply voltage, at -10/100 uA load.<br>
-      Nearly 2V and possible 5V are lost in the H-bridge! For a 12V load consider using a 15V supply.<br>
+    <p>Logic thresholds are 1.5V and 2.3V regardless of supply voltage,
+      at -10/100 uA load.<br>
+      Nearly 2V and possible 5V are lost in the H-bridge! For a 12V load
+      consider using a 15V supply.<br>
       The sense resistor will be fed 2V.</p>
-    <p>Don't expect more than 25kHz performance, although you might be able to push to 40kHz with some loads.</p>
-    <p>Enable is active high, pull that sucker down with a resistor else the load might move during processor reset and download.<br>
-      The other 2 controls are "one way", "the other", and if both "don't move". When disabled expect the motor to slow down and stop due to pushing some current through the part, but preferably through external diodes.</p>
+    <p>Don't expect more than 25kHz performance, although you might be
+      able to push to 40kHz with some loads.</p>
+    <p>Enable is active high, pull that sucker down with a resistor else
+      the load might move during processor reset and download.<br>
+      The other 2 controls are "one way", "the other", and if both
+      "don't move". When disabled expect the motor to slow down and stop
+      due to pushing some current through the part, but preferably
+      through external diodes.</p>
     <p>Multiwatt15 package is used, mounted on a heat sink.</p>
     <p>Freestanding WB291111:</p>
-    <p>It is essential to not use the pullups when you are using 3.3V logic to drive the board.</p>
-    <p>I do not use the pullups so that I can access 5V VCC from the jumpers for them.<br>
-      I soldered the connection for CS1 to its ground, jumpered CS2 to CS1 and then used the CS2 ground for the GND to pair with the 5V accessed via U1 jumper. Pullups are not a particularly good choice for this device, pulldowns would have made more sense when attached to a logic source as that is the inactive level for all signals. The pullups should only be used when controlling the board from simple contacts or open-collector drivers.</p>
-    <hr>L293 boards use a more flexible component, which has enough extra control lines that the interface is SPI-ish, via an HC595 shift register with output register.<br>
-    The controls are shifted out a pin with a clock, then a clock is pulsed for the output register. There are 4 half-H direction controls, and two enables each enable going to a pair of half-H's.<br>
+    <p>It is essential to not use the pullups when you are using 3.3V
+      logic to drive the board.</p>
+    <p>I do not use the pullups so that I can access 5V VCC from the
+      jumpers for them.<br>
+      I soldered the connection for CS1 to its ground, jumpered CS2 to
+      CS1 and then used the CS2 ground for the GND to pair with the 5V
+      accessed via U1 jumper. <br>
+      Pullups are not a particularly good choice for this device,
+      pulldowns would have made more sense when attached to a logic
+      source as that is the inactive level for all signals. <br>
+      The pullups should only be used when controlling the board from
+      simple contacts or open-collector drivers.</p>
+    <hr>
+    <h3>L293</h3>
     <br>
-    For bidirectional DC motor use one provides a direction and its complement to the pair of half-H's that share an enable.<br>
-    When driving 4 independent coils you will most likely not manipulate the enables other than as a system shutdown state.<br>
+    L293 Arduino boards use a more flexible component, which has enough
+    extra control lines that the interface is SPI-ish, via an HC595
+    shift register with output register.<br>
+    The controls are shifted out a pin with a clock, then a clock is
+    pulsed for the output register. There are 4 half-H direction
+    controls, and two enables each enable going to a pair of half-H's.<br>
+    <br>
+    For bidirectional DC motor use one provides a direction and its
+    complement to the pair of half-H's that share an enable.<br>
+    When driving 4 independent coils you will most likely not manipulate
+    the enables other than as a system shutdown state.<br>
     <br>
     The Adafruit 1.x, DK boards have two L293D's:<br>
     <table border="1">
@@ -101,8 +136,11 @@
     <p>Shown as msb first shift order.<br>
       PWM1A and 1B are routed to servo connectors, D9, D10.</p>
     <hr>
-    <p><br>
-      Use a DRV8871 or DRV8833 board when ever possible instead of L29x boards, they waste a lot less power and don't lose nearly as much voltage (typically).</p>
+    <h3>Side by side of driver chips<br>
+    </h3>
+    <p> Use a DRV8871 or DRV8833 board when ever possible instead of
+      L29x boards, they waste a lot less power and don't lose nearly as
+      much voltage (typically).</p>
     <table border="1">
       <tbody>
         <tr>
@@ -146,7 +184,7 @@
         <tr>
           <td>clamp</td>
           <td>none</td>
-          <td><br>
+          <td>-D parts<br>
           </td>
           <td>0.8V</td>
           <td>(yes)<br>
@@ -243,8 +281,10 @@
         <tr>
           <td><br>
           </td>
-          <td colspan="4">The bipolar devices voltage loss is somewhat current dependent but has a higher minimum than <br>
-            the FET devices whose loss is very current dependent, very little at low current.<br>
+          <td colspan="4">The bipolar devices voltage loss is somewhat
+            current dependent but has a higher minimum than <br>
+            the FET devices whose loss is very current dependent, very
+            little at low current.<br>
           </td>
           <td><br>
           </td>
@@ -253,13 +293,12 @@
     </table>
     <br>
     <br>
-    <hr><br>
-    TB6612 <br>
-    <br>
-    <br>
+    <hr>
+    <h3>TB6612 </h3>
     Adafruit V2, over I2C. <br>
     Uses PCA9685 PWM device as is on servo shield.<br>
-    There are two TB6612's, M1&amp;2 on one, M3&amp;4 on the other, similar to original/DK shield.<br>
+    There are two TB6612's, M1&amp;2 on one, M3&amp;4 on the other,
+    similar to original/DK shield.<br>
     <br>
     <table style="width: 100%" border="1">
       <tbody>
@@ -297,17 +336,17 @@
       </tbody>
     </table>
     <br>
-    <br>
-    <br>
-    <br>
-    WEMOS V1.0.0 <br>
+    <hr width="100%" size="2">
+    <h3>WEMOS V1.0.0 </h3>
     Interfaced via a microcontroller that is on I2C.<br>
     <br>
     default address is 30, used directly by Wire library.<br>
     channel select field is 0 for A, 1 for B, 2 for both.<br>
-    Motor status is typical value, use 4 for 'standby'. 0 is hard brake, 3 gentler.<br>
+    Motor status is typical value, use 4 for 'standby'. 0 is hard brake,
+    3 gentler.<br>
     multibyte numerical values are little endian.<br>
-    ex code does read after write with 50 us wait between write and read phases.<br>
+    ex code does read after write with 50 us wait between write and read
+    phases.<br>
     The execution response is ignored by all example programs.<br>
     <br>
     <table border="1">
@@ -421,6 +460,6 @@
       </tbody>
     </table>
     <br>
-    <br>
+    <hr width="100%" size="2"> <br>
   </body>
 </html>

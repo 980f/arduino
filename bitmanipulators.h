@@ -7,19 +7,18 @@
 
 /** yet another variant of manipulating bits.
 This variant was written for the fixedpoint.h class which in turn was written for factoring (and fixing) the vl53l0x library from ST micro. 
+Do not muck with signatures, the operand order was chosen to make it easy to rewrite the mentioned library.
 */
 
 #if __has_include(<cstdint>)
-
 #include <cstdint>  //uint8_t in a few places
-
 #else
 #include "stdint.h"
 #endif
 
-#include "intsizer.h"
+#include "intsizer.h" //computes the type needed to hold a particular whole number.
 
-/** bit of a byte.  
+/** bitmask of a given bit in a given type.   
  * strange name as too many bit() functions are flying around at the moment, should rename once we get rid of such
  * */
 template<typename Intish=uint8_t> constexpr Intish Bitter(unsigned bitnum) {
@@ -27,7 +26,7 @@ template<typename Intish=uint8_t> constexpr Intish Bitter(unsigned bitnum) {
 }
 
 /** annoying to use template for bit of something other than a byte.
- * use: Bitof<uint16_t>(12)  => 1<<12.
+ * use: Bitof<uint16_t>(12)  => 16 bits equal to 1<<12.
  * */
 template<typename Intish> constexpr Intish Bitof(const unsigned bitnum) {
   if (bitnum / 8 >= sizeof(Intish)) {
@@ -36,11 +35,17 @@ template<typename Intish> constexpr Intish Bitof(const unsigned bitnum) {
   return Intish(1) << bitnum;
 }
 
+/** when the bit is known at compile time 
+    Bit<uint32_t,5>() is a function call, not an object construction.
+    uint8_t enableBit = Bit<typeof(enableBit),4>();
+    need to try auto enableBit = Bit<uint8_t,4>(); on all potential compilers of interest. I expect avr to not handle this, too ancient a version of the language.
+*/
 template<typename Intish, unsigned bitnum> constexpr Intish Bit() {
   static_assert(bitnum / 8 < sizeof(Intish), "type does not have that many bits");
   return Intish(1) << bitnum;
 }
 
+/** @returns false for bits that do not exist. */
 template<typename Intish> constexpr bool getBit(const unsigned bitnum, const Intish data) {
   if (bitnum / 8 > sizeof(Intish)) {
     return false;

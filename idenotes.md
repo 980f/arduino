@@ -42,7 +42,7 @@ For Adafruit SAMD development they are:
   - ADAFRUIT_QTPY_M0
   - __SAMD21E18A__
 
-For the USB product info you can stick your own id info in:
+For the Adafruit (perhaps others?) USB product info you can stick your own id info in:
   - USB_MANUFACTURER=\"Adafruit\"
   - USB_PRODUCT=\"QT Py M0\" 
   
@@ -109,7 +109,7 @@ Then libraries
  match name-master
  match nameMoreText   regexp name*
  match MoreTextname     regexp *name
- match wrappednamewoof  regeco *name*
+ match wrappednamewoof  regexp *name*
  
 
 Foo

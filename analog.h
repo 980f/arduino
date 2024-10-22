@@ -2,6 +2,8 @@
 /** will be adding smoothing to analog inputs so wrap the data now.
     some of the chips have more than 8 or 10 bits so this class 'normalizes' values to 15 bits (avoiding sign bit for now).
     no Arduino will ever have 16 usable bits, that requires very careful board design.
+    
+    todo: see analogReadResolution and if it exists for the board use it instead of this class, or use it in this class via #ifdef'ing the bulk of it to triviality.
 */
 
 class AnalogValue: public Printable {
@@ -9,6 +11,7 @@ class AnalogValue: public Printable {
   protected:
     F15 raw;
   public:
+    //this are named both because that is generally good and because we anticipate enhancing the class to have an asymmetric range when we add signedness to it.
     static const F15 Min = (0);
     static const F15 Half = (0x4000);
     static const F15 Max = (0x7FFF);
@@ -55,7 +58,7 @@ class AnalogValue: public Printable {
     }
 
 
-    /**0-> all ones, all ones ->0
+    /**15 bit version of typical '~' functioning. 
      * created for linearmap reversed scaling.
      */
     unsigned operator ~() const {
@@ -78,7 +81,12 @@ class AnalogValue: public Printable {
 
 
 
-/** makes analog output appear as if a simple variable. This is handy if you want to replace direct use with proxying to another guy, or to disable output but still see what the value would have been.*/
+/** makes analog output appear as if a simple variable. This is handy if you want to replace direct use with proxying to another guy, or to disable output but still see what the value would have been.
+
+todo: template number of bits in device  (template <unsigned numbits>) where the value for numbits comes from some processor defines \ 
+ or use analogWriteResolution() if that function exists and set it to 15 and then remove the shift in the operator=() method here.
+*/
+
 struct AnalogOutput {
     const short pinNumber;
     AnalogOutput(short pinNumber): pinNumber(pinNumber) {
@@ -87,7 +95,7 @@ struct AnalogOutput {
 
     //scaled/smoothed value
     void operator =(AnalogValue av) const {
-      analogWrite(pinNumber, ~av >> (15 - 8)); //15 bit normalized input, cut it down to 8 msbs of those 15. todo: configure for 10 and maybe 16 bit output.
+      analogWrite(pinNumber, ~av >> (15 - 8)); //15 bit normalized input, cut it down to 8 msbs of those 15.
     }
 
     //traditional arduino value
@@ -117,6 +125,7 @@ struct AnalogInput {
 };
 
 ///* RC, aka exponential decay, averaging. */
+//the following is an import from another 980f library, but not yet tested for utility or correctness.
 //struct SmoothedAnalogValue: public AnalogValue {
 //  unsigned shift;//power of two scaling is faster than multiply. Someday we will import the 16*16/16 code and make this class better.
 //
