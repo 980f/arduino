@@ -1,6 +1,6 @@
 #generate an Arduino library from a sketch build using Andy's lib sharing setup
-#execute with CWD the sketch's folder  first arg the library name
-#bottom of this file describes what preparation you must do
+#execute with CWD the sketch's folder
+#bottom of this file describes what preparation you must do on the files.
 #todo: cli args for libber and libver
 libber=`basename $PWD`
 libver="1.0.0"
@@ -37,11 +37,10 @@ echo >>$libdir/library.properties "url=github.com/"$USER
 echo >>$libdir/library.properties "architectures=*"
 
 #build a minimal keywords.txt in libdir
-echo >$libdir/keywords.txt "$libber	KEYWORD1"
-#todo: replace spaces with tabs in above file until we figure out how to echo tabs.
+//tab separated keyword:value pairs
+echo -e >$libdir/keywords.txt "$libber\tKEYWORD1"
 
-
-#gotta zip to deploy, this is done in its own script copied here in case you lose that file:
+#gotta zip to deploy. After running this whole script once you can just refresh the zip file to incorporate changes.
 #need path from zip to be relative and named for the library
 pushd ../libraries
 zipname="../$libber-$libver.zip"
@@ -55,10 +54,10 @@ popd
 # put your top level code into yourclass.setup() and yourclass.loop() for easy discovery.
 # it is ok for your setup() and loop() to have some arguments, ones that will be described in your example.ino
 
-#zip file layout: first folder is the libary name
+#zip file layout: first folder is the library name
 #zip should execute from libraries and stored paths should be relative to libraries.
 
-#instead of a zipfile one can make a git repo and git clone it to a directory named for the lib. When prompted for a zipfile give the path to the git clone root.
+#instead of a zipfile one can make a git repo and git clone it to a directory named for the lib. When prompted by library manager for a zipfile give the path to the git clone root.
 #
 # instruction to give to users:
 # place zip on your system where you can find it.
