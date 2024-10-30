@@ -12,7 +12,7 @@
             log("This", 42, 'c', 12.4, anythingforwhichthereisaprintvariant, HEXLY(0x980F));
 
     Initial design returns what the Print::print routines do, all nicely added up. This however precludes chaining to an end-of-line function.
-    OTOH since we have variable length args we can add a Newline as an argument.
+    OTOH since we have variable length args we can add a Newline as an argument. (Later on added auto newline state, using empty param list as trigger).
 
    Arduino Print functionality is type aware, and supports an interface class Printable.
     we use that to output numbers in different bases by using this class to pass the number and base as a single argument to the ChainPrinter.
@@ -22,12 +22,13 @@
 
   There is a shared object named CRLF that you may put in your argument list instead of '\n' or "\r\n". It emits whatever Arduino is configured to emit for a line ending.
 
-  The stifled member of ChainPrinter was tacked on to suppress attempt to talk to SerialUSB before it is ready, without making an app wait for it.
+  The 'stifled' member of ChainPrinter was tacked on to suppress attempt to talk to SerialUSB before it is ready, without making an app wait for it.
   If you wait for it you may wait forever, most usages end up requiring a live PC connection to allow the Arduino program to loop.
-  You may choose to use it as an enable for a debug stream, where enabling it is stifled=!Serial rather than just 'false.
-
+  You may choose to use it as an enable for a debug stream, where enabling it use stifled=!Serial rather than just 'false'.
 
 */
+
+/** binds a base and a value to print in that base */
 template<typename Intish, int base> struct Basely: public Printable {
   Intish value;
   Basely(Intish value): value(value) {}
@@ -37,10 +38,12 @@ template<typename Intish, int base> struct Basely: public Printable {
   }
 };
 
-/** this class is only useful if:
+/** Based class is only useful if:
   1) the choice of base is runtime variable (who does that?)
   or
   2) you need to squeeze program space by sharing code across different bases.
+  
+  @see Basely for when base is known at compile time
 */
 template<typename Intish> struct Based: public Printable {
   Intish value;
@@ -82,16 +85,20 @@ struct BlockDumper : public Printable {
 #define BLOCK(...) BlockDumper( __VA_ARGS__ )
 
 
-#include "valuestacker.h"
+#include "valuestacker.h" //a stack that pushes on object declaration and pops on object destruction.
 
 using FlagStacker=ValueStacker<bool>;
 
 
-struct ChainPrinter {
-    bool stifled = true;
+class ChainPrinter {
+  protected:
     Print &raw;
-    bool autofeed;
+  public://simple user set state
+    bool autofeed; //whether to emit CRLF when end of arglist is encountered, which is the same as passing noargs. myChainPrinter() emits a CRLF.
+    bool stifled = true; //startup disabled due to SerialUSB issues.
     explicit ChainPrinter(Print &raw, bool autofeed = true): raw(raw), autofeed(autofeed) {}
+    //hope this makes 'write()' methods available 
+    operator Print &() const {return raw;}
   private:
     /** this is how you process the nth item of a varargs template group.
         It can generate a surprising amount of code, a function for every combination of argument types, AND all right hand subsets thereof.
@@ -121,21 +128,23 @@ struct ChainPrinter {
       return operator()(args ...) + endl();
     }
 
-    unsigned endl() {
+    unsigned endl() {    
       if (stifled) return 0;
       return raw.println();
     }
 
     /** you must assign this to a named thing to ensure the compiler doesn't elide it.
-      suggested usage:  auto pop= printer.stackFeeder(local_preference_for_linefeeding) */
-    FlagStacker stackFeeder(bool beFeeding = false) { //default value for legacy upgrade from nofeeds
+      suggested usage:  auto pop= printer.stackFeeder(local_preference_for_linefeeding) 
+      default value for arg disables feeding while the returned object exists */
+    FlagStacker stackFeeder(bool beFeeding = false) {
       return FlagStacker(this->autofeed, beFeeding);
     }
 
     /** you must assign this to a named thing to ensure the compiler doesn't elide it.
-          suggested usage:  auto pop= printer.stackStifled(local_preference_for_debugspew) */
-    FlagStacker stackStifled(bool beStifled = false) {
-      return FlagStacker(this->stifled, beStifled);
+          suggested usage:  auto pop= printer.stackStifled(local_preference_for_debugspew)          
+          */
+    FlagStacker stackStifled() {//earlier version allowed you to force a stifled printer back on, a universally bad idea.
+      return FlagStacker(this->stifled, true);
     }
 };
 

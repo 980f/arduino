@@ -77,7 +77,6 @@ class ClockHand {
       mechanism = location;
     }
 
-
     //free run with time set so that one revolution happens per real world cycle of hand
     void realtime() ;
 
@@ -94,18 +93,18 @@ class ClockHand {
 
     /** @returns nearest integer of time unit for either the current location or the targeted one*/
     unsigned asTime(bool actual=false) const {
-    	if(stepperrev==0){
-    		return 0; //avert lockup on bad data.
-    	}
-    	//compute from target, else stepper position
-    	int step= actual? int(mechanism) : target;
+      if(stepperrev==0){
+    	return 0; //avert lockup on bad data.
+      }
+      //compute from target, else stepper position
+      int step= actual? int(mechanism) : target;
       //ignoring step<0 issues
-    	int rem= step % stepperrev;
-    	if(rem<0){//C has strange idea of how modulus should work. clang Linter has bad check on loop variables so switched from prophylatic while to an if.
-    		rem += stepperrev;
-    	}
-    	//rem/stepperrev is now fraction of cycle
-    	return rate(timeperrev()*rem,stepperrev);
+      int rem= step % stepperrev;
+      if(rem<0){//C has strange idea of how modulus should work. clang Linter has bad check on loop variables so switched from prophylatic while to an if.
+    	rem += stepperrev;
+      }
+      //rem/stepperrev is now fraction of cycle
+      return rate(timeperrev()*rem,stepperrev);
     }
 
 };
