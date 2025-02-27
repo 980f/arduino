@@ -10,7 +10,7 @@ template<typename Unsigned=unsigned>
 struct UnsignedRecognizer {
   Unsigned accumulator = 0;
 
-  /** inspect incoming character, @returns whether it is part of the number and if so has added it to local number.*/
+  /** inspect incoming character, @returns whether it is part of the number, If so it has been incorporated into the local number.*/
   bool operator()(char key) {
     if (Char(key).appliedDigit(accumulator)) {
     	return true;
@@ -25,14 +25,17 @@ struct UnsignedRecognizer {
     }
   }
 
-  /** @returns whether the incooming number is !=0
+/** @returns whether the incoming number is 0.
    *  not using operator bool() as the compiler preferred to use operator unsigned() instead of oper bool(), so testing the value cleared it.
+   * this replaced operator ~ in order to better match other library operator overloading habits, this is obscure enough as it is without being discordant with other uses.
   */
-  bool operator ~()const {
-    return accumulator != 0;
+  bool operator !()const {
+    return accumulator == 0;
   }
 
-  /** look at it and it is gone! */
+  /** look at it and it is gone! 
+  * @returns the present value, setting the local value to zero.
+  */
   operator Unsigned() {
     return take(accumulator);
   }

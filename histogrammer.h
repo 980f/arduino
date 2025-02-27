@@ -7,19 +7,20 @@
 
 class HistogrammerBase {
     const unsigned numhist;
-    const bool onebased;
     unsigned * const hist; //an unchanging pointer to values that change.
+    const bool onebased;
+
   public:
     unsigned checks = 0; //public for user convenience
   public:
     HistogrammerBase (const unsigned numhist, unsigned *hist, bool onebased = false): numhist(numhist), hist(hist), onebased(onebased) {}
 
     /** call with each @param value being histogrammed
-       @returns @param value being histogrammed
+       @returns @param value being histogrammed, passes through the value so that you can histogram in the midst of receiving the value.
     */
     unsigned check(unsigned value) {
-      ++checks;
-      ++hist[min(value, numhist)];
+      ++checks;//used to decide that perhaps it is time to report on the content.
+      ++hist[min(value, numhist)];//our template ensures that hist has places for both 0 and numhist, ie numhist+1 is allocated.
       return value;
     }
 
@@ -59,11 +60,11 @@ class HistogrammerBase {
       return nonzeroes != 0;
     }
 
-    /** check and perhaps dump the histogram
+    /** check and periodically dump the histogram
        @@param value being histogrammed
-       @param dbg for where to perhaps show the value,
-       @param opts are output listing formatting options.
-       @returns whether the value triggered some output to the printer
+       @param dbg for where to periodically show the value,
+       @param opts are output listing formatting options, including the periodicity
+       @returns whether printing occurred
     */
     bool operator ()(unsigned value, Print &dbg, const ShowOptions &opts) {
       check(value);

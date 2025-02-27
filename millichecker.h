@@ -11,12 +11,7 @@
 
 */
 
-#ifndef MilliCheckerSize
-#define MilliCheckerSize 100
-#endif
-
 //#define DebugMillichecker 1
-
 
 #if DebugMillichecker
 #include "dbgserial.h"
@@ -27,8 +22,7 @@
 
 
 
-template <unsigned qty>
-class MilliChecker: public Histogrammer<qty> {
+template <unsigned qty> class MilliChecker: public Histogrammer<qty> {
     MilliTick millilast = 0;
   public:
     /** call often enough to sample every millisecond value */
