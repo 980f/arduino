@@ -1,5 +1,9 @@
 #pragma once  //(C) 2018,2019,2021 Andy Heilveil, github/980f
 
+#ifndef Arduino
+using byte=unsigned char;
+#endif
+
 #include "unsignedrecognizer.h"  //recognize numbers but doesn't deal with +/-
 #include "cheaptricks.h"  //ClearOnRead<> COR.
 
