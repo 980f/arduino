@@ -40,6 +40,7 @@ class CLIRP {
     /** command processor. pass it each char as they arrive.
       @returns false if char was used internally, true if you should inspect it*/
     bool doKey(byte key) {
+      //Serial.println("Key:%d",key);
       if (key == 0) { //ignore nulls, might be used for line pacing.
         return false;
       }

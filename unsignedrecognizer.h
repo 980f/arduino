@@ -15,8 +15,8 @@ struct UnsignedRecognizer {
     added '#' prefix for hexadecimal strings for entering rgb values for WS281x LED manipulation, 3 8bit numbers packed into 24 out of 32 bits.
     '~' sets accumulator to all 1's, but you can then add more decimal or hex digits. #~BEEF -> FFFFBEEF
   */
-  bool operator()(char key) {
-    if(key='#' && accumulator==0){//testing accumulator so as to not deal with reinterpreting digits already entered.
+  bool operator()(const char key) {
+    if(key=='#' && accumulator==0){//testing accumulator so as to not deal with reinterpreting digits already entered.
       hexly=true;
       return true;
     }
