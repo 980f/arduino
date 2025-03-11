@@ -46,7 +46,7 @@ template<typename Intish, int base> struct Basely: public Printable {
   @see Basely for when base is known at compile time
 */
 template<typename Intish> struct Based: public Printable {
-  Intish value;
+  const Intish value;
   int base;
   Based(Intish value, int base): value(value), base(base) {}
 
@@ -65,7 +65,7 @@ template<typename Intish> struct Based: public Printable {
 /** for printing chunks of ram.
   While you can invoke it via passing a Print to its printTo method, you can also pass the object to a ChainPrinter to get some framing around it in one line of code. */
 struct BlockDumper : public Printable {
-  uint8_t *base;
+  const uint8_t *base;
   unsigned length;
   char comma;
   BlockDumper(uint8_t *base, unsigned length, char comma = ' '): base(base), length(length), comma(comma)  {  }

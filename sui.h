@@ -1,42 +1,38 @@
+#pragma once
 
-#include "dbgserial.h"
+#include "chainprinter.h"
 
-#include "clirp.h" //commandline interpreter wtih reverse polish input, all args preceed operator.
+#include "clirp.h" //command-line interpreter with reverse polish input, all args precede operator.
 
-class SUI { //Simple User Interface. Binds together a console and an RPN command parser.
-    CLIRP<> cli;
-    decltype(Serial) &cin;
-    ChainPrinter cout;
-  public:
-    SUI (decltype(Serial) &keyboard, Print&printer): cin(keyboard), cout(printer, true) {}
+/**
+  2nd version, prepare to make #args expandable while fixing other utility issues
+*/
 
-    using User = void(*)(char key);
+struct SUI { //Simple User Interface. Binds together a console and an RPN command parser.
+  CLIRP<> cli;
+  decltype(Serial) &cin;//some platforms have different declared classes for symbol Serial.
+  ChainPrinter cout;
 
-    void operator()(User handler) {
-      for (unsigned strokes = cin.available(); strokes-- > 0;) {
-        char key = cin.read();
+  SUI (decltype(Serial) &keyboard, Print&printer): cin(keyboard), cout(printer, true) {}
+
+  using User = void(*)(unsigned char /*key*/, bool /*upper*/);
+
+  void operator()(User handler) {
+    for (unsigned strokes = cin.available(); strokes-- > 0;) {
+      auto key = cin.read();
+      if (cli.doKey(key)) {
         bool upper = key < 'a';
-        if (cli.doKey(key)) {
-          handler(key);
-        }
+        handler(tolower(key), upper);
       }
     }
+  }
 
-    unsigned has2() const {
-      return cli.twoargs();
-    }
+  unsigned operator[](unsigned pi) {
+    return pi > 0 ? cli.pushed : cli.arg;
+  }
 
-    bool hasarg() const {
-      return bool(cli.arg);
-    }
-
-    operator unsigned() {
-      return cli.arg;
-    }
-
-    unsigned more() {
-      return cli.pushed;
-    }
+  unsigned numParams() const {
+    return cli.twoargs() ? 2 : bool(cli.arg);
+  }
 
 };
-
