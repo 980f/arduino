@@ -67,12 +67,12 @@ struct MacAddress {
 
 #ifdef Arduino_h
   /** output standard image to @param output, some Print device such as a Serial port */
-  void PrintOn(Print &output) {
-    for (unsigned index = macSize; index-- > 0;) {//todo: order is suspicious, copying the code that this module was extracted from
-      Serial.print(octet[index], HEX);
-      if (index) {
-        Serial.print(":");
+  void PrintOn(Print &output) {//todo: implement Printable interface and replace this with that.
+    for (unsigned index = 0; index < macSize; ++index) { //order was reversed, I checked Espressif's allocated mac prefixes.
+      if(index){
+        output.print(':');
       }
+      output.print(octet[index], HEX);     
     }
   }
 #endif
