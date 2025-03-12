@@ -91,14 +91,14 @@ using FlagStacker=ValueStacker<bool>;
 
 
 class ChainPrinter {
-  protected:
+  public://this is Arduino land,who needs protection!?
     Print &raw;
   public://simple user set state
     bool autofeed; //whether to emit CRLF when end of arglist is encountered, which is the same as passing noargs. myChainPrinter() emits a CRLF.
     bool stifled = true; //startup disabled due to SerialUSB issues.
     explicit ChainPrinter(Print &raw, bool autofeed = true): raw(raw), autofeed(autofeed) {}
     //hope this makes 'write()' methods available 
-    operator Print &() const {return raw;}
+    
   private:
     /** this is how you process the nth item of a varargs template group.
         It can generate a surprising amount of code, a function for every combination of argument types, AND all right hand subsets thereof.
