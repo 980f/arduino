@@ -24,25 +24,23 @@ struct Credential {
   Credential(const char *ssid, const char *psk): ssid(ssid), psk(psk) {}
 };
 
-//add a line for FX lab, or perhaps make an esp32 wifi router that we then use for development just to do downloads
 std::array EzOTA_Creds = {
-  Credential{"honeyspot", "brigadoonwillbebacksoon"}
+  Credential {"alice-fxtracker", "SpecialEffects"},
+  Credential {"honeyspot", "brigadoonwillbebacksoon"}
 };
 
 
 struct EzOTA {
 
-  bool startWifi(bool andShowMac) {
+  bool startWifi(byte *ownAddress) {
     Serial.println("Starting Wifi");
     for (Credential &creds : EzOTA_Creds) {
       WiFi.mode(WIFI_STA);
       WiFi.begin(creds.ssid, creds.psk);
       if (WiFi.waitForConnectResult() == WL_CONNECTED) {
-
-        if (andShowMac) {
-          Serial.printf("My MAC id");
-          byte ownAddress[6];
+        if (ownAddress) {
           WiFi.macAddress(ownAddress);
+          Serial.print("I am: ");
           for (unsigned i = 0; i < 6; ++i) {
             Serial.printf(":%02x", ownAddress[i]);
           }
@@ -53,13 +51,8 @@ struct EzOTA {
         Serial.println(WiFi.localIP());
         return true;
       }
+      return false;
     }
-    //no creds worked,
-    return false;
-    //on false you should perhaps:
-    //          Serial.println("Connection Failed! Rebooting...");
-    //          delay(5000);
-    //          ESP.restart();
   }
 
   void enableOTA() {
@@ -111,10 +104,12 @@ struct EzOTA {
   }
 
 
-  void setup(bool verbose = true) {
-    startWifi(verbose);
+  void setup(byte *macBuffer = nullptr) {
+    startWifi(macBuffer);
     enableOTA();
+    Serial.println("Setup Complete\n\n");
   }
+
 
   void loop() {
     ArduinoOTA.handle();
