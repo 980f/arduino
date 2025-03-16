@@ -26,16 +26,22 @@ struct Credential {
 
 std::array EzOTA_Creds = {
   Credential {"alice-fxtracker", "SpecialEffects"},
-  Credential {"honeyspot", "brigadoonwillbebacksoon"}
+  Credential {"omada", "scareforacure"},
+  Credential {"Grandpadee", "6440orfight"},  
+  Credential {"honeyspot", "brigadoonwillbebacksoon"},
 };
 
 
 struct EzOTA {
 
   bool startWifi(byte *ownAddress) {
-    Serial.println("Starting Wifi");
+    if (WiFi.isConnected()) {
+      Serial.printf("Wifi Start attempted when already connected\n");
+      return true;
+    }
     for (Credential &creds : EzOTA_Creds) {
       WiFi.mode(WIFI_STA);
+      Serial.printf("Trying %s:%s\n", creds.ssid, creds.psk);
       WiFi.begin(creds.ssid, creds.psk);
       if (WiFi.waitForConnectResult() == WL_CONNECTED) {
         if (ownAddress) {
@@ -50,9 +56,15 @@ struct EzOTA {
         Serial.print("IP address: ");
         Serial.println(WiFi.localIP());
         return true;
+      } else {
+        if (WiFi.isConnected()) {
+          Serial.printf("Wifi is connected to %s despite wfcr saying otherwise\n", creds.ssid);
+          return true;
+        }
       }
-      return false;
-    }
+    }//try another
+
+    return false;
   }
 
   void enableOTA() {
@@ -107,7 +119,7 @@ struct EzOTA {
   void setup(byte *macBuffer = nullptr) {
     startWifi(macBuffer);
     enableOTA();
-    Serial.println("Setup Complete\n\n");
+    Serial.println("ezOTA Setup Complete\n\n");
   }
 
 
