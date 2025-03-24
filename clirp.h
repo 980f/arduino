@@ -44,6 +44,11 @@ class CLIRP {
       if (key == 0) { //ignore nulls, might be used for line pacing.
         return false;
       }
+      if (key == 3) { //^C
+        pushed = Empty;
+        arg = Empty;
+        numberparser.clear();
+      }
       if (key == 255) { //ignore failure of caller to check for ~0 return when reading and nothing present.
         return false;
       }
@@ -73,7 +78,7 @@ class CLIRP {
       return bool(pushed);
     }
 
-    
+
     /** @returns 2 if pushed arg is not Empty, ELSE 1 if single arg is not Empty, ELSE 0.
       caveat: Early versions wrongly ignored useNAV in the tests for empty values.
     */
@@ -81,7 +86,7 @@ class CLIRP {
       return (pushed != Empty) ? 2 : (arg != Empty) ? 1 : 0;//if pushed reply 2 regardless of whether arg appears to have a value.
     }
 
-/** @returns parameter, but also clears it for next command, you can only read once per command */
+    /** @returns parameter, but also clears it for next command, you can only read once per command */
     Unsigned operator[](unsigned index) {
       return index ? pushed : arg;
     }
