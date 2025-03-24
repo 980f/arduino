@@ -1,7 +1,7 @@
 #pragma once  //(C) 2018,2019,2021 Andy Heilveil, github/980f
 
 #ifndef Arduino
-using byte=unsigned char;
+using byte = unsigned char;
 #endif
 
 #include "unsignedrecognizer.h"  //recognize numbers but doesn't deal with +/-
@@ -62,17 +62,18 @@ class CLIRP {
       }
       return true;//we did NOT handle it, YOU should look at it.
     }
-    
+
     /**  may deprecate doKey if this doesn't interfere with other operator() usages. */
     bool operator()(byte key) {
       return doKey(key);
     }
-    
+
     /** @returns whether there is a second non-zero argument. Use 1-based labeling and have labels precede values when doing array assignments. */
     bool twoargs() const {
       return bool(pushed);
     }
 
+    
     /** @returns 2 if pushed arg is not Empty, ELSE 1 if single arg is not Empty, ELSE 0.
       caveat: Early versions wrongly ignored useNAV in the tests for empty values.
     */
@@ -80,6 +81,10 @@ class CLIRP {
       return (pushed != Empty) ? 2 : (arg != Empty) ? 1 : 0;//if pushed reply 2 regardless of whether arg appears to have a value.
     }
 
+/** @returns parameter, but also clears it for next command, you can only read once per command */
+    Unsigned operator[](unsigned index) {
+      return index ? pushed : arg;
+    }
 
     /** Call the @param fn with the arguments present and @returns what that function returned.
       NB: the argument order is the reverse of the RPN entry order. We can debate whether this is a good choice, but it matches early usage of this class.

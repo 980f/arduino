@@ -15,24 +15,28 @@ struct SUI { //Simple User Interface. Binds together a console and an RPN comman
 
   SUI (decltype(Serial) &keyboard, Print&printer): cin(keyboard), cout(printer, true) {}
 
-  using User = void(*)(unsigned char /*key*/, bool /*upper*/);
+  using User = void(*)(unsigned char /*key*/, bool /*upper*/, decltype(cli) &/*argset*/);
 
   void operator()(User handler) {
     for (unsigned strokes = cin.available(); strokes-- > 0;) {
-      auto key = cin.read();
-      if (cli.doKey(key)) {
-        bool upper = key < 'a';
-        handler(tolower(key), upper);
-      }
+      processKey(cin.read(), handler);
+    }
+  }
+
+  //extracted to allow multiple input streams, which streams will not mix nicely
+  void processKey(int key, User handler) {
+    if (cli(key)) {
+      bool upper = key < 'a';
+      handler(tolower(key), upper, cli);
     }
   }
 
   unsigned operator[](unsigned pi) {
-    return pi > 0 ? cli.pushed : cli.arg;
+    return cli[pi];
   }
 
   unsigned numParams() const {
-    return cli.twoargs() ? 2 : bool(cli.arg);
+    return cli.argc();
   }
 
 };
