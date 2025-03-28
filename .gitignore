@@ -16,3 +16,6 @@ L298notes.html.bak
 #psuedo sub module
 *.slo
 #some editor's backups
+*.bak
+*.jpg
+*.webp
