@@ -11,7 +11,7 @@
 #else
 #error this code only works for ESP 8266 or 32
 #endif
-
+#include <esp_mac.h>
 #include <ArduinoOTA.h>
 
 /** todo: non-blocking, timeout in onTick, optionally loop over list forever
