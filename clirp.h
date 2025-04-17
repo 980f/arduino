@@ -5,8 +5,7 @@ using byte = unsigned char;
 #endif
 
 #include "unsignedrecognizer.h"  //recognize numbers but doesn't deal with +/-
-#include "cheaptricks.h"  //ClearOnRead<> COR.
-
+#include "block.h"
 /**
   Command Line Interpreter, Reverse Polish input
 
@@ -25,44 +24,61 @@ using byte = unsigned char;
   useNaV: template arg to use ~0 instead of 0 for 'empty' numbers (NaV is Not a Value, similar to NaN not a number)
   todo: template arg for max number of arguments and use an array rather than two named variables. Needs fancy template varargs stuff presently beyond the author's abilities, also need to check AVR compiler versions for feature support
 */
-template<typename Unsigned = unsigned, bool useNaV = false>
+template<typename Unsigned = unsigned, bool useNaV = false, unsigned maxArgs = 2>
 class CLIRP {
     UnsignedRecognizer<Unsigned> numberparser;
   public:
     enum {
       Empty = useNaV ? ~0 : 0
     };
-    //COR is "Clear on Read", accessing the value naively returns present value but sets storage to Empty.
-    COR<Unsigned> arg = Empty;
-    //for 2 parameter commands, pushed gets value from earlier param.
-    COR<Unsigned> pushed = Empty;
+    Unsigned argv[maxArgs];
+    unsigned argc=0;
+
+    void reset(){
+      for(argc=maxArgs; argc-->0;){
+        argv[argc] = Empty;
+      }
+      //conveniently leaving argc zero.
+    }
   public:
+    Block<Unsigned> args(){
+      return {argc,argv};
+    }
     /** command processor. pass it each char as they arrive.
       @returns false if char was used internally, true if you should inspect it*/
     bool doKey(byte key) {
-      //Serial.println("Key:%d",key);
       if (key == 0) { //ignore nulls, might be used for line pacing.
         return false;
       }
-      if (key == 3) { //^C
-        pushed = Empty;
-        arg = Empty;
-        numberparser.clear();
-      }
-      if (key == 255) { //ignore failure of caller to check for ~0 return when reading and nothing present.
+      
+      if (key == 255) { //ignore failure of caller to check for ~0/-1 return when reading and nothing present.
         return false;
       }
+      
+      if (key == 3) { //^C
+        reset();
+        numberparser.clear();
+        return false;//this was missing for many versions, not sure how that would have been buggy.
+      }
+      
       //test digits before ansi so that we can have a numerical parameter for those.
       if (numberparser(key)) { //part of a number, do no more
         return false;
       }
       //ansi escape sequence doober would go here if we bring it back. it is a state machine that accumulates ansi sequence and stored it on a member herein, returning true when sequence complete.
-      arg = numberparser; //read and clear, regardless of whether used.
+      if(!numberparser){
+        //if nothing was entered then ... no arguments
+      } else {
+        argv[argc++] = numberparser; //read and clear parser, regardless of whether it actually has anything. IE we always indicate at least one parameter
+      }
       switch (key) {
         case '\t'://ignore tabs, makes param files easier to read.
           return false;
         case ','://push a parameter for 2 parameter commands.
-          pushed = arg;//note: pushing clears accumulator  123,? acts the same as 123,0?  (early versions gave you 123,123? which was never useful)
+          for(unsigned i=maxArgs;i-->1;){
+            argv[i]=argv[i-1];
+          }
+          argv[0]=Empty;
           return false;
       }
       return true;//we did NOT handle it, YOU should look at it.
@@ -73,22 +89,9 @@ class CLIRP {
       return doKey(key);
     }
 
-    /** @returns whether there is a second non-zero argument. Use 1-based labeling and have labels precede values when doing array assignments. */
-    bool twoargs() const {
-      return bool(pushed);
-    }
-
-
-    /** @returns 2 if pushed arg is not Empty, ELSE 1 if single arg is not Empty, ELSE 0.
-      caveat: Early versions wrongly ignored useNAV in the tests for empty values.
-    */
-    unsigned argc() const {
-      return (pushed != Empty) ? 2 : (arg != Empty) ? 1 : 0;//if pushed reply 2 regardless of whether arg appears to have a value.
-    }
-
-    /** @returns parameter, but also clears it for next command, you can only read once per command */
-    Unsigned operator[](unsigned index) {
-      return index ? pushed : arg;
+    /** @returns parameter */
+    Unsigned operator[](unsigned index) const {
+      return index<argc ? argv[index] : Empty;
     }
 
     /** Call the @param fn with the arguments present and @returns what that function returned.
@@ -96,14 +99,13 @@ class CLIRP {
       E.G.: if an array is being accessed as index,valueX for array[index]=value, the fn is passed (value,index)
     */
     template <typename Ret, typename U1, typename U2> Ret operator()(Ret (*fn)(U1, U2)) {
-      return (*fn)(arg, pushed);
+      return (*fn)(argv[0], argv[1]);
     }
 
     /** Call the @param fn with the most recent argument, erasing any prior one and @returns what that function returned.
     */
     template <typename Ret, typename U1> Ret operator()(Ret (*fn)(U1)) {
-      pushed = Empty; //forget unused arg.
-      return (*fn)(arg);
+      return (*fn)(argv[0]);
     }
 
 };

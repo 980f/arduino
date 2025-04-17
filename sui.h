@@ -7,15 +7,15 @@
 /**
   2nd version, prepare to make #args expandable while fixing other utility issues
 */
-
+template<typename Unsigned = unsigned, bool useNaV = false, unsigned maxArgs = 2>
 struct SUI { //Simple User Interface. Binds together a console and an RPN command parser.
-  CLIRP<> cli;
+  CLIRP<Unsigned, useNaV , maxArgs> cli;
   decltype(Serial) &cin;//some platforms have different declared classes for symbol Serial.
   ChainPrinter cout;
 
   SUI (decltype(Serial) &keyboard, Print&printer): cin(keyboard), cout(printer, true) {}
 
-  using User = void(*)(unsigned char /*key*/, bool /*upper*/, decltype(cli) &/*argset*/);
+  using User = void(*)(unsigned char /*key*/, bool /*upper*/);
 
   void operator()(User handler) {
     for (unsigned strokes = cin.available(); strokes-- > 0;) {
@@ -27,7 +27,8 @@ struct SUI { //Simple User Interface. Binds together a console and an RPN comman
   void processKey(int key, User handler) {
     if (cli(key)) {
       bool upper = key < 'a';
-      handler(tolower(key), upper, cli);
+      handler(tolower(key), upper);
+      cli.reset();
     }
   }
 
