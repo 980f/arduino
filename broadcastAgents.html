@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>broadcastAgents</title>
+  </head>
+  <body>
+    <p>Vortex Lighting Agent</p>
+    <p>This is a processor that listens to ESP_NOW broadcast messages and updates the LED strands in the vortex.</p>
+    <p>V1 only supports updating subsets of the strands using 4 parameters (there is a 5th in the code but it wasn't useful). The parameters describe a run length, a period &gt;= run length, and how many of those periods, to which the pixels described are set to the given color.</p>
+    <p>Proposed:</p>
+    <ol>
+      <li>Have multiple addressable frames, each command addresses a frame to be edited.</li>
+      <li>coded in terms of ring and position within ring, a 2D coordinate system.</li>
+      <li>Frame can refer to another frame, such as "copy rings +/- with new ring blanked.</li>
+      <li>Have a scheduled cycling through the frames, a list of frame and how long before the next frame, and whether to loop or run once. This allows simple animations to be run locally on this controller, and to preload a complicated frame.</li>
+      <li>Announces its state periodically, current frame, number of frames, and similar stats, by which a generator application can detect that it needs to be given the frame info all over again.</li>
+    </ol>
+    <p>We may wish to treat each ring as its own thing, not allowing commands to reference data in frames for other rings. This would allow us to have multiple processors doing the updates. </p>
+    <p><br>
+      Implementation details:<br>
+      Actually writing to the LED's happens on its own process, request to update sets a flag (frame #) that is inspected when an LED update is completed which includes the "no new bits for xx usec before next stream can be sent". If the background is idle when the fifo is pushed then the background thread is woken early, it is woken ever second or two to refresh the LED's to take care of spontaneous reconnects of the strands.</p>
+    <p>Frame and duration: duration is in milliseconds, with a sentinal value for "forever". There is also "next display item", an index into the list of frame|duration pairs.</p>
+    <p>uint8_t frame;<br>
+      uint8_t next;<br>
+      //two free bytes of padding for other tweaks, or truncate milliseconds to 16 bits, slightly more than a minute before another display needs to be chosen, which can be a loop to self for perpetual display. Possible uses: "send message on activation" so that the remote knows it can reuse a frame.<br>
+      MilliTick duration;</p>
+    <p>Number of frames and number of steps are dynamic quantities, but try to recycle rather than discard + create new.<br>
+    </p>
+    <hr>
+    <p>Trigger inputs Agent</p>
+    <p>QN2025has a processor checking 8 digital inputs and reporting on their changes. A periodic reporting whether something changed or not was disabled as it made it hard to debug other traffic.</p>
+    <p>In progress is making the pin selections, polarity, and debounce time remotely configurable. This configurability is desirable as we can then stock preprogrammed units rather than writing custom programs for each. <br>
+      Also in progress is adding pulse outputs, which have a duration. The duration can be "forever" for simple digital output use. The pulse nature is for driving coils or other energy consuming devices.</p>
+    <p>It is wise to use opto-isolators or at least series resistors between the real world and the controller.</p>
+    <p><br>
+    </p>
+  </body>
+</html>
