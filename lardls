@@ -15,6 +15,6 @@ echo "## recreate links to library sources" >relib
 while read link ; do echo >>relib ln -sf $(readlink "$link") ; done < .lard.1 
 chmod a+x relib
 #and now kill the temps. Comment this out while investigating/debugging this process.
-#rm .lard.*
+rm .lard.*
 
 ## ps: the name is a typo, it was supposed to be "list arduino library links" but didn't get the nk from links.
