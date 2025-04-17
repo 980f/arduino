@@ -2,19 +2,19 @@
 ## when run from arduino project directory,
 ## which is exactly what we need to ignore when checking for new files
 
-#list files that are links but not directory into a temp file 
-find -type l ! -xtype d -printf %f\\n | sort >.lard.1
+#list files that are links but not directory into a temp file , uniq added for dwarvenmines project where there are subordinate projects, might also just not let find recurse.
+find -maxdepth 1 -type l -and ! -xtype d -printf %f\\n | sort >.lard.1
 #merge those into .gitignore via another temp file
 cat .gitignore .lard.1 | sort | uniq >.lard.2
 cp .lard.2 .gitignore 
 #rebuild 'relib' script
 echo "## recreate links to library sources" >relib
 # if our preferred path to the shared code is named lib include that in the rebuild (else see 'newsketch' script)
-[ -L "lib" ] && [ -d "lib" ] && echo "ln -sf $(readlink "lib") lib" >>relib
+[ -L "links" ] && [ -d "links" ] && echo "ln -sf $(readlink "links") links" >>relib
 #we still have the file of files that are links, we produce a line for each into relib
 while read link ; do echo >>relib ln -sf $(readlink "$link") ; done < .lard.1 
 chmod a+x relib
 #and now kill the temps. Comment this out while investigating/debugging this process.
-rm .lard.*
+#rm .lard.*
 
 ## ps: the name is a typo, it was supposed to be "list arduino library links" but didn't get the nk from links.
