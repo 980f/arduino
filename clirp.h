@@ -5,13 +5,13 @@ using byte = unsigned char;
 #endif
 
 #include "unsignedrecognizer.h"  //recognize numbers but doesn't deal with +/-
-#include "block.h"
+
 /**
   Command Line Interpreter, Reverse Polish input
 
   You push bytes at it, then query it for values
 
-  if(clirp.doKey(key_from_serial)){
+  if(clirp(key_from_serial)){
     switch(key){
     case someletter:
       auto result=cli(pointer_to_myfunction); //calls function of one or two arguments. also zeroes out the stored arguments.
@@ -32,53 +32,51 @@ class CLIRP {
       Empty = useNaV ? ~0 : 0
     };
     Unsigned argv[maxArgs];
-    unsigned argc=0;
+    unsigned argc = 0;
 
-    void reset(){
-      for(argc=maxArgs; argc-->0;){
+    void reset() {
+      for (argc = maxArgs; argc-- > 0;) {
         argv[argc] = Empty;
       }
       //conveniently leaving argc zero.
     }
   public:
-    Block<Unsigned> args(){
-      return {argc,argv};
-    }
+    //too soon: and too much coupling in library.
+    //    Block<Unsigned> args() {
+    //      return {argc, argv};
+    //    }
     /** command processor. pass it each char as they arrive.
       @returns false if char was used internally, true if you should inspect it*/
     bool doKey(byte key) {
       if (key == 0) { //ignore nulls, might be used for line pacing.
         return false;
       }
-      
+
       if (key == 255) { //ignore failure of caller to check for ~0/-1 return when reading and nothing present.
         return false;
       }
-      
+
       if (key == 3) { //^C
         reset();
         numberparser.clear();
         return false;//this was missing for many versions, not sure how that would have been buggy.
       }
-      
+
       //test digits before ansi so that we can have a numerical parameter for those.
       if (numberparser(key)) { //part of a number, do no more
         return false;
       }
-      //ansi escape sequence doober would go here if we bring it back. it is a state machine that accumulates ansi sequence and stored it on a member herein, returning true when sequence complete.
-      if(!numberparser){
-        //if nothing was entered then ... no arguments
-      } else {
-        argv[argc++] = numberparser; //read and clear parser, regardless of whether it actually has anything. IE we always indicate at least one parameter
-      }
+      argv[0] = numberparser; //read and clear parser, regardless of whether it actually has anything. IE we always indicate at least one parameter
       switch (key) {
-        case '\t'://ignore tabs, makes param files easier to read.
-          return false;
-        case ','://push a parameter for 2 parameter commands.
-          for(unsigned i=maxArgs;i-->1;){
-            argv[i]=argv[i-1];
+        case '\t'://tab same as comma
+        case ','://push a parameter for multi-parameter commands.
+          if (argc < maxArgs) {
+            ++argc;
           }
-          argv[0]=Empty;
+          for (unsigned i = argc; i-- > 1;) {
+            argv[i] = argv[i - 1];
+          }
+          argv[0] = Empty;
           return false;
       }
       return true;//we did NOT handle it, YOU should look at it.
@@ -89,9 +87,14 @@ class CLIRP {
       return doKey(key);
     }
 
+    /** @returns whether user entered tha many values (0 for any, 1 for 2, sorry but that is the way life goes with 'C' */
+    bool has(unsigned argnumber) {
+      return argnumber < argc;
+    }
+
     /** @returns parameter */
     Unsigned operator[](unsigned index) const {
-      return index<argc ? argv[index] : Empty;
+      return index < argc ? argv[index] : Empty;
     }
 
     /** Call the @param fn with the arguments present and @returns what that function returned.
