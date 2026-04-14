@@ -82,6 +82,7 @@ struct BlockDumper : public Printable {
   }
 };
 
+//a wrapper to ease changing how we dump blocks, the present instance is not well pleasing to its author.
 #define BLOCK(...) BlockDumper( __VA_ARGS__ )
 
 
@@ -115,7 +116,9 @@ class ChainPrinter {
   public:
     /** by overloading operator () we can make invocations look like common logging functions calls. Name your chainprinter dbg or log.*/
     template<typename ... Args>  unsigned operator()(const Args ... args) {
-      if (stifled) return 0;
+      if (stifled) {
+        return 0;
+      }
       if (sizeof... (args)) {//this check keeps us from having to implement a no-args PrintItem.
         return PrintItem(args ...) + (autofeed ? endl() : 0);
       } else {
@@ -129,7 +132,9 @@ class ChainPrinter {
     }
 
     unsigned endl() {    
-      if (stifled) return 0;
+      if (stifled) {
+        return 0;
+      }
       return raw.println();
     }
 
@@ -141,8 +146,7 @@ class ChainPrinter {
     }
 
     /** you must assign this to a named thing to ensure the compiler doesn't elide it.
-          suggested usage:  auto pop= printer.stackStifled(local_preference_for_debugspew)          
-          */
+          suggested usage:  auto pop= printer.stackStifled();  */
     FlagStacker stackStifled() {//earlier version allowed you to force a stifled printer back on, a universally bad idea.
       return FlagStacker(this->stifled, true);
     }

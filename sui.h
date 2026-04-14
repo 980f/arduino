@@ -2,32 +2,32 @@
 
 #include "chainprinter.h"
 
-#include "clirp.h" //command-line interpreter with reverse polish input, all args precede operator.
+#include "clirp.h"  //command-line interpreter with reverse polish input, all args precede operator.
 
 /**
   2nd version, prepare to make #args expandable while fixing other utility issues
+  also give up on composition, derivation is actually a lesser burden all around.
 */
 template<typename Unsigned = unsigned, bool useNaV = false, unsigned maxArgs = 2>
-struct SUI { //Simple User Interface. Binds together a console and an RPN command parser.
-  CLIRP<Unsigned, useNaV , maxArgs> cli;
-  decltype(Serial) &cin;//some platforms have different declared classes for symbol Serial.
+struct SUI {  //Simple User Interface. Binds together a console and an RPN command parser.
+  CLIRP<Unsigned, useNaV, maxArgs> cli;
+  Stream &cin;  //some platforms have different declared classes for symbol Serial.
   ChainPrinter cout;
 
-  SUI (decltype(Serial) &keyboard, Print&printer): cin(keyboard), cout(printer, true) {}
+  SUI(Stream &keyboard, Print &printer): cin(keyboard), cout(printer, true) {}
 
-  using User = void(*)(unsigned char /*key*/, bool /*upper*/);
-
-  void operator()(User handler) {
+  //call this in your loop handler
+  void loop() {
     for (unsigned strokes = cin.available(); strokes-- > 0;) {
-      processKey(cin.read(), handler);
+      processKey(cin.read());
     }
   }
 
   //extracted to allow multiple input streams, which streams will not mix nicely
-  void processKey(int key, User handler) {
+  void processKey(int key) {
     if (cli(key)) {
       bool upper = key < 'a';
-      handler(tolower(key), upper);
+      handleKey(tolower(key), upper);
       cli.reset();
     }
   }
@@ -39,5 +39,7 @@ struct SUI { //Simple User Interface. Binds together a console and an RPN comman
   unsigned numParams() const {
     return cli.argc();
   }
+
+  virtual void handleKey(unsigned char,bool)=0;
 
 };

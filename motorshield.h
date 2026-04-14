@@ -1,4 +1,4 @@
-/** seedstudio V1.1 motor shield
+/** seedstudio V1.x motor shield
 		L298 based dual H-bridge as independent drives (or paired driver)
 */
 

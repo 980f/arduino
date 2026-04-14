@@ -90,7 +90,10 @@ If not present prefix with `#include <Arduino.h>` which is found in the core fol
 Generate prototypes, an imperfect process which you can fix by putting in your own prototypes as needed.
 Add #line directives throughout so error messages point to original files.
 
-`sketch.json` is used by CLI and WEB for ???
+## special build files 
+- `sketch.json` is used by WEB for library resolution. `cpu` is the board configuration,`included_libs` picks library and versions.
+- `sketch.yaml` is used by CLI. They contain profiles, each of which is board etc. needed for a build, unfortunately including port which is too dynamic to save in a file (but is optional). See https://arduino.github.io/arduino-cli/dev/sketch-project-file/.
+
 
 ### Library search order
 core folder {build.core}

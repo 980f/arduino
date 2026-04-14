@@ -2,7 +2,7 @@
 
 #include "chainprinter.h"
 
-template<class Serialish>  //Serial_ or HardwareSerial
+template<class Serialish>  //Serial_ or HardwareSerial, had to make this a template class due to lack of common base class for different Serials for soem processors.
 class EasyConsole: public ChainPrinter {
   public:
     Serialish &conn; //output is wrapped by ChainPrinter
@@ -24,14 +24,7 @@ class EasyConsole: public ChainPrinter {
       conn.begin(uartbaud);//hardware serial. up the baud to reduce overhead.
     }
 
-    //console was often passes as a ChainPrinter and you can't have virtual template members as of C++20 and probably never.
-//    template<typename ... Args> EasyConsole& operator()(const Args ... args) {
-//      if (sizeof... (args)) {
-//        //also ignoring check due to bad behavior of avr usb Serial
-//        //if (conn)
-//          ChainPrinter::operator()(args...);
-//      }
-//      return *this;
-//    }
+  //removed as console was often passed as a ChainPrinter and you can't have virtual template members as of C++20 and probably never.
+  //template<typename ... Args> EasyConsole& operator()(const Args ... args) {... }
 
 };
