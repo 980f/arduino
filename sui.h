@@ -3,7 +3,10 @@
 #include "chainprinter.h"
 
 #include "clirp.h"  //command-line interpreter with reverse polish input, all args precede operator.
-
+#ifdef cli
+#undef cli 
+#pragma message "I have undefined the cli macro that esp32 egregiously put into global namespace"
+#endif
 /**
   2nd version, prepare to make #args expandable while fixing other utility issues
   also give up on composition, derivation is actually a lesser burden all around.
@@ -13,7 +16,7 @@ usage:
     //your local state
      bool handleKey(unsigned char cmd ,bool wasUpper){
       switch(cmd){
-        case 'x': 
+        case 'x':
           //process x command
           return true;
         case '\e':
@@ -49,7 +52,7 @@ struct SUI {  //Simple User Interface. Binds together a console and an RPN comma
       bool upper = key < 'a';
       if(handleKey(tolower(key), upper)){
         cli.reset();
-      }      
+      }
     }
   }
 
