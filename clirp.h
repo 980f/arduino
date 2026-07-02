@@ -22,12 +22,12 @@ using byte = unsigned char;
 
   todo: upgrade to floating point recognizer via 'template if' on class to use.
   todo: replace useNaV with template arg to use ~0 instead of 0 for 'empty' numbers (NaV is Not a Value, similar to NaN not a number)
-  testing: template arg for max number of arguments and use an array rather than two named variables. Needs fancy template varargs stuff presently beyond the author's abilities, also need to check AVR compiler versions for feature support
+  tested: template arg for max number of arguments and use an array rather than two named variables. Need to check AVR compiler versions for feature support and give clear error message vs weird spew.
 */
 template<typename Unsigned = unsigned, bool useNaV = false, unsigned maxArgs = 2>
 class CLIRP {
   UnsignedRecognizer<Unsigned> numberparser;
-
+  
 public:
   enum {
     Empty = useNaV ? ~0 : 0
@@ -36,19 +36,27 @@ public:
   unsigned argc = 0;
 
   void reset() {
-    for (argc = maxArgs; argc-- > 0;) {
-      argv[argc] = Empty;
+    for (argc = maxArgs; argc > 0;) {
+      argv[--argc] = Empty;
     }
-    // conveniently leaving argc zero.
+    //formerly argc would be left at MAXUNSIGNED rather than the 0 the comment here suggested, and which then wiped all of ram the next time an arg stack push occured.
+  }
+
+  void pushArgs(Unsigned newarg){
+    if(argc > 0){
+      for(unsigned i = min(argc, maxArgs-1); i > 0; --i){//the min() deals with overflowing the 'stack'
+        argv[i] = argv[i-1];//can't --i here because that is officially undefined behavior, no promise that the array element addresses won't both be computed before the assignement is executed.
+      }
+    }
+    argv[0] = newarg;
+    if (argc < maxArgs) {
+      ++argc;
+    }    
   }
 
 public:
-  // too soon: and too much coupling in library.
-  //     Block<Unsigned> args() {
-  //       return {argc, argv};
-  //     }
   /** command processor. pass it each char as they arrive.
-    @returns false if char was used internally, true if you should inspect it*/
+    @returns false if char was used internally, true if you should inspect it */
   bool doKey(byte key) {
     if (key == 0) { // ignore nulls, might be used for line pacing.
       return false;
@@ -64,22 +72,19 @@ public:
       return false; // this was missing for many versions, not sure how that would have been buggy.
     }
 
-    // test digits before ansi so that we can have a numerical parameter for those.
     if (numberparser(key)) { // part of a number, do no more
       return false;
     }
-    argv[0] = numberparser; // read and clear parser, regardless of whether it actually has anything. IE we always indicate at least one parameter
     switch (key) {
       case '\t': // tab same as comma
       case ',': // push a parameter for multi-parameter commands.
-        if (argc < maxArgs) {
-          ++argc;
-        }
-        for (unsigned i = argc; i-- > 1;) {
-          argv[i] = argv[i - 1];
-        }
-        argv[0] = Empty;
+        pushArgs(numberparser.notEmpty() ? numberparser: Empty ); //legacy from first implementation, use local 'Empty' rather than unsignedrecognizer's idea of empty.
         return false;
+      default:
+        if(numberparser.notEmpty()){//if a number was in progress capture it, else leave argstack untouched
+          pushArgs(numberparser);
+        }
+        break;
     }
     return true; // we did NOT handle it, YOU should look at it.
   }

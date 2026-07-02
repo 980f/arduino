@@ -12,7 +12,7 @@
   also give up on composition, derivation is actually a lesser burden all around.
 
 usage:
-  struct MySui: public SUI {
+  struct MySui: public SUI <>{
     //your local state
      bool handleKey(unsigned char cmd ,bool wasUpper){
       switch(cmd){
@@ -61,7 +61,7 @@ struct SUI {  //Simple User Interface. Binds together a console and an RPN comma
   }
 
   unsigned numParams() const {
-    return cli.argc();
+    return cli.argc;
   }
 
   /** @return whether the command arguments have been consumed. */
