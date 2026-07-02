@@ -1,4 +1,6 @@
-
+/**
+wraps use of vsnprintf on a buffer, to prevent writing past the end of a buffer.
+*/
 
 struct Sprinter {
   const int guard;
@@ -15,7 +17,7 @@ struct Sprinter {
     return buffer;
   }
 
-  //diagnostic:
+  //diagnostic, tracks the most used by *any* Sprinter, so that a shared buffer can be precisely allocated.
   static int mostused;
   ~Sprinter() {
     if (mostused < tail) {

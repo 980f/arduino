@@ -148,7 +148,7 @@ class ChainPrinter {
     /** you must assign this to a named thing to ensure the compiler doesn't elide it.
           suggested usage:  auto pop= printer.stackStifled();  */
     FlagStacker stackStifled() {//earlier version allowed you to force a stifled printer back on, a universally bad idea.
-      return FlagStacker(this->stifled, true);
+      return FlagStacker(this->stifled, false);//this was WRONG until 23APril2026!
     }
 };
 
