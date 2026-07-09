@@ -64,7 +64,7 @@ struct SUI {  //Simple User Interface. Binds together a console and an RPN comma
     return cli.argc;
   }
 
-  /** @return whether the command arguments have been consumed. */
+  /** @return whether the command arguments have been consumed. Most of the time a command will return true, but if you want to make 2-letter commands then the first returns false after changing the state that the next references.*/
   virtual bool handleKey(unsigned char,bool)=0;
 
 };

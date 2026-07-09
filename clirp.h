@@ -12,7 +12,7 @@ using byte = unsigned char;
   You push bytes at it, then query it for values
 
   if(clirp(key_from_serial)){
-    switch(key){
+    switch(key_from_serial){
     case someletter:
       auto result=cli(pointer_to_myfunction); //calls function of one or two arguments. also zeroes out the stored arguments.
       //auto is the return type of 'myfunction'
@@ -105,6 +105,7 @@ public:
   }
 
   /** Call the @param fn with the arguments present and @returns what that function returned.
+    NB: does NOT remove the arguments from the argument stack, the caller of this function must arrange for that, usually by returning true from the keyhandler.
     NB: the argument order is the reverse of the RPN entry order. We can debate whether this is a good choice, but it matches early usage of this class.
     E.G.: if an array is being accessed as index,valueX for array[index]=value, the fn is passed (value,index)
   */
@@ -112,7 +113,8 @@ public:
     return (*fn)(argv[0], argv[1]);
   }
 
-  /** Call the @param fn with the most recent argument, erasing any prior one and @returns what that function returned.
+  /** Call the @param fn with the most recent argument @returns what that function returned.
+    NB: does NOT remove the arguments from the argument stack, the caller of this function must arrange for that, usually by returning true from the keyhandler.
    */
   template<typename Ret, typename U1> Ret operator()(Ret (*fn)(U1)) {
     return (*fn)(argv[0]);
